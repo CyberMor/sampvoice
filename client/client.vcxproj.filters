@@ -1,0 +1,2036 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Исходные файлы">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Файлы заголовков">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Файлы ресурсов">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk">
+      <UniqueIdentifier>{7e56f37d-d07b-4e49-81ac-59f2ad239179}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk\raknet">
+      <UniqueIdentifier>{aa0b2bf4-34cb-46b7-9324-6c5d7afedc25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk\game">
+      <UniqueIdentifier>{e820b731-b680-4997-a88b-c95b012d6c30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk\game\rw">
+      <UniqueIdentifier>{c6255ea3-c2b2-42c1-b7d7-a5fc04ccbe1e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk\samp">
+      <UniqueIdentifier>{cca4ce7c-959d-4057-8779-cb73e2397ab1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk\audio">
+      <UniqueIdentifier>{e73cfadd-93d4-4abc-8538-e9c94d6bc1b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\resources">
+      <UniqueIdentifier>{395755ca-c049-41f7-ba1f-09910aa87c61}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\modules">
+      <UniqueIdentifier>{52ccd632-f29e-45f2-a298-6be34e71831c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="sdk\raknet\BitStream.cpp">
+      <Filter>Исходные файлы\sdk\raknet</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\C3dMarker.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\C3dMarkers.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAEAudioEntity.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAERadioTrackManager.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAESound.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAEWeaponAudioEntity.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAEWeatherAudioEntity.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAnimatedBuilding.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAnimBlendAssocGroup.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAnimBlendAssociation.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAnimBlendHierarchy.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAnimBlendNode.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAnimBlendSequence.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAnimBlendStaticAssociation.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAnimManager.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAtomicModelInfo.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CAutomobile.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CBaseModelInfo.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CBike.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CBirds.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CBmx.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CBoat.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CBouncingPanel.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CBoundingBox.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CBox.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CBrightLights.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CBuilding.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CBulletInfo.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CBulletTrace.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CBulletTraces.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCamera.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCarAI.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCarCtrl.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCarEnterExit.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCarGenerator.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCheat.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCheckpoint.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCheckpoints.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCivilianPed.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CClock.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CClothes.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CClothesBuilder.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CClouds.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CClumpModelInfo.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CColBox.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CColDisk.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CColLine.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCollision.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCollisionData.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CColModel.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CColourSet.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CColPoint.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CColSphere.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CColTriangle.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CColTrianglePlane.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CControllerConfigManager.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCopPed.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCoronas.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCredits.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCreepingFire.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCustomCarEnvMapPipeline.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCustomCarPlateMgr.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCutsceneMgr.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CCutsceneObject.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CDamageManager.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CDarkel.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CDecision.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CDecisionSimple.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CDirectory.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CDoor.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CDraw.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CDummy.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CDummyObject.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CDummyPed.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CEmergencyPed.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CEntity.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CEntryExit.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CEntryExitManager.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CExplosion.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CFileLoader.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CFileMgr.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CFire.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CFireManager.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CFont.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CGame.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CGamma.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CGarages.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CGeneral.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\cHandlingDataMgr.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CHandObject.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CHeli.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CHud.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CHudColours.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CIniFile.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CIplStore.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CKeyGen.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CLoadedCarGroup.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CLoadingScreen.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CLocalisation.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CMatrix.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CMatrixLink.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CMenuManager.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CMenuSystem.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CMessages.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CMirrors.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CMissionCleanup.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CModelInfo.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CModelInfoAccelerator.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CMonsterTruck.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CMotionBlurStreaks.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CObject.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\COctTree.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\COctTreeBase.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\common.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CompressedVector.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPad.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPathFind.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPed.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPedClothesDesc.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPedIK.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPedIntelligence.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPedModelInfo.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPhysical.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPickup.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPickups.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPlaceable.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPlane.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPlaneTrail.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPlaneTrails.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPlayerPed.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPointLights.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPolyBunch.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPools.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPopCycle.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPopulation.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CProjectile.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CProjectileInfo.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPtrList.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPtrListDoubleLink.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPtrListSingleLink.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPtrNodeDoubleLink.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CPtrNodeSingleLink.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CQuadBike.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CQuadTreeNode.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CQuaternion.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CRadar.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CRealTimeShadow.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CRect.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CReferences.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CRegisteredCorona.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CRegisteredMotionBlurStreak.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CRenderer.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CRestart.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CRGBA.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CRope.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CRopes.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CRunningScript.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CScene.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CSetPiece.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CSetPieces.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CShadowCamera.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CShadows.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CShinyTexts.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CShotInfo.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CSimpleTransform.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CSpecialFX.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CSpecialPlateHandler.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CSphere.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CSprite.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CSprite2d.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CStats.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CStreaming.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CStreamingInfo.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTask.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplex.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexCopInCar.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexDie.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexEnterBoatAsDriver.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexEnterCar.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexEnterCarAsDriver.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexEnterCarAsPassenger.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexFacial.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexKillPedFromBoat.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexKillPedOnFoot.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexLeaveCar.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexPlayHandSignalAnim.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexProstituteSolicit.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexSunbathe.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexUseMobilePhone.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexWander.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskComplexWanderStandard.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskManager.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimple.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleAnim.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleCarSetPedInAsDriver.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleCarSetPedInAsPassenger.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleCarSetPedOut.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleChoking.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleClimb.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleDuck.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleFacial.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleFight.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleGangDriveBy.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleHoldEntity.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleIKChain.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleIKLookAt.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleIKManager.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleInAir.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleJetPack.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimplePlayerOnFoot.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleRunAnim.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleRunNamedAnim.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleStandStill.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleStealthKill.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleSwim.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleThrowProjectile.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleTriggerLookAt.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskSimpleUseGun.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskTimer.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTaskUtilityLineUpPedWithCar.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CText.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTheCarGenerators.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTheScripts.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTheZones.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTimeCycle.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTimeModelInfo.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTimer.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTrailer.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTrain.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTrainNode.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\cTransmission.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CTxdStore.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CUserDisplay.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CVector.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CVector2D.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CVehicle.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CVehicleModelInfo.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CVisibilityPlugins.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CWanted.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CWeapon.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CWeaponEffects.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CWeaponInfo.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CWeaponModelInfo.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CWeather.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CWorld.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\CZone.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\D3DIndexDataBuffer.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\D3DResourceSystem.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\D3DTextureBuffer.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\Fx_c.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\FxBox_c.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\FxFrustumInfo_c.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\FxManager_c.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\FxMemoryPool_c.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\FxPlane_c.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\FxPrtMult_c.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\FxSphere_c.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\FxSystem_c.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\FxSystemBP_c.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\JPegCompress.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\List_c.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\ListItem_c.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\NodeName.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\PipelinePlugin.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\RenderWare.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\TxdDef.cpp">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="sdk\samp\samp.h">
+      <Filter>Исходные файлы\sdk\samp</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\raknet\BitStream.h">
+      <Filter>Исходные файлы\sdk\raknet</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\raknet\RakClient.h">
+      <Filter>Исходные файлы\sdk\raknet</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\rw\rpcriter.h">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\rw\rperror.h">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\rw\rphanim.h">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\rw\rpmatfx.h">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\rw\rpskin.h">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\rw\rpuvanim.h">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\rw\rpworld.h">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\rw\rtanim.h">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\rw\rtdict.h">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\rw\rtquat.h">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\rw\rwcore.h">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\rw\rwplcore.h">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\rw\skeleton.h">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\AnimBlendFrameData.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\C2dEffect.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\C3dMarker.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\C3dMarkers.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAEAudioEntity.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAEExplosionAudioEntity.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAEFireAudioEntity.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAEPedAudioEntity.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAEPedSpeechAudioEntity.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAEPoliceScannerAudioEntity.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAERadioTrackManager.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAESound.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAETwinLoopSoundEntity.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAEVehicleAudioEntity.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAEWeaponAudioEntity.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAEWeatherAudioEntity.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAnimatedBuilding.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAnimationStyleDescriptor.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAnimBlendAssocGroup.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAnimBlendAssociation.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAnimBlendClumpData.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAnimBlendHierarchy.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAnimBlendNode.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAnimBlendSequence.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAnimBlendStaticAssociation.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAnimBlock.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAnimManager.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAtomicModelInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAttractorScanner.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAutomobile.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CAutoPilot.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CBaseModelInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CBike.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CBirds.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CBmx.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CBoat.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CBouncingPanel.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CBoundingBox.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CBox.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CBrightLights.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CBuilding.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CBulletInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CBulletTrace.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CBulletTraces.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCam.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCamera.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCamPathSplines.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCarAI.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCarCtrl.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCarEnterExit.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCarGenerator.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCheat.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCheckpoint.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCheckpoints.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCivilianPed.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CClock.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CClothes.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CClothesBuilder.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CClouds.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CClumpModelInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CColBox.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CColDisk.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CColLine.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCollision.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCollisionData.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CColModel.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CColourSet.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CColPoint.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CColSphere.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CColTriangle.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CColTrianglePlane.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CControllerConfigManager.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCopPed.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCoronas.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCredits.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCreepingFire.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCrimeBeingQd.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCustomCarEnvMapPipeline.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCustomCarPlateMgr.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCutsceneMgr.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CCutsceneObject.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CDamageManager.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CDarkel.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CDecision.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CDecisionMaker.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CDecisionSimple.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CDirectory.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CDoor.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CDraw.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CDummy.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CDummyObject.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CDummyPed.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CEmergencyPed.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CEntity.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CEntityScanner.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CEntryExit.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CEntryExitManager.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CEventGroup.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CEventHandler.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CEventScanner.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CExplosion.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CFileLoader.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CFileMgr.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CFileObjectInstance.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CFire.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CFireManager.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CFont.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CGame.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CGamma.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CGarages.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CGeneral.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\cHandlingDataMgr.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CHandObject.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CHeli.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CHud.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CHudColours.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CIniFile.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CIplStore.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CKeyGen.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CLink.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CLinkList.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CLoadedCarGroup.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CLoadingScreen.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CLocalisation.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CMatrix.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CMatrixLink.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CMenuManager.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CMenuSystem.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CMessages.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CMirrors.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CMissionCleanup.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CModelInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CModelInfoAccelerator.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CMonsterTruck.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CMotionBlurStreaks.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CNodeAddress.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CObject.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CObjectInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\COctTree.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\COctTreeBase.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\common.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CompressedVector.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\COnscreenTimer.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPad.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPathFind.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPed.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPedAcquaintance.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPedClothesDesc.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPedIK.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPedIntelligence.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPedModelInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPhysical.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPickup.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPickups.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPlaceable.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPlane.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPlaneTrail.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPlaneTrails.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPlayerData.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPlayerInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPlayerPed.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPointLights.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPolyBunch.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPool.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPools.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPopCycle.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPopulation.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CProjectile.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CProjectileInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPtrList.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPtrListDoubleLink.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPtrListSingleLink.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPtrNode.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPtrNodeDoubleLink.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CPtrNodeSingleLink.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CQuadBike.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CQuadTreeNode.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CQuaternion.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CQueuedMode.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CRadar.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CRealTimeShadow.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CRect.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CReference.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CReferences.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CRegisteredCorona.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CRegisteredMotionBlurStreak.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CRenderer.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CRepeatSector.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CRestart.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CRGBA.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CRideAnimData.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CRope.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CRopes.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CRunningScript.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CScene.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CSector.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CSetPiece.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CSetPieces.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CShadowCamera.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CShadows.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CShinyTexts.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CShotInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CSimpleTransform.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CSpecialFX.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CSpecialPlateHandler.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CSphere.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CSprite.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CSprite2d.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CStats.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CStore.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CStoredCollPoly.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CStreaming.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CStreamingInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTask.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplex.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexCopInCar.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexDie.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexEnterBoatAsDriver.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexEnterCar.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexEnterCarAsDriver.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexEnterCarAsPassenger.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexFacial.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexKillPedFromBoat.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexKillPedOnFoot.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexLeaveCar.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexPlayHandSignalAnim.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexProstituteSolicit.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexSunbathe.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexUseMobilePhone.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexWander.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskComplexWanderStandard.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskManager.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimple.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleAnim.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleCarSetPedInAsDriver.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleCarSetPedInAsPassenger.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleCarSetPedOut.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleChoking.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleClimb.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleDuck.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleFacial.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleFight.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleGangDriveBy.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleHoldEntity.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleIKChain.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleIKLookAt.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleIKManager.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleInAir.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleJetpack.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimplePlayerOnFoot.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleRunAnim.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleRunNamedAnim.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleStandStill.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleStealthKill.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleSwim.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleThrowProjectile.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleTriggerLookAt.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskSimpleUseGun.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskTimer.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTaskUtilityLineUpPedWithCar.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CText.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTheCarGenerators.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTheScripts.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTheZones.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTimeCycle.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTimeCycleBox.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTimeModelInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTimer.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTrailer.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTrain.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTrainNode.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\cTransmission.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CTxdStore.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CUserDisplay.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CVector.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CVector2D.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CVehicle.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CVehicleModelInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CVisibilityPlugins.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CWanted.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CWeapon.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CWeaponEffects.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CWeaponInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CWeaponModelInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CWeather.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CWorld.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CZone.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\CZoneInfo.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\D3DIndexDataBuffer.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\D3DResourceSystem.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\D3DTextureBuffer.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eAudioEvents.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eCamMode.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eClothesModelPart.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eClothesTexturePart.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eCopType.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eCrimeType.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eDecisionMakerEvents.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eEntityStatus.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eEntityType.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eEventType.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eModelID.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\ePadButtons.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\ePedAnims.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\ePedBones.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\ePedModel.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\ePedPieceTypes.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\ePedState.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\ePedType.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eScriptCommands.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eSprintType.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eStatModAbilities.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eStats.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eStatsReactions.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eSurfaceType.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eTaskType.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eVehicleHandlingFlags.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eVehicleHandlingModelFlags.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eWeaponFire.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eWeaponFlags.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eWeaponModel.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eWeaponType.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\eWinchType.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\Fx_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\FxBox_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\FxEmitterBP_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\FxFrustumInfo_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\FxInfoManager_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\FxManager_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\FxMemoryPool_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\FxPlane_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\FxPrimBP_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\FxPrtMult_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\FxSphere_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\FxSystem_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\FxSystemBP_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\IplDef.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\JPegCompress.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\List_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\ListItem_c.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\NodeName.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\PipelinePlugin.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\PluginBase.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\RenderWare.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\RpHAnimBlendInterpFrame.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\RwObjectNameIdAssocation.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\SArray.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\tBikeHandlingData.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\tBinaryIplFile.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\tBoatHandlingData.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\tFlyingHandlingData.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\tHandlingData.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\tPickupMessage.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\tTransmissionGear.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\TxdDef.h">
+      <Filter>Исходные файлы\sdk\game</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\audio\bass.h">
+      <Filter>Исходные файлы\sdk\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\audio\opus.h">
+      <Filter>Исходные файлы\sdk\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\audio\opus_custom.h">
+      <Filter>Исходные файлы\sdk\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\audio\opus_defines.h">
+      <Filter>Исходные файлы\sdk\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\audio\opus_multistream.h">
+      <Filter>Исходные файлы\sdk\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\audio\opus_types.h">
+      <Filter>Исходные файлы\sdk\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\winres.h">
+      <Filter>Исходные файлы\resources</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="logger.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="memory.hpp">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="sv_addresses.h">
+      <Filter>Исходные файлы\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="sv_net.h">
+      <Filter>Исходные файлы\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="sv_render.h">
+      <Filter>Исходные файлы\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="sv_samp.h">
+      <Filter>Исходные файлы\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="sv_audio.h">
+      <Filter>Исходные файлы\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="sv_header.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sdk\game\rw\errcom.def">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </None>
+    <None Include="sdk\game\rw\errcore.def">
+      <Filter>Исходные файлы\sdk\game\rw</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="sdk\audio\bass.lib">
+      <Filter>Исходные файлы\sdk\audio</Filter>
+    </Library>
+    <Library Include="sdk\audio\opus.lib">
+      <Filter>Исходные файлы\sdk\audio</Filter>
+    </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\micro.png">
+      <Filter>Исходные файлы\resources</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="client.rc">
+      <Filter>Файлы ресурсов</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

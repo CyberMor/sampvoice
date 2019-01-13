@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Исходные файлы">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk">
+      <UniqueIdentifier>{ee2643ca-502b-4d1f-9d7a-4495189971cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk\raknet">
+      <UniqueIdentifier>{a97d8af8-9c34-4bf0-9b40-c524177ce364}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk\pawn">
+      <UniqueIdentifier>{93acd65b-1dd4-4d1e-af2c-99497ab3bd8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk\pawn\amx">
+      <UniqueIdentifier>{13741665-e985-4f1d-aa97-e5f9f4d2568c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk\ysf">
+      <UniqueIdentifier>{b440c184-051e-42c5-bc66-83b5f423243c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk\ysf\data">
+      <UniqueIdentifier>{62bce1f8-ae42-446e-b011-85b5c1a4ef6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk\ysf\includes">
+      <UniqueIdentifier>{7f0cabfe-55ce-4bb3-b33a-c2e668272594}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk\ysf\utils">
+      <UniqueIdentifier>{15eab89a-4752-4de7-9c46-a4b80914ff54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\aux">
+      <UniqueIdentifier>{4c4a0bc3-6323-4656-9364-0dc9b5aa77c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\sdk\audio">
+      <UniqueIdentifier>{cd13217d-a659-49fd-abd6-1494a375d0e2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\raknet\bitstream.cpp">
+      <Filter>Исходные файлы\sdk\raknet</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\pawn\amxplugin.cpp">
+      <Filter>Исходные файлы\sdk\pawn</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="sdk\ysf\addresses.h">
+      <Filter>Исходные файлы\sdk\ysf</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\functions.h">
+      <Filter>Исходные файлы\sdk\ysf</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\globals.h">
+      <Filter>Исходные файлы\sdk\ysf</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\rpc.h">
+      <Filter>Исходные файлы\sdk\ysf</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\structs.h">
+      <Filter>Исходные файлы\sdk\ysf</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\data\object_data.h">
+      <Filter>Исходные файлы\sdk\ysf\data</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\data\player_data.h">
+      <Filter>Исходные файлы\sdk\ysf\data</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\data\vehicle_data.h">
+      <Filter>Исходные файлы\sdk\ysf\data</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\includes\net.h">
+      <Filter>Исходные файлы\sdk\ysf\includes</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\includes\platform.h">
+      <Filter>Исходные файлы\sdk\ysf\includes</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\includes\types.h">
+      <Filter>Исходные файлы\sdk\ysf\includes</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\utils\bimap.h">
+      <Filter>Исходные файлы\sdk\ysf\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\utils\cvector.h">
+      <Filter>Исходные файлы\sdk\ysf\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\utils\cvector2d.h">
+      <Filter>Исходные файлы\sdk\ysf\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\utils\memory.h">
+      <Filter>Исходные файлы\sdk\ysf\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\ysf\utils\optional.h">
+      <Filter>Исходные файлы\sdk\ysf\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\raknet\bitstream.h">
+      <Filter>Исходные файлы\sdk\raknet</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\raknet\networktypes.h">
+      <Filter>Исходные файлы\sdk\raknet</Filter>
+    </ClInclude>
+    <ClInclude Include="sv_net.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="sv_header.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\pawn\amx\amx.h">
+      <Filter>Исходные файлы\sdk\pawn\amx</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\pawn\amx\getch.h">
+      <Filter>Исходные файлы\sdk\pawn\amx</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\pawn\amx\sclinux.h">
+      <Filter>Исходные файлы\sdk\pawn\amx</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\pawn\plugincommon.h">
+      <Filter>Исходные файлы\sdk\pawn</Filter>
+    </ClInclude>
+    <ClInclude Include="sv_pawn.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="sv_audio.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\audio\bass.h">
+      <Filter>Исходные файлы\sdk\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="memory.hpp">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="sv_logger.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="plugin.def">
+      <Filter>Исходные файлы\aux</Filter>
+    </None>
+    <None Include="Makefile">
+      <Filter>Исходные файлы\aux</Filter>
+    </None>
+    <None Include="sampvoice.inc">
+      <Filter>Исходные файлы\aux</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="sdk\audio\bass.lib">
+      <Filter>Исходные файлы\sdk\audio</Filter>
+    </Library>
+  </ItemGroup>
+</Project>
