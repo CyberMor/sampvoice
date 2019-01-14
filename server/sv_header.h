@@ -49,6 +49,7 @@
 #include "sv_logger.h"
 
 #define SV_CURRENT_VERSION				2u				// Текущая версия плагина
+#define SV_CURRENT_VERSION_TEXT			"v2.1"			// Текущая версия плагина в текстовом формате
 #define SV_NET_CONNECT_SIGNATURE		0xABCDDCBAu		// Сигнатура заголовка RPC_25
 #define SV_NET_PACKET_ID				222u			// Номер пакета плагина
 #define SV_NET_PACKET_SIZE				512u			// Размер аудиоданных в одном сетевом пакете (рекомендуется не ставить больше чем 512)

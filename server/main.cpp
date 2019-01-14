@@ -770,7 +770,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(
 		return false;
 	}
 
-	logprintf("SAMPVOICE plugin v2.0 by MOR loaded");
+	logprintf("SAMPVOICE plugin " SV_CURRENT_VERSION_TEXT " by MOR loaded");
 	return true;
 
 }
