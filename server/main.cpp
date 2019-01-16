@@ -12,10 +12,10 @@ namespace core {
 	static st_player_info players[MAX_PLAYERS] = { 0 };
 
 	// Списки локальных потоков с автоматическим режимом привязки
-	static std::forward_list<audio::streams::stream_static*> streams_at_point;
-	static std::map<uint16_t, audio::streams::stream_local*> streams_at_vehicle;
-	static std::map<uint16_t, audio::streams::stream_local*> streams_at_player;
-	static std::map<uint16_t, audio::streams::stream_local*> streams_at_object;
+	static std::set<audio::streams::stream_dynamic_local_at_point*>							streams_at_point;
+	static std::map<uint16_t, std::set<audio::streams::stream_dynamic_local_at_vehicle*>>	streams_at_vehicle;
+	static std::map<uint16_t, std::set<audio::streams::stream_dynamic_local_at_player*>>	streams_at_player;
+	static std::map<uint16_t, std::set<audio::streams::stream_dynamic_local_at_object*>>	streams_at_object;
 
 	// Сетевой обработчик
 	class net_handler : public net::handler_interface {
@@ -55,6 +55,7 @@ namespace core {
 			if (header->signature == SV_NET_CONNECT_SIGNATURE) {
 				core::players[sender_id].sv_version = header->version;
 				core::players[sender_id].has_micro = header->has_micro;
+				if (debug_mode) LogDebug("rpc_handler_connect : sender_id(%hu) version(%hhu) has_micro(%hhu)", sender_id, header->version, header->has_micro);
 				net::send(sender_id, e_packet_id::init, &settings);
 			} else {
 				core::players[sender_id].sv_version = NULL;
@@ -66,60 +67,72 @@ namespace core {
 		// Обработчик добавления автомобиля в стрим игрока
 		void rpc_handler_vehicle_add(uint16_t sender_id, uint16_t vehicle_id) {
 
-			if (debug_mode) LogInfo("rpc_handler_vehicle_add : sender_id(%hu) vehicle_id(%hu)", sender_id, vehicle_id);
+			if (debug_mode) LogDebug("rpc_handler_vehicle_add : sender_id(%hu) vehicle_id(%hu)", sender_id, vehicle_id);
 
 			const auto iter = streams_at_vehicle.find(vehicle_id);
-			if (iter != streams_at_vehicle.end()) (*iter).second->_player_attach(sender_id);
+			if (iter != streams_at_vehicle.end())
+				for (auto i : (*iter).second)
+					i->_player_attach(sender_id);
 
 		}
 
 		// Обработчик удаления автомобиля из стрима игрока
 		void rpc_handler_vehicle_remove(uint16_t sender_id, uint16_t vehicle_id) {
 
-			if (debug_mode) LogInfo("rpc_handler_vehicle_remove : sender_id(%hu) vehicle_id(%hu)", sender_id, vehicle_id);
+			if (debug_mode) LogDebug("rpc_handler_vehicle_remove : sender_id(%hu) vehicle_id(%hu)", sender_id, vehicle_id);
 
 			const auto iter = streams_at_vehicle.find(vehicle_id);
-			if (iter != streams_at_vehicle.end()) (*iter).second->_player_detach(sender_id);
+			if (iter != streams_at_vehicle.end())
+				for (auto i : (*iter).second)
+					i->_player_detach(sender_id);
 
 		}
 
 		// Обработчик добавления игрока в стрим другого игрока
 		void rpc_handler_player_add(uint16_t sender_id, uint16_t player_id) {
 
-			if (debug_mode) LogInfo("rpc_handler_player_add : sender_id(%hu) player_id(%hu)", sender_id, player_id);
+			if (debug_mode) LogDebug("rpc_handler_player_add : sender_id(%hu) player_id(%hu)", sender_id, player_id);
 
 			const auto iter = streams_at_player.find(player_id);
-			if (iter != streams_at_player.end()) (*iter).second->_player_attach(sender_id);
+			if (iter != streams_at_player.end())
+				for (auto i : (*iter).second)
+					i->_player_attach(sender_id);
 
 		}
 
 		// Обработчик удаления игрока из стрима другого игрока
 		void rpc_handler_player_remove(uint16_t sender_id, uint16_t player_id) {
 
-			if (debug_mode) LogInfo("rpc_handler_player_remove : sender_id(%hu) player_id(%hu)", sender_id, player_id);
+			if (debug_mode) LogDebug("rpc_handler_player_remove : sender_id(%hu) player_id(%hu)", sender_id, player_id);
 
 			const auto iter = streams_at_player.find(player_id);
-			if (iter != streams_at_player.end()) (*iter).second->_player_detach(sender_id);
+			if (iter != streams_at_player.end())
+				for (auto i : (*iter).second)
+					i->_player_detach(sender_id);
 
 		}
 
 		// Обработчик добавления объекта в стрим игрока
 		void rpc_handler_object_add(uint16_t sender_id, uint16_t object_id) {
 
-			if (debug_mode) LogInfo("rpc_handler_object_add : sender_id(%hu) object_id(%hu)", sender_id, object_id);
+			if (debug_mode) LogDebug("rpc_handler_object_add : sender_id(%hu) object_id(%hu)", sender_id, object_id);
 
 			const auto iter = streams_at_object.find(object_id);
-			if (iter != streams_at_object.end()) (*iter).second->_player_attach(sender_id);
+			if (iter != streams_at_object.end())
+				for (auto i : (*iter).second)
+					i->_player_attach(sender_id);
 
 		}
 
 		// Обработчик удаления объекта из стрима игрока
 		void rpc_handler_object_remove(uint16_t sender_id, uint16_t object_id) {
 
-			if (debug_mode) LogInfo("rpc_handler_object_remove : sender_id(%hu) object_id(%hu)", sender_id, object_id);
+			if (debug_mode) LogDebug("rpc_handler_object_remove : sender_id(%hu) object_id(%hu)", sender_id, object_id);
 
 			const auto iter = streams_at_object.find(object_id);
-			if (iter != streams_at_object.end()) (*iter).second->_player_detach(sender_id);
+			if (iter != streams_at_object.end())
+				for (auto i : (*iter).second)
+					i->_player_detach(sender_id);
 
 		}
 
@@ -128,6 +141,8 @@ namespace core {
 	// Pawn-обработчик
 	class pawn_handler : public pawn::handler_interface {
 	public:
+
+
 
 		// Инициализировать настройки плагина
 		bool init(
@@ -151,11 +166,9 @@ namespace core {
 		uint8_t get_version(
 			uint16_t player_id
 		) {
-
 			if (samp::player_is_connect(player_id))
 				return players[player_id].sv_version;
 			else return players[player_id].sv_version = NULL;
-
 		}
 
 		// Установить клавишу активации
@@ -163,12 +176,10 @@ namespace core {
 			uint16_t player_id,
 			uint8_t key_id
 		) {
-			
 			if (samp::player_is_connect(player_id)) {
 				sv_packet::set_key st_params = { key_id };
 				net::send(player_id, e_packet_id::set_key, &st_params);
 			}
-
 		}
 
 		// Отправить пакет в ресивер
@@ -178,6 +189,8 @@ namespace core {
 		) {
 			if (audio::object::is_object(target)) target->push(packet);
 		}
+
+
 
 		// Проверить наличие микрофона
 		bool has_micro(
@@ -205,13 +218,13 @@ namespace core {
 			uint16_t player_id,
 			float volume
 		) {
-			
 			if (samp::player_is_connect(player_id)) {
 				sv_packet::record_volume st_params = { volume };
 				net::send(player_id, e_packet_id::record_volume, &st_params);
 			}
-
 		}
+
+
 
 		// Создать эффект "chorus"
 		audio::effects::chorus* effect_create_chorus(
@@ -403,6 +416,8 @@ namespace core {
 			if (audio::object::is_object(effect)) delete effect;
 		}
 
+
+
 		// Установить параметр потокового класса
 		void stream_set_parameter(
 			audio::streams::streamable* target,
@@ -440,30 +455,28 @@ namespace core {
 		}
 
 		// Начать воспроизведение в потоковый класс
-		bool stream_play_audio_internal(
+		bool stream_play_sound_internal(
 			audio::streams::streamable *target,
-			bool loop,
-			uint32_t index
+			uint32_t index,
+			bool loop
 		) {
-			if (audio::object::is_object(target)) return target->play_audio(loop, index);
-			else return false;
+			return (audio::object::is_object(target) && target->play_sound(index, loop));
 		}
 
 		// Начать воспроизведение в потоковый класс
-		bool stream_play_audio_external(
+		bool stream_play_sound_external(
 			audio::streams::streamable *target,
-			bool loop,
-			const char *url
+			const char *url,
+			bool loop
 		) {
-			if (audio::object::is_object(target)) return target->play_audio(loop, url);
-			else return false;
+			return (audio::object::is_object(target) && target->play_sound(url, loop));
 		}
 
 		// Остановить воспроизведение в потоковый класс
-		void stream_stop_audio(
+		void stream_stop_sound(
 			audio::streams::streamable *target
 		) {
-			if (audio::object::is_object(target)) target->stop_audio();
+			if (audio::object::is_object(target)) target->stop_sound();
 		}
 
 		// Привязать игрока к потоковому классу
@@ -490,13 +503,13 @@ namespace core {
 			if (audio::object::is_object(stream)) {
 				
 				// Удаление из списков автоматической привязки
-				streams_at_point.remove((audio::streams::stream_static*)(stream));
+				streams_at_point.erase((audio::streams::stream_dynamic_local_at_point*)(stream));
 				for (auto i = streams_at_vehicle.begin(); i != streams_at_vehicle.end(); i++)
-					if ((*i).second == stream) streams_at_vehicle.erase(i);
+					(*i).second.erase((audio::streams::stream_dynamic_local_at_vehicle*)(stream));
 				for (auto i = streams_at_player.begin(); i != streams_at_player.end(); i++)
-					if ((*i).second == stream) streams_at_player.erase(i);
+					(*i).second.erase((audio::streams::stream_dynamic_local_at_player*)(stream));
 				for (auto i = streams_at_object.begin(); i != streams_at_object.end(); i++)
-					if ((*i).second == stream) streams_at_object.erase(i);
+					(*i).second.erase((audio::streams::stream_dynamic_local_at_object*)(stream));
 
 				delete stream;
 
@@ -504,88 +517,117 @@ namespace core {
 
 		}
 
+
+
 		// Создать глобальный поток
-		audio::streams::stream_global* gstream_create() {
-			return new audio::streams::stream_global;
+		audio::streams::stream_static_global* sgstream_create() {
+			return new audio::streams::stream_static_global;
 		}
 
 		// Обновить параметры локального потока
-		void lstream_update(
-			audio::streams::stream_static *lstream,
+		void slstream_update(
+			audio::streams::stream_static_local_at_point *slstream,
 			float pos_x, float pos_y, float pos_z,
 			float ornt_x, float ornt_y, float ornt_z,
 			float vel_x, float vel_y, float vel_z
 		) {
-			if (audio::object::is_object(lstream))
-				lstream->update(
+			if (audio::object::is_object(slstream))
+				slstream->update(
 					pos_x, pos_y, pos_z,
 					ornt_x, ornt_y, ornt_z,
 					vel_x, vel_y, vel_z
 				);
 		}
 
-		// Создать локальный статический поток
-		audio::streams::stream_static* lstream_create_at_point(
-			const bool bind_mode,
+		// Создать статический локальный поток с привязкой к точке
+		audio::streams::stream_static_local_at_point* slstream_create_at_point(
+			float pos_x, float pos_y, float pos_z,
+			float ornt_x, float ornt_y, float ornt_z,
+			float vel_x, float vel_y, float vel_z
+		) {
+			return new audio::streams::stream_static_local_at_point(
+				pos_x, pos_y, pos_z,
+				ornt_x, ornt_y, ornt_z,
+				vel_x, vel_y, vel_z
+			);
+		}
+
+		// Создать статический локальный поток с привязкой к автомобилю
+		audio::streams::stream_static_local_at_vehicle* slstream_create_at_vehicle(
+			uint16_t vehicle_id
+		) {
+			return new audio::streams::stream_static_local_at_vehicle(vehicle_id);
+		}
+
+		// Создать статический локальный поток с привязкой к игроку
+		audio::streams::stream_static_local_at_player* slstream_create_at_player(
+			uint16_t player_id
+		) {
+			return new audio::streams::stream_static_local_at_player(player_id);
+		}
+
+		// Создать статический локальный поток с привязкой к объекту
+		audio::streams::stream_static_local_at_object* slstream_create_at_object(
+			uint16_t object_id
+		) {
+			return new audio::streams::stream_static_local_at_object(object_id);
+		}
+
+
+
+		// Создать динамический локальный поток с привязкой к точке
+		audio::streams::stream_dynamic_local_at_point* dlstream_create_at_point(
 			float pos_x, float pos_y, float pos_z,
 			float ornt_x, float ornt_y, float ornt_z,
 			float vel_x, float vel_y, float vel_z
 		) {
 
-			const auto result = new audio::streams::stream_static(
-				bind_mode,
+			const auto result = new audio::streams::stream_dynamic_local_at_point(
 				pos_x, pos_y, pos_z,
 				ornt_x, ornt_y, ornt_z,
 				vel_x, vel_y, vel_z
 			);
 
-			if (bind_mode) streams_at_point.push_front(result);
+			if (result) streams_at_point.insert(result);
 			return result;
 
 		}
 
-		// Создать локальный динамический поток с привязкой к автомобилю
-		audio::streams::stream_dynamic_at_vehicle* lstream_create_at_vehicle(
-			const bool bind_mode,
+		// Создать динамический локальный поток с привязкой к автомобилю
+		audio::streams::stream_dynamic_local_at_vehicle* dlstream_create_at_vehicle(
 			uint16_t vehicle_id
 		) {
-			
-			const auto result = new audio::streams::stream_dynamic_at_vehicle(bind_mode, vehicle_id);
-			if (bind_mode) streams_at_vehicle[vehicle_id] = result;
+			const auto result = new audio::streams::stream_dynamic_local_at_vehicle(vehicle_id);
+			if (result) streams_at_vehicle[vehicle_id].insert(result);
 			return result;
-
 		}
 
-		// Создать локальный динамический поток с привязкой к игроку
-		audio::streams::stream_dynamic_at_player* lstream_create_at_player(
-			const bool bind_mode,
+		// Создать динамический локальный поток с привязкой к игроку
+		audio::streams::stream_dynamic_local_at_player* dlstream_create_at_player(
 			uint16_t player_id
 		) {
-			
-			const auto result = new audio::streams::stream_dynamic_at_player(bind_mode, player_id);
-			if (bind_mode) streams_at_player[player_id] = result;
+			const auto result = new audio::streams::stream_dynamic_local_at_player(player_id);
+			if (result) streams_at_player[player_id].insert(result);
 			return result;
-
 		}
 
-		// Создать локальный динамический поток с привязкой к объекту
-		audio::streams::stream_dynamic_at_object* lstream_create_at_object(
-			const bool bind_mode,
+		// Создать динамический локальный поток с привязкой к объекту
+		audio::streams::stream_dynamic_local_at_object* dlstream_create_at_object(
 			uint16_t object_id
 		) {
-			
-			const auto result = new audio::streams::stream_dynamic_at_object(bind_mode, object_id);
-			if (bind_mode) streams_at_object[object_id] = result;
+			const auto result = new audio::streams::stream_dynamic_local_at_object(object_id);
+			if (result) streams_at_object[object_id].insert(result);
 			return result;
-
 		}
+
+
 
 		// Добавить элемент в группу
 		void group_add(
 			audio::group *group,
 			void *element
 		) {
-			if (audio::object::is_object(group)) group->add(element);
+			if (audio::object::is_object(group) && audio::object::is_object((audio::object*)(element))) group->add(element);
 		}
 
 		// Удалить элемент из группы
@@ -593,7 +635,7 @@ namespace core {
 			audio::group *group,
 			void *element
 		) {
-			if (audio::object::is_object(group)) group->remove(element);
+			if (audio::object::is_object(group) && audio::object::is_object((audio::object*)(element))) group->remove(element);
 		}
 
 		// Удалить группу
@@ -603,15 +645,21 @@ namespace core {
 			if (audio::object::is_object(group)) delete group;
 		}
 
+
+
 		// Создать группу потоков
 		audio::streams::stream_group* sgroup_create() {
 			return new audio::streams::stream_group;
 		}
 
+
+
 		// Создать группу эффектов
 		audio::effects::effect_group* egroup_create() {
 			return new audio::effects::effect_group;
 		}
+
+
 
 		// Создать буфер
 		audio::buffer* buffer_create() {
@@ -688,12 +736,16 @@ namespace core {
 			if (audio::object::is_object(buffer)) delete buffer;
 		}
 
+
+
 		// Зарегистрировать звук
 		uint32_t sound_register(
 			const char *url
 		) {
 			return audio::sounds::store::sound(url);
 		}
+
+
 
 	};
 
@@ -729,11 +781,8 @@ PLUGIN_EXPORT void PLUGIN_CALL ProcessTick() {
 		for (auto i = core::streams_at_point.begin(); i != core::streams_at_point.end(); i++)
 			for (uint16_t pid = 0; pid <= pNetGame->pPlayerPool->dwPlayerPoolSize; pid++)
 				if (pNetGame->pPlayerPool->bIsPlayerConnected[pid]) {
-					if ((*i)->is_in_stream(pid)) {
-						if (!(*i)->player_is_contained(pid)) (*i)->_player_attach(pid);
-					} else {
-						if ((*i)->player_is_contained(pid)) (*i)->_player_detach(pid);
-					}
+					if ((*i)->is_in_stream(pid)) (*i)->_player_attach(pid);
+					else (*i)->_player_detach(pid);
 				}
 
 	}
@@ -777,11 +826,9 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(
 
 // Выгрузка плагина
 PLUGIN_EXPORT void PLUGIN_CALL Unload() {
-
 	pawn::free();
 	net::free();
 	BASS_Free();
-
 }
 
 // Загрузка мода

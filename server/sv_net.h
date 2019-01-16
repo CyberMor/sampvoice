@@ -53,7 +53,7 @@ namespace net {
 		RPCParameters *parameters
 	) {
 
-		sv_packet::connect *st_connect = (sv_packet::connect*) (parameters->input + ((parameters->numberOfBitsOfData >> 3) - sizeof(sv_packet::connect)));
+		sv_packet::connect *st_connect = (sv_packet::connect*)(parameters->input + ((parameters->numberOfBitsOfData >> 3) - sizeof(sv_packet::connect)));
 		handler->rpc_handler_connect(raknet::getindexfromplayerid(parameters->sender), st_connect);
 		if (*(uint32_t*)(st_connect) == SV_NET_CONNECT_SIGNATURE) parameters->numberOfBitsOfData -= sizeof(sv_packet::connect) << 3; // Уменьшаем длину пакета, удаляя тем самым заголовок
 		rpc_original_connect(parameters);
@@ -72,10 +72,10 @@ namespace net {
 
 			if (*rpc_id == RPC_CONNECT) {
 				rpc_original_connect = rpc_handler;
-				rpc_handler = (void(*)(RPCParameters*)) &hook_rpc_connect;
+				rpc_handler = (void(*)(RPCParameters*))(&hook_rpc_connect);
 			}
 
-			raknet::registerasrpc((int*)rpc_id, rpc_handler);
+			raknet::registerasrpc((int*)(rpc_id), rpc_handler);
 
 		}
 
@@ -243,11 +243,9 @@ namespace net {
 			vtable[RAKNET_RECEIVE_OFFSET] = reinterpret_cast<void*>(thiscall_hooks::hook_receive);
 			vtable[RAKNET_REGISTER_RPC_OFFSET] = reinterpret_cast<void*>(thiscall_hooks::hook_register_as_rpc);
 
-			return rakserver;
-
 		}
 
-		return nullptr;
+		return rakserver;
 
 	}
 
@@ -263,7 +261,7 @@ namespace net {
 		if (!memory::getmoduleinfo(addr_server, addr, size)) return false;
 		memory::scanner net_scanner(addr, size);
 
-		if (uint8_t *func_ptr = (uint8_t*) net_scanner.find(pattern, mask)) {
+		if (uint8_t *func_ptr = (uint8_t*)(net_scanner.find(pattern, mask))) {
 			func_ptr -= 7; // Вычитаем смещение сигнатуры
 			if (*func_ptr == 0xE9) addr_pawn_raknet = (uint32_t)(func_ptr) + *(uint32_t*)(func_ptr + 1) + 5;
 			if (hook_rakserver = new memory::hooks::jump_hook(func_ptr, func_hook_getrakserver)) return true;
@@ -288,19 +286,6 @@ namespace net {
 
 	static inline bool send(
 		uint16_t player_id,
-		Packet *packet
-	) {
-		BitStream bs(packet->data, packet->length, false);
-		return raknet::send(
-			&bs, PacketPriority::HIGH_PRIORITY,
-			PacketReliability::RELIABLE_ORDERED,
-			'\0', raknet::getplayeridfromindex(player_id),
-			player_id == -1
-		);
-	}
-
-	static inline bool send(
-		uint16_t player_id,
 		BitStream *bs
 	) {
 		return raknet::send(
@@ -313,10 +298,9 @@ namespace net {
 
 	static inline bool send(
 		uint16_t player_id,
-		uint8_t *ptr_data,
-		uint32_t length
+		uint8_t packet_id
 	) {
-		BitStream bs(ptr_data, length, false);
+		bitstream bs(packet_id);
 		return raknet::send(
 			&bs, PacketPriority::HIGH_PRIORITY,
 			PacketReliability::RELIABLE_ORDERED,
@@ -329,12 +313,10 @@ namespace net {
 	static inline bool send(
 		uint16_t player_id,
 		uint8_t packet_id,
-		T *params = nullptr
+		T *params
 	) {
-		BitStream bs;
-		bs.Write((uint8_t)SV_NET_PACKET_ID);
-		bs.Write((uint8_t)packet_id);
-		if (params) bs.Write((const char *)params, sizeof(T));
+		bitstream bs(packet_id);
+		bs.Write((const char *)(params), sizeof(T));
 		return raknet::send(
 			&bs, PacketPriority::HIGH_PRIORITY,
 			PacketReliability::RELIABLE_ORDERED,

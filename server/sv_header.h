@@ -84,6 +84,7 @@ struct e_packet_id {
 		
 		lstream_update,				// Пакет обновления локального статического потока
 		lstream_create_at_point,	// Пакет создания локального статического потока на точку
+
 		lstream_create_at_vehicle,	// Пакет создания локального динамического потока с привязкой к автомобилю
 		lstream_create_at_player,	// Пакет создания локального динамического потока с привязкой к игроку
 		lstream_create_at_object,	// Пакет создания локального динамического потока с привязкой к объекту
@@ -308,14 +309,18 @@ class bitstream : public BitStream {
 public:
 
 	bitstream(
-		uint8_t packet_id,
-		const void *data_ptr = nullptr,
-		uint32_t data_size = 0
+		uint8_t packet_id
 	) {
-		this->Write((uint8_t)SV_NET_PACKET_ID);
+		this->Write((uint8_t)(SV_NET_PACKET_ID));
 		this->Write(packet_id);
-		if (data_ptr && data_size)
-			this->Write(((const char*)(data_ptr)), data_size);
+	}
+
+	bitstream(
+		uint8_t packet_id,
+		const void *data_ptr,
+		uint32_t data_size
+	) : bitstream(packet_id) {
+		this->Write((const char*)(data_ptr), data_size);
 	}
 
 };
@@ -338,16 +343,25 @@ namespace audio {
 		class parameq;
 		class reverb;
 	}
+	namespace sounds {
+		class store;
+		class sound;
+	}
 	namespace streams {
 		class streamable;
 		class stream;
 		class stream_group;
-		class stream_global;
-		class stream_local;
 		class stream_static;
-		class stream_dynamic_at_vehicle;
-		class stream_dynamic_at_player;
-		class stream_dynamic_at_object;
+		class stream_dynamic;
+		class stream_static_global;
+		class stream_static_local_at_point;
+		class stream_static_local_at_vehicle;
+		class stream_static_local_at_player;
+		class stream_static_local_at_object;
+		class stream_dynamic_local_at_point;
+		class stream_dynamic_local_at_vehicle;
+		class stream_dynamic_local_at_player;
+		class stream_dynamic_local_at_object;
 	}
 	class buffer;
 }

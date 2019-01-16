@@ -39,22 +39,28 @@ namespace pawn {
 		virtual void stream_slide_parameter(audio::streams::streamable* target, uint8_t param_id, float start_value, float end_value, uint32_t time) = 0;
 		virtual void stream_effect_attach(audio::streams::streamable *target, audio::effects::effectable* effect) = 0;
 		virtual void stream_effect_detach(audio::streams::streamable *target, audio::effects::effectable* effect) = 0;
-		virtual bool stream_play_audio_internal(audio::streams::streamable *target, bool loop, uint32_t index) = 0;
-		virtual bool stream_play_audio_external(audio::streams::streamable *target, bool loop, const char *url) = 0;
-		virtual void stream_stop_audio(audio::streams::streamable *target) = 0;
+		virtual bool stream_play_sound_internal(audio::streams::streamable *target, uint32_t index, bool loop) = 0;
+		virtual bool stream_play_sound_external(audio::streams::streamable *target, const char *url, bool loop) = 0;
+		virtual void stream_stop_sound(audio::streams::streamable *target) = 0;
 		virtual void stream_player_attach(audio::streams::streamable* target, uint16_t player_id) = 0;
 		virtual void stream_player_detach(audio::streams::streamable* target, uint16_t player_id) = 0;
 		virtual void stream_delete(audio::streams::stream* stream) = 0;
 
-		// Глобальный поток
-		virtual audio::streams::stream_global* gstream_create() = 0;
+		// Статический глобальный поток
+		virtual audio::streams::stream_static_global* sgstream_create() = 0;
 
-		// Локальный поток
-		virtual void lstream_update(audio::streams::stream_static* lstream, float pos_x, float pos_y, float pos_z, float ornt_x, float ornt_y, float ornt_z, float vel_x, float vel_y, float vel_z) = 0;
-		virtual audio::streams::stream_static* lstream_create_at_point(const bool bind_mode, float pos_x, float pos_y, float pos_z, float ornt_x, float ornt_y, float ornt_z, float vel_x, float vel_y, float vel_z) = 0;
-		virtual audio::streams::stream_dynamic_at_vehicle* lstream_create_at_vehicle(const bool bind_mode, uint16_t vehicle_id) = 0;
-		virtual audio::streams::stream_dynamic_at_player* lstream_create_at_player(const bool bind_mode, uint16_t player_id) = 0;
-		virtual audio::streams::stream_dynamic_at_object* lstream_create_at_object(const bool bind_mode, uint16_t object_id) = 0;
+		// Статический локальный поток
+		virtual void slstream_update(audio::streams::stream_static_local_at_point* slstream, float pos_x, float pos_y, float pos_z, float ornt_x, float ornt_y, float ornt_z, float vel_x, float vel_y, float vel_z) = 0;
+		virtual audio::streams::stream_static_local_at_point* slstream_create_at_point(float pos_x, float pos_y, float pos_z, float ornt_x, float ornt_y, float ornt_z, float vel_x, float vel_y, float vel_z) = 0;
+		virtual audio::streams::stream_static_local_at_vehicle* slstream_create_at_vehicle(uint16_t vehicle_id) = 0;
+		virtual audio::streams::stream_static_local_at_player* slstream_create_at_player(uint16_t player_id) = 0;
+		virtual audio::streams::stream_static_local_at_object* slstream_create_at_object(uint16_t object_id) = 0;
+
+		// Динамический локальный поток
+		virtual audio::streams::stream_dynamic_local_at_point* dlstream_create_at_point(float pos_x, float pos_y, float pos_z, float ornt_x, float ornt_y, float ornt_z, float vel_x, float vel_y, float vel_z) = 0;
+		virtual audio::streams::stream_dynamic_local_at_vehicle* dlstream_create_at_vehicle(uint16_t vehicle_id) = 0;
+		virtual audio::streams::stream_dynamic_local_at_player* dlstream_create_at_player(uint16_t player_id) = 0;
+		virtual audio::streams::stream_dynamic_local_at_object* dlstream_create_at_object(uint16_t object_id) = 0;
 
 		// Интерфейс группы
 		virtual void group_add(audio::group *group, void *element) = 0;
@@ -476,7 +482,7 @@ namespace pawn {
 
 
 
-		// Установить параметр потокового класса
+		// Установить параметр класса потока
 		static cell AMX_NATIVE_CALL n_sv_stream_set_parameter(
 			AMX *amx, cell *params
 		) {
@@ -494,7 +500,7 @@ namespace pawn {
 
 		}
 
-		// Задать скольжение параметра потокового класса
+		// Задать скольжение параметра класса потока
 		static cell AMX_NATIVE_CALL n_sv_stream_slide_parameter(
 			AMX *amx, cell *params
 		) {
@@ -514,7 +520,7 @@ namespace pawn {
 
 		}
 
-		// Привязать эффектовый класс к потоковому классу
+		// Привязать класс эффекта к классу потока
 		static cell AMX_NATIVE_CALL n_sv_stream_effect_attach(
 			AMX *amx, cell *params
 		) {
@@ -531,7 +537,7 @@ namespace pawn {
 
 		}
 
-		// Привязать эффектовый класс к потоковому классу
+		// Отвязать класс эффекта от класса потока
 		static cell AMX_NATIVE_CALL n_sv_stream_effect_detach(
 			AMX *amx, cell *params
 		) {
@@ -548,29 +554,29 @@ namespace pawn {
 
 		}
 
-		// Запустить воспроизведение аудиофайла из хранилища в потоковый класс
-		static cell AMX_NATIVE_CALL n_sv_stream_play_audio_internal(
+		// Запустить воспроизведение звукового файла из хранилища в класс потока
+		static cell AMX_NATIVE_CALL n_sv_stream_play_sound_internal(
 			AMX *amx, cell *params
 		) {
 
 			if (params[0] != (3 * sizeof(cell))) return false;
 
 			audio::streams::streamable* target = reinterpret_cast<audio::streams::streamable*>(params[1]);
-			const bool loop = static_cast<bool>(params[2]);
-			const uint32_t index = static_cast<uint32_t>(params[3]);
+			const uint32_t index = static_cast<uint32_t>(params[2]);
+			const bool loop = static_cast<bool>(params[3]);
 
 			if (debug_mode) {
-				const auto result = handler->stream_play_audio_internal(target, loop, index);
-				LogDebug("[%s] : target(%p), loop(%s), index(%u) : return(%s)", __FUNCTION__, target, (loop ? "true" : "false"), index, (result ? "true" : "false"));
+				const auto result = handler->stream_play_sound_internal(target, index, loop);
+				LogDebug("[%s] : target(%p), index(%u), loop(%s) : return(%s)", __FUNCTION__, target, index, (loop ? "true" : "false"), (result ? "true" : "false"));
 				return result;
 			}
 
-			return handler->stream_play_audio_internal(target, loop, index);
+			return handler->stream_play_sound_internal(target, index, loop);
 
 		}
 
-		// Запустить воспроизведение аудиофайла по url в потоковый класс
-		static cell AMX_NATIVE_CALL n_sv_stream_play_audio_external(
+		// Запустить воспроизведение звукового файла по url в класс потока
+		static cell AMX_NATIVE_CALL n_sv_stream_play_sound_external(
 			AMX *amx, cell *params
 		) {
 
@@ -581,29 +587,29 @@ namespace pawn {
 			if (params[0] != (3 * sizeof(cell))) return false;
 
 			audio::streams::streamable* target = reinterpret_cast<audio::streams::streamable*>(params[1]);
-			const bool loop = static_cast<bool>(params[2]);
-			if (!amx_GetAddr(amx, params[3], &phys_addr) &&
+			const bool loop = static_cast<bool>(params[3]);
+			if (!amx_GetAddr(amx, params[2], &phys_addr) &&
 				!amx_StrLen(phys_addr, &length) &&
-				(string = (char*)alloca(length + 1)) &&
+				(string = (char*)(alloca(length + 1))) &&
 				!amx_GetString(string, phys_addr, false, length + 1)
 			) {
 
 				string[length] = '\0';
 
 				if (debug_mode) {
-					const auto result = handler->stream_play_audio_external(target, loop, string);
-					LogDebug("[%s] : target(%p), loop(%s), url(%s) : return(%s) ", __FUNCTION__, target, (loop ? "true" : "false"), string, (result ? "true" : "false"));
+					const auto result = handler->stream_play_sound_external(target, string, loop);
+					LogDebug("[%s] : target(%p), url(%s), loop(%s) : return(%s) ", __FUNCTION__, target, string, (loop ? "true" : "false"), (result ? "true" : "false"));
 					return result;
 				}
 
-				return handler->stream_play_audio_external(target, loop, string);
+				return handler->stream_play_sound_external(target, string, loop);
 
 			} else return false;
 
 		}
 
-		// Остановить воспроизведение аудиофайла в потоковый класс
-		static cell AMX_NATIVE_CALL n_sv_stream_stop_audio(
+		// Остановить воспроизведение звукового файла в класс потока
+		static cell AMX_NATIVE_CALL n_sv_stream_stop_sound(
 			AMX *amx, cell *params
 		) {
 
@@ -613,12 +619,12 @@ namespace pawn {
 
 			if (debug_mode) LogDebug("[%s] : target(%p)", __FUNCTION__, target);
 
-			handler->stream_stop_audio(target);
+			handler->stream_stop_sound(target);
 			return NULL;
 
 		}
 
-		// Привязать игрока к потоковому классу
+		// Привязать игрока к классу потока
 		static cell AMX_NATIVE_CALL n_sv_stream_player_attach(
 			AMX *amx, cell *params
 		) {
@@ -635,7 +641,7 @@ namespace pawn {
 
 		}
 
-		// Отвязать игрока от потокового класса
+		// Отвязать игрока от класса потока
 		static cell AMX_NATIVE_CALL n_sv_stream_player_detach(
 			AMX *amx, cell *params
 		) {
@@ -670,33 +676,31 @@ namespace pawn {
 
 
 
-		// Создать глобальный поток
-		static cell AMX_NATIVE_CALL n_sv_gstream_create(
+		// Создать статический глобальный поток
+		static cell AMX_NATIVE_CALL n_sv_sgstream_create(
 			AMX *amx, cell *params
 		) {
 
 			if (params[0] != (0 * sizeof(cell))) return NULL;
 
 			if (debug_mode) {
-				const auto result = handler->gstream_create();
+				const auto result = handler->sgstream_create();
 				LogDebug("[%s] : return(result)", __FUNCTION__, result);
 				return reinterpret_cast<cell>(result);
 			}
 
-			return reinterpret_cast<cell>(handler->gstream_create());
+			return reinterpret_cast<cell>(handler->sgstream_create());
 
 		}
 
-
-
-		// Обновить координаты локального статического потока
-		static cell AMX_NATIVE_CALL n_sv_lstream_update(
+		// Обновить координаты статического локального потока
+		static cell AMX_NATIVE_CALL n_sv_slstream_update(
 			AMX *amx, cell *params
 		) {
 
 			if (params[0] != (10 * sizeof(cell))) return NULL;
 
-			audio::streams::stream_static* lstream = reinterpret_cast<audio::streams::stream_static*>(params[1]);
+			audio::streams::stream_static_local_at_point* slstream = reinterpret_cast<audio::streams::stream_static_local_at_point*>(params[1]);
 			const float pos_x = amx_ctof(params[2]);
 			const float pos_y = amx_ctof(params[3]);
 			const float pos_z = amx_ctof(params[4]);
@@ -707,98 +711,180 @@ namespace pawn {
 			const float vel_y = amx_ctof(params[9]);
 			const float vel_z = amx_ctof(params[10]);
 
-			if (debug_mode) LogDebug("[%s] : lstream(%p), pos_x(%f), pos_y(%f), pos_z(%f), ornt_x(%f), ornt_y(%f), ornt_z(%f), vel_x(%f), vel_y(%f), vel_z(%f)", __FUNCTION__, lstream, pos_x, pos_y, pos_z, ornt_x, ornt_y, ornt_z, vel_x, vel_y, vel_z);
+			if (debug_mode) LogDebug("[%s] : slstream(%p), pos_x(%f), pos_y(%f), pos_z(%f), ornt_x(%f), ornt_y(%f), ornt_z(%f), vel_x(%f), vel_y(%f), vel_z(%f)", __FUNCTION__, slstream, pos_x, pos_y, pos_z, ornt_x, ornt_y, ornt_z, vel_x, vel_y, vel_z);
 
-			handler->lstream_update(lstream, pos_x, pos_y, pos_z, ornt_x, ornt_y, ornt_z, vel_x, vel_y, vel_z);
+			handler->slstream_update(slstream, pos_x, pos_y, pos_z, ornt_x, ornt_y, ornt_z, vel_x, vel_y, vel_z);
 			return NULL;
 
 		}
 
-		// Создать локальный статический поток на точку
-		static cell AMX_NATIVE_CALL n_sv_lstream_create_at_point(
+		// Создать статический локальный поток на точку
+		static cell AMX_NATIVE_CALL n_sv_slstream_create_at_point(
 			AMX *amx, cell *params
 		) {
 
-			if (params[0] != (10 * sizeof(cell))) return NULL;
+			if (params[0] != (9 * sizeof(cell))) return NULL;
 
-			const bool bind_mode = static_cast<bool>(params[1]);
-			const float pos_x = amx_ctof(params[2]);
-			const float pos_y = amx_ctof(params[3]);
-			const float pos_z = amx_ctof(params[4]);
-			const float ornt_x = amx_ctof(params[5]);
-			const float ornt_y = amx_ctof(params[6]);
-			const float ornt_z = amx_ctof(params[7]);
-			const float vel_x = amx_ctof(params[8]);
-			const float vel_y = amx_ctof(params[9]);
-			const float vel_z = amx_ctof(params[10]);
+			const float pos_x = amx_ctof(params[1]);
+			const float pos_y = amx_ctof(params[2]);
+			const float pos_z = amx_ctof(params[3]);
+			const float ornt_x = amx_ctof(params[4]);
+			const float ornt_y = amx_ctof(params[5]);
+			const float ornt_z = amx_ctof(params[6]);
+			const float vel_x = amx_ctof(params[7]);
+			const float vel_y = amx_ctof(params[8]);
+			const float vel_z = amx_ctof(params[9]);
 
 			if (debug_mode) {
-				const auto result = handler->lstream_create_at_point(bind_mode, pos_x, pos_y, pos_z, ornt_x, ornt_y, ornt_z, vel_x, vel_y, vel_z);
-				LogDebug("[%s] : bind_mode(%s), pos_x(%f), pos_y(%f), pos_z(%f), ornt_x(%f), ornt_y(%f), ornt_z(%f), vel_x(%f), vel_y(%f), vel_z(%f) : return(%p)", __FUNCTION__, (bind_mode ? "true" : "false"), pos_x, pos_y, pos_z, ornt_x, ornt_y, ornt_z, vel_x, vel_y, vel_z, result);
+				const auto result = handler->slstream_create_at_point(pos_x, pos_y, pos_z, ornt_x, ornt_y, ornt_z, vel_x, vel_y, vel_z);
+				LogDebug("[%s] : pos_x(%f), pos_y(%f), pos_z(%f), ornt_x(%f), ornt_y(%f), ornt_z(%f), vel_x(%f), vel_y(%f), vel_z(%f) : return(%p)", __FUNCTION__, pos_x, pos_y, pos_z, ornt_x, ornt_y, ornt_z, vel_x, vel_y, vel_z, result);
 				return reinterpret_cast<cell>(result);
 			}
 
-			return reinterpret_cast<cell>(handler->lstream_create_at_point(bind_mode, pos_x, pos_y, pos_z, ornt_x, ornt_y, ornt_z, vel_x, vel_y, vel_z));
+			return reinterpret_cast<cell>(handler->slstream_create_at_point(pos_x, pos_y, pos_z, ornt_x, ornt_y, ornt_z, vel_x, vel_y, vel_z));
 
 		}
 
-		// Создать локальный динамический поток с привязкой к автомобилю
-		static cell AMX_NATIVE_CALL n_sv_lstream_create_at_vehicle(
+		// Создать статический локальный поток с привязкой к автомобилю
+		static cell AMX_NATIVE_CALL n_sv_slstream_create_at_vehicle(
 			AMX *amx, cell *params
 		) {
 
-			if (params[0] != (2 * sizeof(cell))) return NULL;
+			if (params[0] != (1 * sizeof(cell))) return NULL;
 
-			const bool bind_mode = static_cast<bool>(params[1]);
-			const uint16_t vehicle_id = static_cast<uint16_t>(params[2]);
+			const uint16_t vehicle_id = static_cast<uint16_t>(params[1]);
 
 			if (debug_mode) {
-				const auto result = handler->lstream_create_at_vehicle(bind_mode, vehicle_id);
-				LogDebug("[%s] : bind_mode(%s), vehicle_id(%hu) : return(%p)", __FUNCTION__, (bind_mode ? "true" : "false"), vehicle_id, result);
+				const auto result = handler->slstream_create_at_vehicle(vehicle_id);
+				LogDebug("[%s] : vehicle_id(%hu) : return(%p)", __FUNCTION__, vehicle_id, result);
 				return reinterpret_cast<cell>(result);
 			}
 
-			return reinterpret_cast<cell>(handler->lstream_create_at_vehicle(bind_mode, vehicle_id));
+			return reinterpret_cast<cell>(handler->slstream_create_at_vehicle(vehicle_id));
 
 		}
 
-		// Создать локальный динамический поток с привязкой к игроку
-		static cell AMX_NATIVE_CALL n_sv_lstream_create_at_player(
+		// Создать статический локальный поток с привязкой к игроку
+		static cell AMX_NATIVE_CALL n_sv_slstream_create_at_player(
 			AMX *amx, cell *params
 		) {
 
-			if (params[0] != (2 * sizeof(cell))) return NULL;
+			if (params[0] != (1 * sizeof(cell))) return NULL;
 
-			const bool bind_mode = static_cast<bool>(params[1]);
-			const uint16_t player_id = static_cast<uint16_t>(params[2]);
+			const uint16_t player_id = static_cast<uint16_t>(params[1]);
 
 			if (debug_mode) {
-				const auto result = handler->lstream_create_at_player(bind_mode, player_id);
-				LogDebug("[%s] : bind_mode(%s), player_id(%hu) : return(%p)", __FUNCTION__, (bind_mode ? "true" : "false"), player_id, result);
+				const auto result = handler->slstream_create_at_player(player_id);
+				LogDebug("[%s] : player_id(%hu) : return(%p)", __FUNCTION__, player_id, result);
 				return reinterpret_cast<cell>(result);
 			}
 
-			return reinterpret_cast<cell>(handler->lstream_create_at_player(bind_mode, player_id));
+			return reinterpret_cast<cell>(handler->slstream_create_at_player(player_id));
 
 		}
 
-		// Создать локальный динамический поток с привязкой к объекту
-		static cell AMX_NATIVE_CALL n_sv_lstream_create_at_object(
+		// Создать статический локальный поток с привязкой к объекту
+		static cell AMX_NATIVE_CALL n_sv_slstream_create_at_object(
 			AMX *amx, cell *params
 		) {
 
-			if (params[0] != (2 * sizeof(cell))) return NULL;
+			if (params[0] != (1 * sizeof(cell))) return NULL;
 
-			const bool bind_mode = static_cast<bool>(params[1]);
-			const uint16_t object_id = static_cast<uint16_t>(params[2]);
+			const uint16_t object_id = static_cast<uint16_t>(params[1]);
 
 			if (debug_mode) {
-				const auto result = handler->lstream_create_at_object(bind_mode, object_id);
-				LogDebug("[%s] : bind_mode(%s), object_id(%hu) : return(%p)", __FUNCTION__, (bind_mode ? "true" : "false"), object_id, result);
+				const auto result = handler->slstream_create_at_object(object_id);
+				LogDebug("[%s] : object_id(%hu) : return(%p)", __FUNCTION__, object_id, result);
 				return reinterpret_cast<cell>(result);
 			}
 
-			return reinterpret_cast<cell>(handler->lstream_create_at_object(bind_mode, object_id));
+			return reinterpret_cast<cell>(handler->slstream_create_at_object(object_id));
+
+		}
+
+
+
+		// Создать динамический локальный поток на точку
+		static cell AMX_NATIVE_CALL n_sv_dlstream_create_at_point(
+			AMX *amx, cell *params
+		) {
+
+			if (params[0] != (9 * sizeof(cell))) return NULL;
+
+			const float pos_x = amx_ctof(params[1]);
+			const float pos_y = amx_ctof(params[2]);
+			const float pos_z = amx_ctof(params[3]);
+			const float ornt_x = amx_ctof(params[4]);
+			const float ornt_y = amx_ctof(params[5]);
+			const float ornt_z = amx_ctof(params[6]);
+			const float vel_x = amx_ctof(params[7]);
+			const float vel_y = amx_ctof(params[8]);
+			const float vel_z = amx_ctof(params[9]);
+
+			if (debug_mode) {
+				const auto result = handler->dlstream_create_at_point(pos_x, pos_y, pos_z, ornt_x, ornt_y, ornt_z, vel_x, vel_y, vel_z);
+				LogDebug("[%s] : pos_x(%f), pos_y(%f), pos_z(%f), ornt_x(%f), ornt_y(%f), ornt_z(%f), vel_x(%f), vel_y(%f), vel_z(%f) : return(%p)", __FUNCTION__, pos_x, pos_y, pos_z, ornt_x, ornt_y, ornt_z, vel_x, vel_y, vel_z, result);
+				return reinterpret_cast<cell>(result);
+			}
+
+			return reinterpret_cast<cell>(handler->dlstream_create_at_point(pos_x, pos_y, pos_z, ornt_x, ornt_y, ornt_z, vel_x, vel_y, vel_z));
+
+		}
+
+		// Создать динамический локальный поток с привязкой к автомобилю
+		static cell AMX_NATIVE_CALL n_sv_dlstream_create_at_vehicle(
+			AMX *amx, cell *params
+		) {
+
+			if (params[0] != (1 * sizeof(cell))) return NULL;
+
+			const uint16_t vehicle_id = static_cast<uint16_t>(params[1]);
+
+			if (debug_mode) {
+				const auto result = handler->dlstream_create_at_vehicle(vehicle_id);
+				LogDebug("[%s] : vehicle_id(%hu) : return(%p)", __FUNCTION__, vehicle_id, result);
+				return reinterpret_cast<cell>(result);
+			}
+
+			return reinterpret_cast<cell>(handler->dlstream_create_at_vehicle(vehicle_id));
+
+		}
+
+		// Создать динамический локальный поток с привязкой к игроку
+		static cell AMX_NATIVE_CALL n_sv_dlstream_create_at_player(
+			AMX *amx, cell *params
+		) {
+
+			if (params[0] != (1 * sizeof(cell))) return NULL;
+
+			const uint16_t player_id = static_cast<uint16_t>(params[1]);
+
+			if (debug_mode) {
+				const auto result = handler->dlstream_create_at_player(player_id);
+				LogDebug("[%s] : player_id(%hu) : return(%p)", __FUNCTION__, player_id, result);
+				return reinterpret_cast<cell>(result);
+			}
+
+			return reinterpret_cast<cell>(handler->dlstream_create_at_player(player_id));
+
+		}
+
+		// Создать динамический локальный поток с привязкой к объекту
+		static cell AMX_NATIVE_CALL n_sv_dlstream_create_at_object(
+			AMX *amx, cell *params
+		) {
+
+			if (params[0] != (1 * sizeof(cell))) return NULL;
+
+			const uint16_t object_id = static_cast<uint16_t>(params[1]);
+
+			if (debug_mode) {
+				const auto result = handler->dlstream_create_at_object(object_id);
+				LogDebug("[%s] : object_id(%hu) : return(%p)", __FUNCTION__, object_id, result);
+				return reinterpret_cast<cell>(result);
+			}
+
+			return reinterpret_cast<cell>(handler->dlstream_create_at_object(object_id));
 
 		}
 
@@ -1183,22 +1269,28 @@ namespace pawn {
 				{ "sv_stream_slide_parameter",		natives::n_sv_stream_slide_parameter },
 				{ "sv_stream_effect_attach",		natives::n_sv_stream_effect_attach },
 				{ "sv_stream_effect_detach",		natives::n_sv_stream_effect_detach },
-				{ "sv_stream_play_audio_internal",	natives::n_sv_stream_play_audio_internal },
-				{ "sv_stream_play_audio_external",	natives::n_sv_stream_play_audio_external },
-				{ "sv_stream_stop_audio",			natives::n_sv_stream_stop_audio },
+				{ "sv_stream_play_sound_internal",	natives::n_sv_stream_play_sound_internal },
+				{ "sv_stream_play_sound_external",	natives::n_sv_stream_play_sound_external },
+				{ "sv_stream_stop_sound",			natives::n_sv_stream_stop_sound },
 				{ "sv_stream_player_attach",		natives::n_sv_stream_player_attach },
 				{ "sv_stream_player_detach",		natives::n_sv_stream_player_detach },
 				{ "sv_stream_delete",				natives::n_sv_stream_delete },
 
-				// Глобальный поток
-				{ "sv_gstream_create",				natives::n_sv_gstream_create },
+				// Статический глобальный поток
+				{ "sv_sgstream_create",				natives::n_sv_sgstream_create },
 
-				// Локальный поток
-				{ "sv_lstream_update",				natives::n_sv_lstream_update },
-				{ "sv_lstream_create_at_point",		natives::n_sv_lstream_create_at_point },
-				{ "sv_lstream_create_at_vehicle",	natives::n_sv_lstream_create_at_vehicle },
-				{ "sv_lstream_create_at_player",	natives::n_sv_lstream_create_at_player },
-				{ "sv_lstream_create_at_object",	natives::n_sv_lstream_create_at_object },
+				// Статический локальный поток
+				{ "sv_slstream_update",				natives::n_sv_slstream_update },
+				{ "sv_slstream_create_at_point",	natives::n_sv_slstream_create_at_point },
+				{ "sv_slstream_create_at_vehicle",	natives::n_sv_slstream_create_at_vehicle },
+				{ "sv_slstream_create_at_player",	natives::n_sv_slstream_create_at_player },
+				{ "sv_slstream_create_at_object",	natives::n_sv_slstream_create_at_object },
+
+				// Динамический локальный поток
+				{ "sv_dlstream_create_at_point",	natives::n_sv_dlstream_create_at_point },
+				{ "sv_dlstream_create_at_vehicle",	natives::n_sv_dlstream_create_at_vehicle },
+				{ "sv_dlstream_create_at_player",	natives::n_sv_dlstream_create_at_player },
+				{ "sv_dlstream_create_at_object",	natives::n_sv_dlstream_create_at_object },
 
 				// Интерфейс группы
 				{ "sv_group_add",					natives::n_sv_group_add },

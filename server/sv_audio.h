@@ -137,19 +137,16 @@ namespace audio {
 			// Параметры эффекта
 			void *param_ptr;
 			uint32_t param_size;
-			uint32_t full_size;
 
 		public:
 
 			// Создать эффект
 			effect(
 				uint8_t _effect_id,
-				int _priority,
-				uint32_t _full_size
+				int _priority
 			) :
 				effect_id(_effect_id),
-				priority(_priority),
-				full_size(_full_size)
+				priority(_priority)
 			{}
 
 			// Привязать эффект к потоку игрока
@@ -157,20 +154,13 @@ namespace audio {
 				uint32_t stream,
 				uint16_t player_id
 			) {
-
-				sv_packet::effect_create *st_params = (sv_packet::effect_create*)(alloca(full_size));
-				st_params->stream = stream;
-				st_params->effect = (uint32_t)(this);
-				st_params->effect_id = this->effect_id;
-				st_params->priority = this->priority;
-				memcpy(st_params->parameters, this->param_ptr, this->param_size);
-				bitstream bs(
-					e_packet_id::effect_create,
-					st_params, full_size
-				);
-
+				bitstream bs(e_packet_id::effect_create);
+				bs.Write(stream);
+				bs.Write((uint32_t)(this));
+				bs.Write(this->effect_id);
+				bs.Write(this->priority);
+				bs.Write((char*)(this->param_ptr), this->param_size);
 				net::send(player_id, &bs);
-
 			}
 
 			// Отвязать эффект от потока игрока
@@ -194,27 +184,27 @@ namespace audio {
 		private:
 
 			// Эффекты группы
-			std::forward_list<effectable*> effects;
+			std::set<effectable*> effects;
 
 		public:
 
 			// Удалить группу
 			~effect_group() {
-				if (!this->effects.empty()) for (auto i = this->effects.begin(); i != this->effects.end(); i++) delete (*i);
+				for (auto i = this->effects.begin(); i != this->effects.end(); i++) delete (*i);
 			}
 
 			// Добавить эффект
 			void add(
 				void *element
 			) {
-				this->effects.push_front((effectable*)(element));
+				this->effects.insert((effectable*)(element));
 			}
 
 			// Удалить эффект
 			void remove(
 				void *element
 			) {
-				this->effects.remove((effectable*)(element));
+				this->effects.erase((effectable*)(element));
 			}
 
 			// Привязать поток к группе
@@ -252,8 +242,7 @@ namespace audio {
 				uint32_t lPhase
 			) : effect(
 				e_effect_id::chorus,
-				priority,
-				sizeof(sv_packet::effect_create) + sizeof(st_param::st_chorus)
+				priority
 			) {
 				this->param_ptr = malloc(this->param_size = sizeof(st_param::st_chorus));
 				((st_param::st_chorus*)(this->param_ptr))->fWetDryMix = fWetDryMix;
@@ -281,8 +270,7 @@ namespace audio {
 				float fPredelay
 			) : effect(
 				e_effect_id::compressor,
-				priority,
-				sizeof(sv_packet::effect_create) + sizeof(st_param::st_compressor)
+				priority
 			) {
 				this->param_ptr = malloc(this->param_size = sizeof(st_param::st_compressor));
 				((st_param::st_compressor*)(this->param_ptr))->fGain = fGain;
@@ -308,8 +296,7 @@ namespace audio {
 				float fPreLowpassCutoff
 			) : effect(
 				e_effect_id::distortion,
-				priority,
-				sizeof(sv_packet::effect_create) + sizeof(st_param::st_distortion)
+				priority
 			) {
 				this->param_ptr = malloc(this->param_size = sizeof(st_param::st_distortion));
 				((st_param::st_distortion*)(this->param_ptr))->fGain = fGain;
@@ -334,8 +321,7 @@ namespace audio {
 				bool lPanDelay
 			) : effect(
 				e_effect_id::echo,
-				priority,
-				sizeof(sv_packet::effect_create) + sizeof(st_param::st_echo)
+				priority
 			) {
 				this->param_ptr = malloc(this->param_size = sizeof(st_param::st_echo));
 				((st_param::st_echo*)(this->param_ptr))->fWetDryMix = fWetDryMix;
@@ -362,8 +348,7 @@ namespace audio {
 				uint32_t lPhase
 			) : effect(
 				e_effect_id::flanger,
-				priority,
-				sizeof(sv_packet::effect_create) + sizeof(st_param::st_flanger)
+				priority
 			) {
 				this->param_ptr = malloc(this->param_size = sizeof(st_param::st_flanger));
 				((st_param::st_flanger*)(this->param_ptr))->fWetDryMix = fWetDryMix;
@@ -387,8 +372,7 @@ namespace audio {
 				uint32_t dwWaveShape
 			) : effect(
 				e_effect_id::gargle,
-				priority,
-				sizeof(sv_packet::effect_create) + sizeof(st_param::st_gargle)
+				priority
 			) {
 				this->param_ptr = malloc(this->param_size = sizeof(st_param::st_gargle));
 				((st_param::st_gargle*)(this->param_ptr))->dwRateHz = dwRateHz;
@@ -417,8 +401,7 @@ namespace audio {
 				float flHFReference
 			) : effect(
 				e_effect_id::i3dl2reverb,
-				priority,
-				sizeof(sv_packet::effect_create) + sizeof(st_param::st_i3dl2reverb)
+				priority
 			) {
 				this->param_ptr = malloc(this->param_size = sizeof(st_param::st_i3dl2reverb));
 				((st_param::st_i3dl2reverb*)(this->param_ptr))->lRoom = lRoom;
@@ -448,8 +431,7 @@ namespace audio {
 				float fGain
 			) : effect(
 				e_effect_id::parameq,
-				priority,
-				sizeof(sv_packet::effect_create) + sizeof(st_param::st_parameq)
+				priority
 			) {
 				this->param_ptr = malloc(this->param_size = sizeof(st_param::st_parameq));
 				((st_param::st_parameq*)(this->param_ptr))->fCenter = fCenter;
@@ -471,8 +453,7 @@ namespace audio {
 				float fHighFreqRTRatio
 			) : effect(
 				e_effect_id::reverb,
-				priority,
-				sizeof(sv_packet::effect_create) + sizeof(st_param::st_reverb)
+				priority
 			) {
 				this->param_ptr = malloc(this->param_size = sizeof(st_param::st_reverb));
 				((st_param::st_reverb*)(this->param_ptr))->fInGain = fInGain;
@@ -485,9 +466,11 @@ namespace audio {
 
 	}
 
+	/// [DEPEDENCY]
 	// Звуки
 	namespace sounds {
 
+		/// [DEPEDENCY]
 		// Хранилище звуков
 		class store {
 		private:
@@ -501,10 +484,11 @@ namespace audio {
 			static inline const char* url(
 				const uint32_t index
 			) {
-				if (index < table.size() && table[index]) return table[index];
+				if (index < table.size()) return table[index];
 				else return nullptr;
 			}
 
+			/// [DEPEDENCY]
 			// Зарегистрировать звук (-1 если не удалось)
 			static const uint32_t sound(
 				const char *url
@@ -537,6 +521,7 @@ namespace audio {
 
 			}
 
+			/// [DEPEDENCY]
 			// Отправить таблицу игроку
 			static void send(
 				const uint16_t player_id
@@ -609,8 +594,8 @@ namespace audio {
 				char *file_url;
 				uint32_t start_time, end_time, url_size, file_size, file_time;
 
-				file_url = (char*)malloc(url_size = strlen(_url) + 1);
-				memcpy((void*)file_url, _url, url_size);
+				file_url = (char*)(malloc(url_size = strlen(_url) + 1));
+				memcpy((void*)(file_url), _url, url_size);
 
 				if (HSTREAM meta = BASS_StreamCreateURL(file_url, 0, BASS_STREAM_DECODE, nullptr, nullptr)) {
 					file_time = 1000 * BASS_ChannelBytes2Seconds(meta, BASS_ChannelGetLength(meta, BASS_POS_BYTE));
@@ -687,6 +672,7 @@ namespace audio {
 
 	}
 
+	/// [DEPEDENCY]
 	// Звуковые потоки
 	namespace streams {
 
@@ -698,9 +684,9 @@ namespace audio {
 			virtual void slide_parameter(uint8_t param_id, float start_value, float end_value, uint32_t time) = 0;
 			virtual void effect_attach(effects::effectable* effect) = 0;
 			virtual void effect_detach(effects::effectable* effect) = 0;
-			virtual bool play_audio(bool loop, uint32_t index) = 0;
-			virtual bool play_audio(bool loop, const char *url) = 0;
-			virtual void stop_audio() = 0;
+			virtual bool play_sound(uint32_t index, bool loop) = 0;
+			virtual bool play_sound(const char *url, bool loop) = 0;
+			virtual void stop_sound() = 0;
 			virtual void player_attach(uint16_t player_id) = 0;
 			virtual void player_detach(uint16_t player_id) = 0;
 		};
@@ -711,9 +697,6 @@ namespace audio {
 		class stream : public streamable {
 		private:
 
-			// Параметры потока
-			std::map<uint8_t, float> parameters;
-
 			// Информацию о скользящем параметре
 			struct st_slide_info {
 				float ratio;
@@ -721,11 +704,14 @@ namespace audio {
 				float end_value;
 			};
 
+			// Параметры потока
+			std::map<uint8_t, float> parameters;
+
 			// Скользящие параметры потока
 			std::map<uint8_t, st_slide_info> slide_parameters;
 
 			// Эффекты привязанные к потоку
-			std::forward_list<effects::effectable*> effects;
+			std::set<effects::effectable*> effects;
 
 			// Звук потока
 			sounds::sound *sound = nullptr;
@@ -733,16 +719,7 @@ namespace audio {
 		protected:
 
 			// Игроки привязанные к потоку
-			std::forward_list<uint16_t> players;
-
-			// Проверить есть ли игрок в потоке
-			inline bool player_exists(
-				const uint16_t player_id
-			) {
-				for (auto i = players.begin(); i != players.end(); i++) {
-					if ((*i) == player_id) return true;
-				} return false;
-			}
+			std::set<uint16_t> players;
 
 			// Отправить игроку образ потока
 			void send_meta(
@@ -799,17 +776,10 @@ namespace audio {
 				delete sound;
 
 				if (!this->players.empty()) {
-					
-					sv_packet::stream_delete st_params = {
-						(uint32_t)(this)
-					}; bitstream bs(
-						e_packet_id::stream_delete,
-						&st_params, sizeof(st_params)
-					);
-
+					sv_packet::stream_delete st_params = { (uint32_t)(this) };
+					bitstream bs(e_packet_id::stream_delete, &st_params, sizeof(st_params));
 					for (auto i = this->players.begin(); i != this->players.end(); i++)
 						net::send(*i, &bs);
-
 				}
 
 			}
@@ -818,13 +788,11 @@ namespace audio {
 			void push(
 				Packet *packet
 			) {
-
 				if (!this->players.empty()) {
+					BitStream bs(packet->data, packet->length, false);
 					((sv_packet::header*)(packet->data))->get<sv_packet::voice>()->stream = (uint32_t)(this);
-					for (auto i = this->players.begin(); i != this->players.end(); i++)
-						net::send(*i, packet);
+					for (auto i = this->players.begin(); i != this->players.end(); i++) net::send(*i, &bs);
 				}
-
 			}
 
 			// Установить параметр
@@ -837,19 +805,10 @@ namespace audio {
 				this->slide_parameters.erase(param_id);
 
 				if (!this->players.empty()) {
-
-					sv_packet::stream_set_parameter st_params = {
-						(uint32_t)(this),
-						param_id,
-						value
-					}; bitstream bs(
-						e_packet_id::stream_set_parameter,
-						&st_params, sizeof(st_params)
-					);
-
+					sv_packet::stream_set_parameter st_params = { (uint32_t)(this), param_id, value };
+					bitstream bs(e_packet_id::stream_set_parameter, &st_params, sizeof(st_params));
 					for (auto i = this->players.begin(); i != this->players.end(); i++)
 						net::send(*i, &bs);
-
 				}
 
 			}
@@ -870,21 +829,10 @@ namespace audio {
 				};
 
 				if (!this->players.empty()) {
-
-					sv_packet::stream_slide_parameter st_params = {
-						(uint32_t)(this),
-						param_id,
-						start_value,
-						end_value,
-						time
-					}; bitstream bs(
-						e_packet_id::stream_slide_parameter,
-						&st_params, sizeof(st_params)
-					);
-
+					sv_packet::stream_slide_parameter st_params = { (uint32_t)(this), param_id, start_value, end_value, time };
+					bitstream bs(e_packet_id::stream_slide_parameter, &st_params, sizeof(st_params));
 					for (auto i = this->players.begin(); i != this->players.end(); i++)
 						net::send(*i, &bs);
-
 				}
 
 			}
@@ -893,36 +841,27 @@ namespace audio {
 			void effect_attach(
 				effects::effectable* target
 			) {
-				
-				this->effects.push_front(target);
-
-				if (!this->players.empty())
+				if (this->effects.insert(target).second && !this->players.empty())
 					for (auto i = this->players.begin(); i != this->players.end(); i++)
 						target->attach((uint32_t)(this), *i);
-
 			}
 
 			// Отвязать эффект от потока
 			void effect_detach(
 				effects::effectable* target
 			) {
-				
-				this->effects.remove(target);
-
-				if (!this->players.empty())
+				if (this->effects.erase(target) && !this->players.empty())
 					for (auto i = this->players.begin(); i != this->players.end(); i++)
 						target->detach((uint32_t)(this), *i);
-
 			}
 
 			// Воспроизвести звук из хранилища
-			bool play_audio(
-				bool loop,
-				uint32_t index
+			bool play_sound(
+				uint32_t index,
+				bool loop
 			) {
 
-				if (this->sound) delete this->sound;
-				if (this->sound = sounds::sound::create(index, loop)) {
+				if (!this->sound && (this->sound = sounds::sound::create(index, loop))) {
 
 					if (!this->players.empty()) {
 						BitStream *bs = this->sound->packet((uint32_t)(this), clock());
@@ -939,13 +878,12 @@ namespace audio {
 			}
 
 			// Воспроизвести звук по url
-			bool play_audio(
-				bool loop,
-				const char *url
+			bool play_sound(
+				const char *url,
+				bool loop
 			) {
 
-				if (this->sound) delete this->sound;
-				if (this->sound = sounds::sound::create(url, loop)) {
+				if (!this->sound && (this->sound = sounds::sound::create(url, loop))) {
 
 					if (!this->players.empty()) {
 						BitStream *bs = this->sound->packet((uint32_t)(this), clock());
@@ -962,37 +900,21 @@ namespace audio {
 			}
 
 			// Остановить воспроизведение
-			void stop_audio() {
+			void stop_sound() {
 
 				if (this->sound) {
+
 					delete this->sound;
 					this->sound = nullptr;
-				}
 
-				if (!this->players.empty()) {
-
-					sv_packet::stream_stop_audio st_params = {
-						(uint32_t)(this)
-					}; bitstream bs(
-						e_packet_id::stream_stop_audio,
-						&st_params, sizeof(st_params)
-					);
-
-					for (auto i = this->players.begin(); i != this->players.end(); i++)
-						net::send(*i, &bs);
+					if (!this->players.empty()) {
+						sv_packet::stream_stop_audio st_params = { (uint32_t)(this) };
+						bitstream bs(e_packet_id::stream_stop_audio, &st_params, sizeof(st_params));
+						for (auto i = this->players.begin(); i != this->players.end(); i++)
+							net::send(*i, &bs);
+					}
 
 				}
-
-			}
-
-			// Отвязать игрока от потока
-			virtual void player_detach(
-				uint16_t player_id
-			) {
-
-				this->players.remove(player_id);
-				sv_packet::stream_delete st_params = { (uint32_t)(this) };
-				net::send(player_id, e_packet_id::stream_delete, &st_params);
 
 			}
 
@@ -1003,40 +925,35 @@ namespace audio {
 		private:
 
 			// Потоки группы
-			std::forward_list<streamable*> streams;
+			std::set<streamable*> streams;
 
 		public:
 
 			// Удалить группу
 			~stream_group() {
-				if (!this->streams.empty()) for (auto i = this->streams.begin(); i != this->streams.end(); i++) delete (*i);
+				for (auto i = this->streams.begin(); i != this->streams.end(); i++) delete (*i);
 			}
 
 			// Добавить поток
 			void add(
 				void *element
 			) {
-				if (object::is_object((streamable*)(element)))
-					this->streams.push_front((streamable*)(element));
+				this->streams.insert((streamable*)(element));
 			}
 
 			// Удалить поток
 			void remove(
 				void *element
 			) {
-				if (object::is_object((streamable*)(element)))
-					this->streams.remove((streamable*)(element));
+				this->streams.erase((streamable*)(element));
 			}
 
 			// Отправить пакет в группу
 			void push(
 				Packet *packet
 			) {
-
-				if (!this->streams.empty())
-					for (auto i = this->streams.begin(); i != this->streams.end(); i++)
-						(*i)->push(packet);
-
+				for (auto i = this->streams.begin(); i != this->streams.end(); i++)
+					(*i)->push(packet);
 			}
 
 			// Установить параметр
@@ -1044,11 +961,8 @@ namespace audio {
 				uint8_t param_id,
 				float value
 			) {
-
-				if (!this->streams.empty())
-					for (auto i = this->streams.begin(); i != this->streams.end(); i++)
-						(*i)->set_parameter(param_id, value);
-
+				for (auto i = this->streams.begin(); i != this->streams.end(); i++)
+					(*i)->set_parameter(param_id, value);
 			}
 
 			// Задать скольжение параметра
@@ -1058,44 +972,35 @@ namespace audio {
 				float end_value,
 				uint32_t time
 			) {
-
-				if (!this->streams.empty())
-					for (auto i = this->streams.begin(); i != this->streams.end(); i++)
-						(*i)->slide_parameter(param_id, start_value, end_value, time);
-
+				for (auto i = this->streams.begin(); i != this->streams.end(); i++)
+					(*i)->slide_parameter(param_id, start_value, end_value, time);
 			}
 
 			// Привязать эффект к потоку
 			void effect_attach(
 				effects::effectable* target
 			) {
-
-				if (!this->streams.empty())
-					for (auto i = this->streams.begin(); i != this->streams.end(); i++)
-						(*i)->effect_attach(target);
-
+				for (auto i = this->streams.begin(); i != this->streams.end(); i++)
+					(*i)->effect_attach(target);
 			}
 
 			// Отвязать эффект от потока
 			void effect_detach(
 				effects::effectable* target
 			) {
-
-				if (!this->streams.empty())
-					for (auto i = this->streams.begin(); i != this->streams.end(); i++)
-						(*i)->effect_detach(target);
-
+				for (auto i = this->streams.begin(); i != this->streams.end(); i++)
+					(*i)->effect_detach(target);
 			}
 
 			// Воспроизвести аудио из хранилища
-			bool play_audio(
-				bool loop,
-				uint32_t index
+			bool play_sound(
+				uint32_t index,
+				bool loop
 			) {
 
 				const char *url = sounds::store::url(index);
 				if (url && sounds::sound::check(url)) {
-					if (!this->streams.empty()) for (auto i = this->streams.begin(); i != this->streams.end(); i++) (*i)->play_audio(loop, index);
+					for (auto i = this->streams.begin(); i != this->streams.end(); i++) (*i)->play_sound(loop, index);
 					return true;
 				}
 
@@ -1104,13 +1009,13 @@ namespace audio {
 			}
 
 			// Воспроизвести аудио по url
-			bool play_audio(
-				bool loop,
-				const char *url
+			bool play_sound(
+				const char *url,
+				bool loop
 			) {
 
 				if (sounds::sound::check(url)) {
-					if (!this->streams.empty()) for (auto i = this->streams.begin(); i != this->streams.end(); i++) (*i)->play_audio(loop, url);
+					for (auto i = this->streams.begin(); i != this->streams.end(); i++) (*i)->play_sound(loop, url);
 					return true;
 				}
 
@@ -1119,123 +1024,25 @@ namespace audio {
 			}
 
 			// Остановить воспроизведение
-			void stop_audio() {
-
-				if (!this->streams.empty())
-					for (auto i = this->streams.begin(); i != this->streams.end(); i++)
-						(*i)->stop_audio();
-
+			void stop_sound() {
+				for (auto i = this->streams.begin(); i != this->streams.end(); i++)
+					(*i)->stop_sound();
 			}
 
 			// Привязать игрока к группе
 			void player_attach(
 				uint16_t player_id
 			) {
-
-				if (!this->streams.empty())
-					for (auto i = this->streams.begin(); i != this->streams.end(); i++)
-						(*i)->player_attach(player_id);
-
+				for (auto i = this->streams.begin(); i != this->streams.end(); i++)
+					(*i)->player_attach(player_id);
 			}
 
 			// Отвязать игрока от группы
 			void player_detach(
 				uint16_t player_id
 			) {
-
-				if (!this->streams.empty())
-					for (auto i = this->streams.begin(); i != this->streams.end(); i++)
-						(*i)->player_detach(player_id);
-
-			}
-
-		};
-
-		// --------------------------------
-
-		// Глобальный поток
-		class stream_global : public stream {
-		public:
-
-			// Привязать игрока к потоку
-			void player_attach(
-				uint16_t player_id
-			) {
-				
-				if (!player_exists(player_id)) {
-
-					this->players.push_front(player_id);
-
-					sv_packet::gstream_create st_params = { (uint32_t)(this) };
-					net::send(player_id, e_packet_id::gstream_create, &st_params);
-
-					this->send_meta(player_id);
-
-				}
-
-			}
-
-		};
-
-		// Локальный поток
-		class stream_local : public stream {
-		protected:
-
-			// Тип привязки
-			const bool bind_mode;
-
-		public:
-
-			// Создать локальный поток
-			stream_local(
-				const bool _bind_mode
-			) : bind_mode(_bind_mode) {}
-
-			// Получить режим привязки
-			inline bool get_bind_mode() {
-				return this->bind_mode;
-			}
-
-			// Проверить наличие игрока в потоке
-			inline bool player_is_contained(
-				const uint16_t player_id
-			) {
-				for (auto i = this->players.begin(); i != this->players.end(); i++)
-					if ((*i) == player_id) return true;
-				return false;
-			}
-
-			// Привязать игрока к локальному потоку
-			virtual void _player_attach(
-				uint16_t player_id
-			) = 0;
-
-			// Отвязать игрока от локального потока
-			void _player_detach(
-				uint16_t player_id
-			) {
-				this->stream::player_detach(player_id);
-			}
-
-			// Проверить статус
-			virtual bool is_in_stream(
-				const uint16_t player_id
-			) = 0;
-
-			// Привязать игрока к потоку
-			void player_attach(
-				uint16_t player_id
-			) {
-				if (!this->bind_mode)
-					this->_player_attach(player_id);
-			}
-
-			// Отвязать игрока от потока
-			void player_detach(
-				uint16_t player_id
-			) {
-				if (!this->bind_mode)
-					this->stream::player_detach(player_id);
+				for (auto i = this->streams.begin(); i != this->streams.end(); i++)
+					(*i)->player_detach(player_id);
 			}
 
 		};
@@ -1243,7 +1050,80 @@ namespace audio {
 		// --------------------------------
 
 		// Статический поток
-		class stream_static : public stream_local {
+		class stream_static : public stream {
+		public:
+
+			// Отвязать игрока от потока
+			void player_detach(
+				uint16_t player_id
+			) {
+				if (this->players.erase(player_id)) {
+					sv_packet::stream_delete st_params = { (uint32_t)(this) };
+					net::send(player_id, e_packet_id::stream_delete, &st_params);
+				}
+			}
+
+		};
+
+		// Динамический поток
+		class stream_dynamic : public stream {
+		public:
+
+			// Проверить вхождение игрока в стрим объекта
+			virtual bool is_in_stream(
+				uint16_t player_id
+			) = 0;
+
+			// Привязать игрока к потоку
+			virtual void _player_attach(
+				uint16_t player_id
+			) = 0;
+
+			// Отвязать игрока от потока
+			void _player_detach(
+				uint16_t player_id
+			) {
+				if (this->players.erase(player_id)) {
+					sv_packet::stream_delete st_params = { (uint32_t)(this) };
+					net::send(player_id, e_packet_id::stream_delete, &st_params);
+				}
+			}
+
+			// [API] Привязать игрока к потоку
+			void player_attach(
+				uint16_t player_id
+			) {}
+
+			// [API] Отвязать игрока от потока
+			void player_detach(
+				uint16_t player_id
+			) {}
+
+		};
+
+		// --------------------------------
+
+		// Статический глобальный поток
+		class stream_static_global : public stream_static {
+		public:
+
+			// Привязать игрока к потоку
+			void player_attach(
+				uint16_t player_id
+			) {
+				if (this->players.insert(player_id).second) {
+					sv_packet::gstream_create st_params = { (uint32_t)(this) };
+					if (net::send(player_id, e_packet_id::gstream_create, &st_params))
+						this->send_meta(player_id);
+				}
+			}
+
+		};
+
+		// --------------------------------
+
+		// Статический локальный поток с привязкой к точке
+		class stream_static_local_at_point : public stream_static {
 		private:
 
 			// Параметры потока
@@ -1254,34 +1134,172 @@ namespace audio {
 		public:
 
 			// Создать поток
-			stream_static(
-				const bool bind_mode,
+			stream_static_local_at_point(
 				float px, float py, float pz,
 				float ox, float oy, float oz,
 				float vx, float vy, float vz
-			) : stream_local(bind_mode) {
-				
-				this->position.fX = px;
-				this->position.fY = py;
-				this->position.fZ = pz;
+			) :
+				position({ px, py, pz }),
+				orientation({ ox, oy, oz }),
+				velocity({ vx, vy, vz })
+			{}
 
-				this->orientation.fX = ox;
-				this->orientation.fY = oy;
-				this->orientation.fZ = oz;
+			// Привязать игрока к потоку
+			void player_attach(
+				uint16_t player_id
+			) {
 
-				this->velocity.fX = vx;
-				this->velocity.fY = vy;
-				this->velocity.fZ = vz;
+				if (this->players.insert(player_id).second) {
 
-				if (bind_mode && pNetGame->pPlayerPool->dwConnectedPlayers)
-					for (uint16_t i = 0; i <= pNetGame->pPlayerPool->dwPlayerPoolSize; i++)
-						if (this->is_in_stream(i)) this->_player_attach(i);
+					sv_packet::slstream_params st_params = {
+						(uint32_t)(this),
+						this->position.fX, this->position.fY, this->position.fZ,
+						this->orientation.fX, this->orientation.fY, this->orientation.fZ,
+						this->velocity.fX, this->velocity.fY, this->velocity.fZ
+					};
+
+					if (net::send(player_id, e_packet_id::lstream_create_at_point, &st_params))
+						this->send_meta(player_id);
+
+				}
 
 			}
 
-			// Получить игроков потока
-			inline std::forward_list<uint16_t>* get_players() {
-				return &this->players;
+			// Обновить позицию потока
+			void update(
+				float px, float py, float pz,
+				float ox, float oy, float oz,
+				float vx, float vy, float vz
+			) {
+
+				this->position = { px, py, pz };
+				this->orientation = { ox, oy, oz };
+				this->velocity = { vx, vy, vz };
+
+				if (!this->players.empty()) {
+					sv_packet::slstream_params st_params = { (uint32_t)(this), px, py, pz, ox, oy, oz, vx, vy, vz };
+					bitstream bs(e_packet_id::lstream_update, &st_params, sizeof(st_params));
+					for (auto i = this->players.begin(); i != this->players.end(); i++)
+						net::send(*i, &bs);
+				}
+
+			}
+
+		};
+
+		// Статический поток с привязкой к автомобилю
+		class stream_static_local_at_vehicle : public stream_static {
+		private:
+
+			// ID автомобиля привязки
+			const uint16_t vehicle_id;
+
+		public:
+
+			// Создать поток
+			stream_static_local_at_vehicle(
+				uint16_t _vehicle_id
+			) :
+				vehicle_id(_vehicle_id)
+			{}
+
+			// Привязать игрока к потоку
+			void player_attach(
+				uint16_t player_id
+			) {
+				if (this->players.insert(player_id).second) {
+					sv_packet::dlstream_create st_params = { (uint32_t)(this), this->vehicle_id };
+					if (net::send(player_id, e_packet_id::lstream_create_at_vehicle, &st_params))
+						this->send_meta(player_id);
+				}
+			}
+
+		};
+
+		// Статический поток с привязкой к игроку
+		class stream_static_local_at_player : public stream_static {
+		private:
+
+			// ID игрока привязки
+			const uint16_t player_id;
+
+		public:
+
+			// Создать поток
+			stream_static_local_at_player(
+				uint16_t _player_id
+			) :
+				player_id(_player_id)
+			{}
+
+			// Привязать игрока к потоку
+			void player_attach(
+				uint16_t player_id
+			) {
+				if (this->players.insert(player_id).second) {
+					sv_packet::dlstream_create st_params = { (uint32_t)(this), this->player_id };
+					if (net::send(player_id, e_packet_id::lstream_create_at_player, &st_params))
+						this->send_meta(player_id);
+				}
+			}
+
+		};
+
+		// Статический поток с привязкой к объекту
+		class stream_static_local_at_object : public stream_static {
+		private:
+
+			// ID объекта привязки
+			const uint16_t object_id;
+
+		public:
+
+			// Создать поток
+			stream_static_local_at_object(
+				uint16_t _object_id
+			) :
+				object_id(_object_id)
+			{}
+
+			// Привязать игрока к потоку
+			void player_attach(
+				uint16_t player_id
+			) {
+				if (this->players.insert(player_id).second) {
+					sv_packet::dlstream_create st_params = { (uint32_t)(this), this->object_id };
+					if (net::send(player_id, e_packet_id::lstream_create_at_object, &st_params))
+						this->send_meta(player_id);
+				}
+			}
+
+		};
+
+		// --------------------------------
+
+		// Динамический локальный поток с привязкой к точке
+		class stream_dynamic_local_at_point : public stream_dynamic {
+		private:
+
+			// Параметры потока
+			CVector position;		// Позиция потока
+			CVector orientation;	// Направление потока
+			CVector velocity;		// Скорость потока
+
+		public:
+
+			// Создать поток
+			stream_dynamic_local_at_point(
+				float px, float py, float pz,
+				float ox, float oy, float oz,
+				float vx, float vy, float vz
+			) :
+				position({ px, py, pz }),
+				orientation({ ox, oy, oz }),
+				velocity({ vx, vy, vz })
+			{
+				if (pNetGame->pPlayerPool->dwConnectedPlayers)
+					for (uint16_t i = 0; i <= pNetGame->pPlayerPool->dwPlayerPoolSize; i++)
+						if (this->is_in_stream(i)) this->_player_attach(i);
 			}
 
 			// Проверить статус
@@ -1296,9 +1314,7 @@ namespace audio {
 				uint16_t player_id
 			) {
 
-				if (!player_exists(player_id)) {
-
-					this->players.push_front(player_id);
+				if (this->players.insert(player_id).second) {
 
 					sv_packet::slstream_params st_params = {
 						(uint32_t)(this),
@@ -1307,8 +1323,8 @@ namespace audio {
 						this->velocity.fX, this->velocity.fY, this->velocity.fZ
 					};
 
-					net::send(player_id, e_packet_id::lstream_create_at_point, &st_params);
-					this->send_meta(player_id);
+					if (net::send(player_id, e_packet_id::lstream_create_at_point, &st_params))
+						this->send_meta(player_id);
 
 				}
 
@@ -1320,18 +1336,10 @@ namespace audio {
 				float ox, float oy, float oz,
 				float vx, float vy, float vz
 			) {
-				
-				this->position.fX = px;
-				this->position.fY = py;
-				this->position.fZ = pz;
 
-				this->orientation.fX = ox;
-				this->orientation.fY = oy;
-				this->orientation.fZ = oz;
-
-				this->velocity.fX = vx;
-				this->velocity.fY = vy;
-				this->velocity.fZ = vz;
+				this->position = { px, py, pz };
+				this->orientation = { ox, oy, oz };
+				this->velocity = { vx, vy, vz };
 
 				if (!this->players.empty()) {
 					sv_packet::slstream_params st_params = { (uint32_t)(this), px, py, pz, ox, oy, oz, vx, vy, vz };
@@ -1345,31 +1353,26 @@ namespace audio {
 		};
 
 		// Динамический поток с привязкой к автомобилю
-		class stream_dynamic_at_vehicle : public stream_local {
-		private:
+		class stream_dynamic_local_at_vehicle : public stream_dynamic {
+		public:
 
 			// ID автомобиля привязки
 			const uint16_t vehicle_id;
 
-		public:
-
 			// Создать поток
-			stream_dynamic_at_vehicle(
-				const bool bind_mode,
+			stream_dynamic_local_at_vehicle(
 				uint16_t _vehicle_id
-			) : stream_local(bind_mode),
+			) :
 				vehicle_id(_vehicle_id)
 			{
-				
-				if (bind_mode && pNetGame->pPlayerPool->dwConnectedPlayers)
+				if (pNetGame->pPlayerPool->dwConnectedPlayers)
 					for (uint16_t i = 0; i <= pNetGame->pPlayerPool->dwPlayerPoolSize; i++)
 						if (this->is_in_stream(i)) this->_player_attach(i);
-
 			}
 
 			// Проверить статус
 			bool is_in_stream(
-				const uint16_t player_id
+				uint16_t player_id
 			) {
 				return pNetGame->pPlayerPool->pPlayer[player_id] && pNetGame->pPlayerPool->pPlayer[player_id]->byteVehicleStreamedIn[vehicle_id];
 			}
@@ -1378,44 +1381,36 @@ namespace audio {
 			void _player_attach(
 				uint16_t player_id
 			) {
-
-				if (!player_exists(player_id)) {
-					this->players.push_front(player_id);
+				if (this->players.insert(player_id).second) {
 					sv_packet::dlstream_create st_params = { (uint32_t)(this), this->vehicle_id };
-					net::send(player_id, e_packet_id::lstream_create_at_vehicle, &st_params);
-					this->send_meta(player_id);
+					if (net::send(player_id, e_packet_id::lstream_create_at_vehicle, &st_params))
+						this->send_meta(player_id);
 				}
-
 			}
 
 		};
 
 		// Динамический поток с привязкой к игроку
-		class stream_dynamic_at_player : public stream_local {
-		private:
+		class stream_dynamic_local_at_player : public stream_dynamic {
+		public:
 
 			// ID игрока привязки
 			const uint16_t player_id;
 
-		public:
-
 			// Создать поток
-			stream_dynamic_at_player(
-				const bool bind_mode,
+			stream_dynamic_local_at_player(
 				uint16_t _player_id
-			) : stream_local(bind_mode),
+			) :
 				player_id(_player_id)
 			{
-
-				if (bind_mode && pNetGame->pPlayerPool->dwConnectedPlayers)
+				if (pNetGame->pPlayerPool->dwConnectedPlayers)
 					for (uint16_t i = 0; i <= pNetGame->pPlayerPool->dwPlayerPoolSize; i++)
 						if (this->is_in_stream(i)) this->_player_attach(i);
-
 			}
 
 			// Проверить статус
 			bool is_in_stream(
-				const uint16_t player_id
+				uint16_t player_id
 			) {
 				return pNetGame->pPlayerPool->pPlayer[player_id] && pNetGame->pPlayerPool->pPlayer[player_id]->byteStreamedIn[this->player_id];
 			}
@@ -1424,44 +1419,36 @@ namespace audio {
 			void _player_attach(
 				uint16_t player_id
 			) {
-
-				if (!player_exists(player_id)) {
-					this->players.push_front(player_id);
+				if (this->players.insert(player_id).second) {
 					sv_packet::dlstream_create st_params = { (uint32_t)(this), this->player_id };
-					net::send(player_id, e_packet_id::lstream_create_at_player, &st_params);
-					this->send_meta(player_id);
+					if (net::send(player_id, e_packet_id::lstream_create_at_player, &st_params))
+						this->send_meta(player_id);
 				}
-
 			}
 
 		};
 
 		// Динамический поток с привязкой к объекту
-		class stream_dynamic_at_object : public stream_local {
-		private:
+		class stream_dynamic_local_at_object : public stream_dynamic {
+		public:
 
 			// ID объекта привязки
 			const uint16_t object_id;
 
-		public:
-
 			// Создать поток
-			stream_dynamic_at_object(
-				const bool bind_mode,
+			stream_dynamic_local_at_object(
 				uint16_t _object_id
-			) : stream_local(bind_mode),
+			) :
 				object_id(_object_id)
 			{
-
-				if (bind_mode && pNetGame->pPlayerPool->dwConnectedPlayers)
+				if (pNetGame->pPlayerPool->dwConnectedPlayers)
 					for (uint16_t i = 0; i <= pNetGame->pPlayerPool->dwPlayerPoolSize; i++)
 						if (this->is_in_stream(i)) this->_player_attach(i);
-
 			}
 
 			// Проверить статус
 			bool is_in_stream(
-				const uint16_t player_id
+				uint16_t player_id
 			) {
 				return pNetGame->pObjectPool->bPlayerObjectSlotState[player_id][this->object_id];
 			}
@@ -1470,14 +1457,11 @@ namespace audio {
 			void _player_attach(
 				uint16_t player_id
 			) {
-
-				if (!player_exists(player_id)) {
-					this->players.push_front(player_id);
+				if (this->players.insert(player_id).second) {
 					sv_packet::dlstream_create st_params = { (uint32_t)(this), this->object_id };
-					net::send(player_id, e_packet_id::lstream_create_at_object, &st_params);
-					this->send_meta(player_id);
+					if (net::send(player_id, e_packet_id::lstream_create_at_object, &st_params))
+						this->send_meta(player_id);
 				}
-
 			}
 
 		};

@@ -47,8 +47,9 @@ enum SV_PARAMETER {
 #define SV_EGROUP:			SV_PTR:
 #define SV_EFFECT:			SV_PTR:
 #define SV_STREAM:			SV_PTR:
-#define SV_GSTREAM:			SV_PTR:
-#define SV_LSTREAM:			SV_PTR:
+#define SV_SGSTREAM:		SV_PTR:
+#define SV_SLSTREAM:		SV_PTR:
+#define SV_DLSTREAM:		SV_PTR:
 #define SV_PACKET:			SV_PTR:
 #define SV_SOUND:			SV_UINT:
 
@@ -77,20 +78,24 @@ native SV_VOID:sv_stream_set_parameter(SV_STREAMABLE:target, SV_PARAMETER:param_
 native SV_VOID:sv_stream_slide_parameter(SV_STREAMABLE:target, SV_PARAMETER:param_id, SV_FLOAT:start_value, SV_FLOAT:end_value, SV_UINT:time);
 native SV_VOID:sv_stream_effect_attach(SV_STREAMABLE:target, SV_EFFECTABLE:effect);
 native SV_VOID:sv_stream_effect_detach(SV_STREAMABLE:target, SV_EFFECTABLE:effect);
-native SV_BOOL:sv_stream_play_audio_internal(SV_STREAMABLE:target, SV_BOOL:loop, SV_SOUND:index);
-native SV_BOOL:sv_stream_play_audio_external(SV_STREAMABLE:target, SV_BOOL:loop, url[]);
-native SV_VOID:sv_stream_stop_audio(SV_STREAMABLE:target);
+native SV_BOOL:sv_stream_play_sound_internal(SV_STREAMABLE:target, SV_SOUND:index, SV_BOOL:loop);
+native SV_BOOL:sv_stream_play_sound_external(SV_STREAMABLE:target, url[], SV_BOOL:loop);
+native SV_VOID:sv_stream_stop_sound(SV_STREAMABLE:target);
 native SV_VOID:sv_stream_player_attach(SV_STREAMABLE:target, SV_UINT:player_id);
 native SV_VOID:sv_stream_player_detach(SV_STREAMABLE:target, SV_UINT:player_id);
 native SV_VOID:sv_stream_delete(SV_STREAM:stream);
 
-native SV_GSTREAM:sv_gstream_create();
+native SV_SGSTREAM:sv_sgstream_create();
+native SV_VOID:sv_slstream_update(SV_SLSTREAM:slstream, SV_FLOAT:position_x, SV_FLOAT:position_y, SV_FLOAT:position_z, SV_FLOAT:orientation_x, SV_FLOAT:orientation_y, SV_FLOAT:orientation_z, SV_FLOAT:velocity_x, SV_FLOAT:velocity_y, SV_FLOAT:velocity_z);
+native SV_SLSTREAM:sv_slstream_create_at_point(SV_FLOAT:position_x, SV_FLOAT:position_y, SV_FLOAT:position_z, SV_FLOAT:orientation_x, SV_FLOAT:orientation_y, SV_FLOAT:orientation_z, SV_FLOAT:velocity_x, SV_FLOAT:velocity_y, SV_FLOAT:velocity_z);
+native SV_SLSTREAM:sv_slstream_create_at_vehicle(SV_UINT:vehicle_id);
+native SV_SLSTREAM:sv_slstream_create_at_player(SV_UINT:player_id);
+native SV_SLSTREAM:sv_slstream_create_at_object(SV_UINT:object_id);
 
-native SV_VOID:sv_lstream_update(SV_LSTREAM:lstream, SV_FLOAT:position_x, SV_FLOAT:position_y, SV_FLOAT:position_z, SV_FLOAT:orientation_x, SV_FLOAT:orientation_y, SV_FLOAT:orientation_z, SV_FLOAT:velocity_x, SV_FLOAT:velocity_y, SV_FLOAT:velocity_z);
-native SV_LSTREAM:sv_lstream_create_at_point(SV_BOOL:bind_mode, SV_FLOAT:position_x, SV_FLOAT:position_y, SV_FLOAT:position_z, SV_FLOAT:orientation_x, SV_FLOAT:orientation_y, SV_FLOAT:orientation_z, SV_FLOAT:velocity_x, SV_FLOAT:velocity_y, SV_FLOAT:velocity_z);
-native SV_LSTREAM:sv_lstream_create_at_vehicle(SV_BOOL:bind_mode, SV_UINT:vehicle_id);
-native SV_LSTREAM:sv_lstream_create_at_player(SV_BOOL:bind_mode, SV_UINT:player_id);
-native SV_LSTREAM:sv_lstream_create_at_object(SV_BOOL:bind_mode, SV_UINT:object_id);
+native SV_DLSTREAM:sv_dlstream_create_at_point(SV_FLOAT:position_x, SV_FLOAT:position_y, SV_FLOAT:position_z, SV_FLOAT:orientation_x, SV_FLOAT:orientation_y, SV_FLOAT:orientation_z, SV_FLOAT:velocity_x, SV_FLOAT:velocity_y, SV_FLOAT:velocity_z);
+native SV_DLSTREAM:sv_dlstream_create_at_vehicle(SV_UINT:vehicle_id);
+native SV_DLSTREAM:sv_dlstream_create_at_player(SV_UINT:player_id);
+native SV_DLSTREAM:sv_dlstream_create_at_object(SV_UINT:object_id);
 
 native SV_VOID:sv_group_add(SV_GROUP:group, SV_PTR:element);
 native SV_VOID:sv_group_remove(SV_GROUP:group, SV_PTR:element);
@@ -114,5 +119,8 @@ native SV_VOID:sv_buffer_delete(SV_BUFFER:buffer);
 native SV_SOUND:sv_sound_register(url[]);
 
 forward SV_BOOL:OnPlayerVoice(SV_UINT:playerid, SV_PACKET:packet, SV_UINT:volume);
+
+
+
 forward SV_VOID:OnStreamEnd(SV_STREAM:stream);
 forward SV_VOID:OnBufferEnd(SV_BUFFER:buffer);
