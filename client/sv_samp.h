@@ -9,6 +9,7 @@
 #include "logger.h"
 #include "memory.hpp"
 
+/// [dependency]
 namespace samp {
 
 	// Статус модуля

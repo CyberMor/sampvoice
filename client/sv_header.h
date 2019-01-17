@@ -262,15 +262,17 @@ namespace sv_packet {
 
 // Структуры плагина
 namespace sv_structs {
+#pragma pack(push, 1)
 
 	// Структура настроек
-	volatile struct settings {
+	struct settings {
 		int icon_x, icon_y;		// Позиция иконки микрофона
 		uint32_t store_limit;	// Максимальный размер хранилища
 		bool reject_status;		// Статус запрета активации микрофона
 		bool debug_status;		// Статус отладки
 	};
 
+#pragma pack(pop)
 }
 
 // Настройки плагина

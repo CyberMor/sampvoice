@@ -803,6 +803,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(
 		return false;
 	}
 
+	/*
 	DWORD logprintf_addr = reinterpret_cast<DWORD>(ppData[PLUGIN_DATA_LOGPRINTF]);
 	if (logprintf_addr != CAddress::FUNC_Logprintf_037 &&
 		logprintf_addr != CAddress::FUNC_Logprintf_037_R2_1
@@ -810,6 +811,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(
 		LogError("main", "plugin supports only version 0.3.7");
 		return false;
 	}
+	*/
 
 	if (!net::init(
 		ppData[PLUGIN_DATA_LOGPRINTF],

@@ -117,8 +117,7 @@ namespace audio {
 			void * const dst,
 			const uint32_t max_len
 		) {
-			if (opus::status) return opus_encode(opus::encoder, (opus_int16*)(src), opus::frame_size, (uint8_t*)(dst), max_len);
-			else return NULL;
+			return (opus::status ? opus_encode(opus::encoder, (opus_int16*)(src), opus::frame_size, (uint8_t*)(dst), max_len) : NULL);
 		}
 
 		// Распаковать данные
@@ -127,19 +126,16 @@ namespace audio {
 			const uint32_t length,
 			void * const dst
 		) {
-			if (opus::status) return opus_decode(opus::decoder, (uint8_t*)(src), length, (opus_int16*)(dst), opus::frame_size, 0);
-			else return NULL;
+			return (opus::status ? opus_decode(opus::decoder, (uint8_t*)(src), length, (opus_int16*)(dst), opus::frame_size, 0) : NULL);
 		}
 
 		// Выгрузить кодек
 		static void free() {
-
 			if (opus::status) {
 				opus_encoder_destroy(opus::encoder);
 				opus_decoder_destroy(opus::decoder);
 				opus::status = false;
 			}
-
 		}
 
 	};
@@ -985,18 +981,14 @@ namespace audio {
 				inline uint32_t c_index(
 					const uint16_t id
 				) {
-
 					for (uint32_t i = 0; i < c_max_count; i++) if (c_status[i] && c_id[i] == id) return i;
 					return -1;
-
 				}
 
 				// Получить свободный индекс
 				inline uint32_t c_ifree() {
-
 					for (uint32_t i = 0; i < c_max_count; i++) if (!c_status[i]) return i;
 					return -1;
-
 				}
 
 			public:
@@ -1024,12 +1016,9 @@ namespace audio {
 
 				// Перезагрузить каналы
 				inline void reset() {
-
 					BASS_ChannelPlay(this->channel, TRUE);
-
 					for (uint32_t i = 0; i < c_max_count; i++)
 						if (c_status[i]) BASS_ChannelPlay(c_handle[i], TRUE);
-
 				}
 
 				// -----------------------------------

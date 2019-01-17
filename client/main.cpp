@@ -44,6 +44,7 @@ namespace core {
 			samp::add_message_to_chat(SV_COLOR_INFO, "[sampvoice] : /" SV_COMMAND_DEBUG " - debug status on/off");
 		}
 
+		/// [dependency]
 		// Изменить позицию иконки
 		static void change(
 			char *args
@@ -76,6 +77,7 @@ namespace core {
 				new_size *= 1048576u;	// Перевод мегабайтов в байты
 				settings::get_settings()->store_limit = new_size;
 				audio::playback::sounds::store::set_limit(new_size);
+				samp::add_message_to_chat(SV_COLOR_INFO, "[sampvoice] : storage size set to %u bytes", new_size);
 			}
 		}
 
@@ -118,7 +120,7 @@ namespace core {
 		} return false;
 		case e_packet_id::set_key: {
 			sv_packet::set_key *st_data = p_header->get<sv_packet::set_key>();
-			if (settings::get_settings()->debug_status) LogDebug("set_key : key_id(%hhu)", st_data->key_id);
+			if (settings::get_settings()->debug_status) LogDebug("set_key : key_id(%hhX)", st_data->key_id);
 			active_key_id = st_data->key_id;
 		} return false;
 		case e_packet_id::voice: {
