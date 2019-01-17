@@ -1357,7 +1357,10 @@ namespace audio {
 		static bool init(
 			uint16_t frequency,
 			uint32_t frame_size,
-			uint32_t store_limit
+			uint32_t store_limit,
+			float factor_distance,
+			float factor_rolloff,
+			float factor_doppler
 		) {
 
 			BASS_Free();
@@ -1378,7 +1381,7 @@ namespace audio {
 				}
 
 				BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, (float)(FrontEndMenuManager.m_nSfxVolume) * (10000.f / 64.f));
-				BASS_Set3DFactors(1, 1, 1);
+				BASS_Set3DFactors(factor_distance, factor_rolloff, factor_doppler);
 				BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_LIGHT);
 				BASS_Set3DPosition(
 					(BASS_3DVECTOR*)&TheCamera.GetPosition(),
@@ -1675,14 +1678,17 @@ namespace audio {
 		uint16_t bitrate,					// Битрейт (в бит/с)
 		uint16_t frequency,					// Частота звука
 		uint16_t frame_dur,					// Длительность одного звукового кадра (в миллисекундах)
-		uint32_t store_limit				// Размер хранилища звуковых файлов
+		uint32_t store_limit,				// Размер хранилища звуковых файлов
+		float factor_distance,				// Фактор дистанции звука
+		float factor_rolloff,				// Фактор затухания звука
+		float factor_doppler				// Фактор эффекта Допплера
 	) {
 
 		uint32_t frame_size = frequency * frame_dur / 1000;
 		record::init(record_handler, frequency, frame_dur, 32u);
 
 		// Модуль record не обязателен для инициализации
-		return (playback::init(frequency, frame_size, store_limit) && opus::init(frequency, frame_size, bitrate));
+		return (playback::init(frequency, frame_size, store_limit, factor_distance, factor_rolloff, factor_doppler) && opus::init(frequency, frame_size, bitrate));
 
 	}
 

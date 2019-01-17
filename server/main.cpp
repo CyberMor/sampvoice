@@ -148,15 +148,23 @@ namespace core {
 		bool init(
 			uint32_t bitrate,
 			uint16_t frequency,
-			uint8_t voice_rate
+			uint8_t voice_rate,
+			float factor_distance,
+			float factor_rolloff,
+			float factor_doppler
 		) {
 
 			if (frequency != 8000 && frequency != 12000 && frequency != 16000 && frequency != 24000 && frequency != 48000) return false;
 			if (voice_rate != 40 && voice_rate != 60 && voice_rate != 80 && voice_rate != 100 && voice_rate != 120) return false;
+			if (factor_rolloff < 0.f || factor_rolloff > 10.f) return false;
+			if (factor_doppler < 0.f || factor_doppler > 10.f) return false;
 			
 			settings.bitrate = bitrate;
 			settings.frequency = frequency;
 			settings.voice_rate = voice_rate;
+			settings.factor_distance = factor_distance;
+			settings.factor_rolloff = factor_rolloff;
+			settings.factor_doppler = factor_doppler;
 
 			return true;
 

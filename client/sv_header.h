@@ -151,6 +151,9 @@ namespace sv_packet {
 		uint32_t bitrate;		// Звуковой трафик
 		uint16_t frequency;		// Частота звука (8000/12000/16000/24000/48000)
 		uint8_t voice_rate;		// Длительность звукового кадра (40/60/80/100/120)
+		float factor_distance;	// Фактор дистанции звука
+		float factor_rolloff;	// Фактор затухания звука (0 - 10.0)
+		float factor_doppler;	// Фактор эффекта Допплера (0 - 10.0)
 	};
 
 	// Пакет клавиши активации

@@ -53,7 +53,7 @@ enum SV_PARAMETER {
 #define SV_PACKET:			SV_PTR:
 #define SV_SOUND:			SV_UINT:
 
-native SV_BOOL:sv_init(SV_UINT:bitrate, SV_FREQUENCY:frequency, SV_VOICE_RATE:voice_rate);
+native SV_BOOL:sv_init(SV_UINT:bitrate, SV_FREQUENCY:frequency, SV_VOICE_RATE:voice_rate, SV_FLOAT:factor_distance, SV_FLOAT:factor_rolloff, SV_FLOAT:factor_doppler);
 native SV_UINT:sv_get_version(SV_UINT:player_id);
 native SV_VOID:sv_set_key(SV_UINT:player_id, SV_UINT:key_id);
 native SV_VOID:sv_send_packet(SV_PACKET:packet, SV_RECEIVER:target);

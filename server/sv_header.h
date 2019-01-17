@@ -48,15 +48,18 @@
 
 #include "sv_logger.h"
 
-#define SV_CURRENT_VERSION				2u				// Текущая версия плагина
-#define SV_CURRENT_VERSION_TEXT			"v2.1"			// Текущая версия плагина в текстовом формате
-#define SV_NET_CONNECT_SIGNATURE		0xABCDDCBAu		// Сигнатура заголовка RPC_25
-#define SV_NET_PACKET_ID				222u			// Номер пакета плагина
-#define SV_NET_PACKET_SIZE				512u			// Размер аудиоданных в одном сетевом пакете (рекомендуется не ставить больше чем 512)
+#define SV_CURRENT_VERSION						2u				// Текущая версия плагина
+#define SV_CURRENT_VERSION_TEXT					"v2.1"			// Текущая версия плагина в текстовом формате
+#define SV_NET_CONNECT_SIGNATURE				0xABCDDCBAu		// Сигнатура заголовка RPC_25
+#define SV_NET_PACKET_ID						222u			// Номер пакета плагина
+#define SV_NET_PACKET_SIZE						512u			// Размер аудиоданных в одном сетевом пакете (рекомендуется не ставить больше чем 512)
 
-#define SV_SETTINGS_DEFAULT_BITRATE		6000u			// Битрейт по умолчанию
-#define SV_SETTINGS_DEFAULT_FREQUENCY	48000u			// Частота звука по умолчанию
-#define SV_SETTINGS_DEFAULT_VOICERATE	100u			// Длительность кадра по умолчанию
+#define SV_SETTINGS_DEFAULT_BITRATE				6000u			// Битрейт по умолчанию
+#define SV_SETTINGS_DEFAULT_FREQUENCY			48000u			// Частота звука по умолчанию
+#define SV_SETTINGS_DEFAULT_VOICERATE			100u			// Длительность кадра по умолчанию
+#define SV_SETTINGS_DEFAULT_FACTORDISTANCE		1.0f			// Фактор дистанции звука по умолчанию
+#define SV_SETTINGS_DEFAULT_FACTORROLLOFF		1.0f			// Фактор затухания звука по умолчанию
+#define SV_SETTINGS_DEFAULT_FACTORDOPPLER		1.0f			// Фактор эффекта Допплера по умолчанию
 
 // Номера пакетов
 struct e_packet_id {
@@ -166,6 +169,9 @@ namespace sv_packet {
 		uint32_t bitrate;				// Звуковой трафик
 		uint16_t frequency;				// Частота звука (8000/12000/16000/24000/48000)
 		uint8_t voice_rate;				// Длительность звукового кадра (40/60/80/100/120)
+		float factor_distance;			// Фактор дистанции звука
+		float factor_rolloff;			// Фактор затухания звука (0 - 10.0)
+		float factor_doppler;			// Фактор эффекта Допплера (0 - 10.0)
 	};
 
 	// Пакет клавиши активации
@@ -279,7 +285,10 @@ namespace sv_packet {
 sv_packet::init settings = {
 	SV_SETTINGS_DEFAULT_BITRATE,
 	SV_SETTINGS_DEFAULT_FREQUENCY,
-	SV_SETTINGS_DEFAULT_VOICERATE
+	SV_SETTINGS_DEFAULT_VOICERATE,
+	SV_SETTINGS_DEFAULT_FACTORDISTANCE,
+	SV_SETTINGS_DEFAULT_FACTORROLLOFF,
+	SV_SETTINGS_DEFAULT_FACTORDOPPLER
 };
 
 // Дистанция зоны стрима

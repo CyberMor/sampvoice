@@ -11,7 +11,7 @@ namespace pawn {
 	public:
 
 		// Основное
-		virtual bool init(uint32_t bitrate, uint16_t frequency, uint8_t voice_rate) = 0;
+		virtual bool init(uint32_t bitrate, uint16_t frequency, uint8_t voice_rate, float factor_distance, float factor_rolloff, float factor_doppler) = 0;
 		virtual uint8_t get_version(uint16_t player_id) = 0;
 		virtual void set_key(uint16_t player_id, uint8_t key_id) = 0;
 		virtual void send_packet(Packet *packet, audio::receiver *target) = 0;
@@ -101,19 +101,22 @@ namespace pawn {
 			AMX *amx, cell *params
 		) {
 
-			if (params[0] != (3 * sizeof(cell))) return false;
+			if (params[0] != (6 * sizeof(cell))) return false;
 
 			const uint32_t bitrate = static_cast<uint32_t>(params[1]);
 			const uint16_t frequency = static_cast<uint16_t>(params[2]);
 			const uint8_t voice_rate = static_cast<uint8_t>(params[3]);
+			const float factor_distance = amx_ctof(params[4]);
+			const float factor_rolloff = amx_ctof(params[5]);
+			const float factor_doppler = amx_ctof(params[6]);
 
 			if (debug_mode) {
-				const bool result = handler->init(bitrate, frequency, voice_rate);
-				LogDebug("[%s] : bitrate(%u), frequency(%hu), voice_rate(%hhu) : return(%s)", __FUNCTION__, bitrate, frequency, voice_rate, (result ? "true" : "false"));
+				const bool result = handler->init(bitrate, frequency, voice_rate, factor_distance, factor_rolloff, factor_doppler);
+				LogDebug("[%s] : bitrate(%u), frequency(%hu), voice_rate(%hhu), factor_distance(%f), factor_rolloff(%f), factor_doppler(%f) : return(%s)", __FUNCTION__, bitrate, frequency, voice_rate, factor_distance, factor_rolloff, factor_doppler, (result ? "true" : "false"));
 				return result;
 			}
 
-			return handler->init(bitrate, frequency, voice_rate);
+			return handler->init(bitrate, frequency, voice_rate, factor_distance, factor_rolloff, factor_doppler);
 
 		}
 

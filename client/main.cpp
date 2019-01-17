@@ -114,8 +114,8 @@ namespace core {
 		switch (p_header->packet_id) {
 		case e_packet_id::init: {
 			sv_packet::init *st_data = p_header->get<sv_packet::init>();
-			if (settings::get_settings()->debug_status) LogDebug("sv_init : bitrate(%u) frequency(%hu) voice_rate(%hhu)", st_data->bitrate, st_data->frequency, st_data->voice_rate);
-			if (!audio::init(handler_voice, st_data->bitrate, st_data->frequency, st_data->voice_rate, settings::get_settings()->store_limit))
+			if (settings::get_settings()->debug_status) LogDebug("sv_init : bitrate(%u) frequency(%hu) voice_rate(%hhu) factor_distance(%f) factor_rolloff(%f) factor_doppler(%f)", st_data->bitrate, st_data->frequency, st_data->voice_rate, st_data->factor_distance, st_data->factor_rolloff, st_data->factor_doppler);
+			if (!audio::init(handler_voice, st_data->bitrate, st_data->frequency, st_data->voice_rate, settings::get_settings()->store_limit, st_data->factor_distance, st_data->factor_rolloff, st_data->factor_doppler))
 				LogError("main", "could not initialize audio module");
 		} return false;
 		case e_packet_id::set_key: {
