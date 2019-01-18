@@ -8,12 +8,12 @@ English | [Русский](https://github.com/CyberMor/sampvoice/blob/master/REA
 
 ## Features
 ---------------------------------
-* Controollable voice chat transfer
-* Reproductive audio files
-* Recording voice chat to a buffer and its translation
-* Controllable player microphone
-* Creating audio effects
-* Attachable audio streams to objects
+* Controlled voice stream
+* Play audio files
+* Record voice stream in the buffer and broadcast it
+* Player microphone control
+* Creating sound effects
+* Attaching voice stream to objects
 * And many more minor features ...
 
 ## Installation
