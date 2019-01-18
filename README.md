@@ -1,5 +1,7 @@
 # **SAMPVOICE**
 
+English | [Русский](https://github.com/CyberMor/sampvoice/blob/master/README.ru.md)
+
 ## Description
 ---------------------------------
 **SAMPVOICE** - is a development kit for realization of voice chatting in Pawn for SA:MP. Currently the plugin supports only version **SA:MP 0.3.7-R1**.
