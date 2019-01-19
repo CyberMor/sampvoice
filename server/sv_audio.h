@@ -212,7 +212,7 @@ namespace audio {
 				uint32_t stream,
 				uint16_t player_id
 			) {
-				if (!this->effects.empty()) for (auto i = this->effects.begin(); i != this->effects.end(); i++) (*i)->attach(stream, player_id);
+				for (auto i = this->effects.begin(); i != this->effects.end(); i++) (*i)->attach(stream, player_id);
 			}
 
 			// Отвязать поток от группы
@@ -220,7 +220,7 @@ namespace audio {
 				uint32_t stream,
 				uint16_t player_id
 			) {
-				if (!this->effects.empty()) for (auto i = this->effects.begin(); i != this->effects.end(); i++) (*i)->detach(stream, player_id);
+				for (auto i = this->effects.begin(); i != this->effects.end(); i++) (*i)->detach(stream, player_id);
 			}
 
 		};
@@ -841,7 +841,7 @@ namespace audio {
 			void effect_attach(
 				effects::effectable* target
 			) {
-				if (this->effects.insert(target).second && !this->players.empty())
+				if (this->effects.insert(target).second)
 					for (auto i = this->players.begin(); i != this->players.end(); i++)
 						target->attach((uint32_t)(this), *i);
 			}
@@ -850,7 +850,7 @@ namespace audio {
 			void effect_detach(
 				effects::effectable* target
 			) {
-				if (this->effects.erase(target) && !this->players.empty())
+				if (this->effects.erase(target))
 					for (auto i = this->players.begin(); i != this->players.end(); i++)
 						target->detach((uint32_t)(this), *i);
 			}

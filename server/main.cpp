@@ -635,7 +635,7 @@ namespace core {
 			audio::group *group,
 			void *element
 		) {
-			if (audio::object::is_object(group) && audio::object::is_object((audio::object*)(element))) group->add(element);
+			if (audio::object::is_object(group)) group->add(element);
 		}
 
 		// Удалить элемент из группы
@@ -643,7 +643,7 @@ namespace core {
 			audio::group *group,
 			void *element
 		) {
-			if (audio::object::is_object(group) && audio::object::is_object((audio::object*)(element))) group->remove(element);
+			if (audio::object::is_object(group)) group->remove(element);
 		}
 
 		// Удалить группу
