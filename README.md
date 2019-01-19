@@ -78,7 +78,6 @@ public OnPlayerConnect(playerid) {
     if(sv_get_version(playerid) == SV_NULL) {
         SendClientMessage(playerid, -1, "You don't have SampVoice installed");
     } else if(sv_get_version(playerid) < SV_VERSION) {
-        SendClientMessage(playerid, -1, "У вас устаревшая версия плагина, возможна несовместимость. Обновите её.");
         SendClientMessage(playerid, -1, "You're holding an old version of the plugin, possibly incompatiable. update it.");
     }
     // Checking microphone availability
@@ -88,7 +87,6 @@ public OnPlayerConnect(playerid) {
     // Creating a global stream for the player and connecting him to it
     player_stream[playerid] = sv_gstream_create();
     sv_stream_player_attach(player_stream[playerid], playerid);
-    // Установка клавиши активации микрофона игроку
     // Installation of player microphone activation keys
     sv_set_key(playerid, 0x32); // 0x32 - this is the code for the key '2'
     return 1;
