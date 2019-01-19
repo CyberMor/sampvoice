@@ -39,7 +39,7 @@ For players there are two variants for installation: automatic (through an insta
 ---------------------------------
 1. Downlod from [the `releases` page](https://github.com/CyberMor/sampvoice/releases) the correct version of the plugin for your platform
 2. Extract the files to the root of your server directory.
-3. Добавьте в файл конфигурации сервера *server.cfg* строку *"plugins sampvoice"* для Win32 и "plugins sampvoice.so" для Linux x86 **(Если у вас стоит плагин Pawn.RakNet обязательно разместите плагин в конфиге после него)**.
+3. Add to the server configuration file (`server.cfg`) the line *"plugins sampvoice"* for Win32 and *"plugins sampvoice.so"* for Linux x86 (If you're using the Pawn.RakNet plugin, make sure this [sampvoice] plugin loads *after* Pawn.RakNet) 
 3. Add to the `plugins` line the plugin's name as seen below
 Windows 32 bit
 ```
@@ -56,7 +56,6 @@ plugins sampvoice.so
 In order to start using the plugin, read the documentation that goes with the server kit. For this, open `sampvoice.chm` file using `Help Explorer Viewer`.
 Its important to know, that the plugin uses its own system of types and constants. Even though that this this is only a cover over the basic types of Pawn, it helps in the navigate through the internal types of the plugin and not confuse between the pointers.
 
-Чтобы начать использовать функционал плагина, подключите заголовочный файл:
 In order to start using the functions of the plugin, include it in your gamemode:
 ```php
 #include <sampvoice>
@@ -109,7 +108,6 @@ public SV_BOOL:OnPlayerVoice(
 	return SV_TRUE;     // Delete the packet? (SV_TRUE - yes, SV_FALSE - no)
 }
 ```
-Для того, чтобы один игрок слышал другого, необходимо подключить его к потоку другого игрока функцией *sv_stream_player_attach(stream, playerid)*.
 In order for one player to hear another, it is necessary to connect him to a stream of another player using the function `sv_stream_player_attach(stream, playerid)`
 
 ## Compiling
@@ -117,7 +115,6 @@ In order for one player to hear another, it is necessary to connect him to a str
 Plugin compiles using the Win32 platform and Linux x86.
 Below are further instructions:
 
-Склонируйте репозиторий себе на компьютер и перейдите в директорию плагина:
 Clone the repository and navigate to the directory
 ```sh
 git clone https://github.com/CyberMor/sampvoice.git
