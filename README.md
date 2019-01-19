@@ -1,20 +1,20 @@
 # **SAMPVOICE**
 
-English | [Русский](https://github.com/CyberMor/sampvoice/blob/master/README.ru.md)
+English | [Русский](https://github.com/CyberMor/sampvoice/blob/testing/README.ru.md)
 
 ## Description
 ---------------------------------
-**SAMPVOICE** - is a development kit for realization of voice chatting in Pawn for SA:MP. Currently the plugin supports only version **SA:MP 0.3.7-R1**.
+**SAMPVOICE** - is Software Development Kit for the implementation of voice systems in the Pawn language for SA:MP servers. Currently the plugin supports only version **SA:MP 0.3.7-R1**.
 
 ## Features
 ---------------------------------
 * Controlled voice stream
-* Play audio files
+* Play sound files
 * Record voice stream in the buffer and broadcast it
 * Player microphone control
 * Creating sound effects
-* Attaching voice stream to objects
-* And many more minor features ...
+* Binding voice stream to game objects
+* And many more minor features...
 
 ## Installation
 ---------------------------------
@@ -22,22 +22,22 @@ In order for the plugin to work, it is necessary for the players to install the 
 
 #### For players
 ---------------------------------
-For players there are two variants for installation: automatic (through an installer) and manaul (using the source)
+For players there are two variants for installation: automatic (through an installer) and manually (using the archive)
 
 ##### Automatically
 ---------------------------------
-1. In order to download the installer, head over to [the `releases` page](https://github.com/CyberMor/sampvoice/releases) and choose the right version of the plugin.
-2. After downloading, launch the installer and choose the right language for your installation, afterwards the installer will automatically find your GTA San Andreas folder.
+1. In order to download the installer, head over to [the `releases` page](https://github.com/CyberMor/sampvoice/releases) and choose the desired version of the plugin.
+2. After downloading, launch the installer and choose the desired language for your installation, afterwards the installer will automatically find your GTA San Andreas folder.
 3. Press `OK` and wait until the installation finishes.
 
 ##### Manually
 ---------------------------------
-1. Head over [the `releases` page](https://github.com/CyberMor/sampvoice/releases) and download the archive with the correct client version.
+1. Head over [the `releases` page](https://github.com/CyberMor/sampvoice/releases) and download the archive with the desired client version.
 2. Extract the archive to your GTA San Andreas folder.
 
 #### For developers
 ---------------------------------
-1. Downlod from [the `releases` page](https://github.com/CyberMor/sampvoice/releases) the correct version of the plugin for your platform
+1. Download from [the `releases` page](https://github.com/CyberMor/sampvoice/releases) the desired version of the plugin for your platform
 2. Extract the files to the root of your server directory.
 3. Add to the server configuration file (`server.cfg`) the line *"plugins sampvoice"* for Win32 and *"plugins sampvoice.so"* for Linux x86 (If you're using the Pawn.RakNet plugin, make sure this [sampvoice] plugin loads *after* Pawn.RakNet) 
 3. Add to the `plugins` line the plugin's name as seen below
