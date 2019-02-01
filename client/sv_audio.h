@@ -1230,9 +1230,9 @@ namespace audio {
 				HSTREAM c_create() {
 
 					HSTREAM handle = BASS_StreamCreate(this->frequency, 1, BASS_SAMPLE_3D, STREAMPROC_PUSH, nullptr);
-					BASS_ChannelSet3DAttributes(this->channel, BASS_3DMODE_NORMAL, -1, -1, -1, -1, -1);
+					BASS_ChannelSet3DAttributes(handle, BASS_3DMODE_NORMAL, -1, -1, -1, -1, -1);
 					BASS_ChannelSet3DPosition(
-						this->channel,
+                        handle,
 						(BASS_3DVECTOR*)(this->vec_position),
 						(BASS_3DVECTOR*)(this->vec_orientation),
 						(BASS_3DVECTOR*)(this->vec_velocity)
