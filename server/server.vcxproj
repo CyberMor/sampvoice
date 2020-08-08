@@ -6,19 +6,90 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DynamicLocalStreamAtObject.h" />
+    <ClInclude Include="DynamicLocalStreamAtPlayer.h" />
+    <ClInclude Include="DynamicLocalStreamAtPoint.h" />
+    <ClInclude Include="DynamicLocalStreamAtVehicle.h" />
+    <ClInclude Include="DynamicStream.h" />
+    <ClInclude Include="GlobalStream.h" />
+    <ClInclude Include="include\MPMCQueue.h" />
+    <ClInclude Include="include\SPSCQueue.h" />
+    <ClInclude Include="PlayerInfo.h" />
+    <ClInclude Include="PlayerStore.h" />
+    <ClInclude Include="PointStream.h" />
+    <ClInclude Include="LocalStream.h" />
+    <ClInclude Include="Network.h" />
+    <ClInclude Include="ControlPacket.h" />
+    <ClInclude Include="Pawn.h" />
+    <ClInclude Include="StaticLocalStreamAtObject.h" />
+    <ClInclude Include="StaticLocalStreamAtPlayer.h" />
+    <ClInclude Include="StaticLocalStreamAtPoint.h" />
+    <ClInclude Include="StaticLocalStreamAtVehicle.h" />
+    <ClInclude Include="Stream.h" />
+    <ClInclude Include="Header.h" />
+    <ClInclude Include="include\pawn\amx\amx.h" />
+    <ClInclude Include="include\pawn\amx\getch.h" />
+    <ClInclude Include="include\pawn\amx\sclinux.h" />
+    <ClInclude Include="include\pawn\plugincommon.h" />
+    <ClInclude Include="include\raknet\bitstream.h" />
+    <ClInclude Include="include\raknet\networktypes.h" />
+    <ClInclude Include="include\util\logger.h" />
+    <ClInclude Include="include\util\memory.hpp" />
+    <ClInclude Include="include\util\raknet.h" />
+    <ClInclude Include="include\ysf\addresses.h" />
+    <ClInclude Include="include\ysf\globals.h" />
+    <ClInclude Include="include\ysf\structs.h" />
+    <ClInclude Include="include\ysf\utils\cvector.h" />
+    <ClInclude Include="include\ysf\utils\cvector2d.h" />
+    <ClInclude Include="include\ysf\utils\memory.h" />
+    <ClInclude Include="Worker.h" />
+    <ClInclude Include="VoicePacket.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ControlPacket.cpp" />
+    <ClCompile Include="DynamicLocalStreamAtObject.cpp" />
+    <ClCompile Include="DynamicLocalStreamAtPlayer.cpp" />
+    <ClCompile Include="DynamicLocalStreamAtPoint.cpp" />
+    <ClCompile Include="DynamicLocalStreamAtVehicle.cpp" />
+    <ClCompile Include="DynamicStream.cpp" />
+    <ClCompile Include="GlobalStream.cpp" />
+    <ClCompile Include="LocalStream.cpp" />
+    <ClCompile Include="Network.cpp" />
+    <ClCompile Include="Pawn.cpp" />
+    <ClCompile Include="PlayerStore.cpp" />
+    <ClCompile Include="PointStream.cpp" />
+    <ClCompile Include="StaticLocalStreamAtObject.cpp" />
+    <ClCompile Include="StaticLocalStreamAtPlayer.cpp" />
+    <ClCompile Include="StaticLocalStreamAtPoint.cpp" />
+    <ClCompile Include="StaticLocalStreamAtVehicle.cpp" />
+    <ClCompile Include="Stream.cpp" />
+    <ClCompile Include="include\pawn\amxplugin.cpp" />
+    <ClCompile Include="include\raknet\bitstream.cpp" />
+    <ClCompile Include="include\util\logger.cpp" />
+    <ClCompile Include="include\util\raknet.cpp" />
+    <ClCompile Include="include\ysf\ysf.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="VoicePacket.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Makefile" />
+    <None Include="plugin.def" />
+    <None Include="sampvoice.inc" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{658FA649-71EA-4E35-BDF6-71AD941F8761}</ProjectGuid>
     <RootNamespace>server</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PreferredToolArchitecture>x86</PreferredToolArchitecture>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -32,83 +103,41 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)bin\</OutDir>
     <TargetName>sampvoice</TargetName>
-    <TargetExt>.dll</TargetExt>
+    <IntDir>temp\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>sdk</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <StructMemberAlignment>1Byte</StructMemberAlignment>
-      <PreprocessorDefinitions>_WINDLL;_WINSOCK_DEPRECATED_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <DisableSpecificWarnings>
-      </DisableSpecificWarnings>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <FloatingPointModel>Fast</FloatingPointModel>
-      <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
+      <PreprocessorDefinitions>_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <StringPooling>true</StringPooling>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>plugin.def</ModuleDefinitionFile>
-      <SubSystem>Console</SubSystem>
-      <Version>2.0</Version>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
+      <StackReserveSize>
+      </StackReserveSize>
+      <StackCommitSize>
+      </StackCommitSize>
+      <HeapReserveSize>
+      </HeapReserveSize>
+      <HeapCommitSize>
+      </HeapCommitSize>
+      <ProgramDatabaseFile />
+      <MinimumRequiredVersion />
+      <SetChecksum>true</SetChecksum>
+      <ImportLibrary />
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="sdk\pawn\amxplugin.cpp" />
-    <ClCompile Include="sdk\raknet\bitstream.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="memory.hpp" />
-    <ClInclude Include="sdk\audio\bass.h" />
-    <ClInclude Include="sdk\pawn\amx\amx.h" />
-    <ClInclude Include="sdk\pawn\amx\getch.h" />
-    <ClInclude Include="sdk\pawn\amx\sclinux.h" />
-    <ClInclude Include="sdk\pawn\plugincommon.h" />
-    <ClInclude Include="sv_audio.h" />
-    <ClInclude Include="sv_header.h" />
-    <ClInclude Include="sv_logger.h" />
-    <ClInclude Include="sv_net.h" />
-    <ClInclude Include="sv_pawn.h" />
-    <ClInclude Include="sdk\raknet\bitstream.h" />
-    <ClInclude Include="sdk\raknet\networktypes.h" />
-    <ClInclude Include="sdk\ysf\addresses.h" />
-    <ClInclude Include="sdk\ysf\data\object_data.h" />
-    <ClInclude Include="sdk\ysf\data\player_data.h" />
-    <ClInclude Include="sdk\ysf\data\vehicle_data.h" />
-    <ClInclude Include="sdk\ysf\functions.h" />
-    <ClInclude Include="sdk\ysf\globals.h" />
-    <ClInclude Include="sdk\ysf\includes\net.h" />
-    <ClInclude Include="sdk\ysf\includes\platform.h" />
-    <ClInclude Include="sdk\ysf\includes\types.h" />
-    <ClInclude Include="sdk\ysf\rpc.h" />
-    <ClInclude Include="sdk\ysf\structs.h" />
-    <ClInclude Include="sdk\ysf\utils\bimap.h" />
-    <ClInclude Include="sdk\ysf\utils\cvector.h" />
-    <ClInclude Include="sdk\ysf\utils\cvector2d.h" />
-    <ClInclude Include="sdk\ysf\utils\memory.h" />
-    <ClInclude Include="sdk\ysf\utils\optional.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Makefile" />
-    <None Include="plugin.def" />
-    <None Include="sampvoice.inc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="sdk\audio\bass.lib" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
