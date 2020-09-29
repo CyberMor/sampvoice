@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -23,88 +23,89 @@
 #include "Channel.h"
 
 class StreamAtObject : public LocalStream {
-private:
 
-	const WORD objectId;
-
-	void ChannelCreationHandler(const Channel& channel) override {
-
-		this->LocalStream::ChannelCreationHandler(channel);
-
-		const auto pNetGame = SAMP::pNetGame();
-		if (!pNetGame) return;
-
-		const auto pObjectPool = pNetGame->GetObjectPool();
-		if (!pObjectPool) return;
-
-		const auto pObject = pObjectPool->m_pObject[this->objectId];
-		if (!pObject) return;
-
-		const auto pObjectEntity = pObject->m_pGameEntity;
-		if (!pObjectEntity) return;
-
-		const auto pObjectMatrix = pObjectEntity->GetMatrix();
-		if (!pObjectMatrix) return;
-
-		BASS_ChannelSet3DPosition(
-			channel.handle, (BASS_3DVECTOR*)(&pObjectMatrix->pos),
-			&BASS_3DVECTOR(0, 0, 0), &BASS_3DVECTOR(0, 0, 0)
-		);
-
-	}
+    StreamAtObject() = delete;
+    StreamAtObject(const StreamAtObject&) = delete;
+    StreamAtObject(StreamAtObject&&) = delete;
+    StreamAtObject& operator=(const StreamAtObject&) = delete;
+    StreamAtObject& operator=(StreamAtObject&&) = delete;
 
 public:
 
-	StreamAtObject() = delete;
-	StreamAtObject(const StreamAtObject& object) = delete;
-	StreamAtObject(StreamAtObject&& object) = delete;
+    explicit StreamAtObject(PlayHandlerType&& playHandler, StopHandlerType&& stopHandler,
+                            const std::string& name, const D3DCOLOR color,
+                            const WORD objectId, const float distance)
+        : LocalStream(BASS_SAMPLE_3D | BASS_SAMPLE_MUTEMAX,
+                      std::move(playHandler), std::move(stopHandler),
+                      StreamType::LocalStreamAtObject,
+                      name, color, distance)
+        , objectId(objectId) {}
 
-	StreamAtObject& operator=(const StreamAtObject& object) = delete;
-	StreamAtObject& operator=(StreamAtObject&& object) = delete;
+    ~StreamAtObject() noexcept = default;
 
-	StreamAtObject(
-		const PlayHandlerType& playHandler,
-		const StopHandlerType& stopHandler,
-		const std::string& name,
-		const D3DCOLOR color,
-		const WORD objectId,
-		const float distance
-	) :
+public:
 
-		LocalStream(
-			BASS_SAMPLE_3D | BASS_SAMPLE_MUTEMAX,
-			playHandler, stopHandler,
-			StreamType::LocalStreamAtObject,
-			name, color, distance
-		),
+    void Tick() noexcept override
+    {
+        this->LocalStream::Tick();
 
-		objectId(objectId)
+        const auto pNetGame = SAMP::pNetGame();
+        if (!pNetGame) return;
 
-	{}
+        const auto pObjectPool = pNetGame->GetObjectPool();
+        if (!pObjectPool) return;
 
-	void Tick() override {
+        const auto pObject = pObjectPool->m_pObject[this->objectId];
+        if (!pObject) return;
 
-		this->LocalStream::Tick();
+        const auto pObjectEntity = pObject->m_pGameEntity;
+        if (!pObjectEntity) return;
 
-		const auto pNetGame = SAMP::pNetGame();
-		if (!pNetGame) return;
+        const auto pObjectMatrix = pObjectEntity->GetMatrix();
+        if (!pObjectMatrix) return;
 
-		const auto pObjectPool = pNetGame->GetObjectPool();
-		if (!pObjectPool) return;
+        for (const auto& iChan : this->channels)
+        {
+            if (iChan->speaker != SV::NonePlayer)
+            {
+                BASS_ChannelSet3DPosition(iChan->handle,
+                    reinterpret_cast<BASS_3DVECTOR*>(&pObjectMatrix->pos),
+                    nullptr, nullptr);
+            }
+        }
+    }
 
-		const auto pObject = pObjectPool->m_pObject[this->objectId];
-		if (!pObject) return;
+private:
 
-		const auto pObjectEntity = pObject->m_pGameEntity;
-		if (!pObjectEntity) return;
+    void ChannelCreationHandler(const Channel& channel) noexcept override
+    {
+        static const BASS_3DVECTOR kZeroVector { 0, 0, 0 };
 
-		const auto pObjectMatrix = pObjectEntity->GetMatrix();
-		if (!pObjectMatrix) return;
+        this->LocalStream::ChannelCreationHandler(channel);
 
-		for (const auto& iChan : this->channels) if (iChan->speaker != SV::NonePlayer)
-			BASS_ChannelSet3DPosition(iChan->handle, (BASS_3DVECTOR*)(&pObjectMatrix->pos), nullptr, nullptr);
+        const auto pNetGame = SAMP::pNetGame();
+        if (!pNetGame) return;
 
-	}
+        const auto pObjectPool = pNetGame->GetObjectPool();
+        if (!pObjectPool) return;
+
+        const auto pObject = pObjectPool->m_pObject[this->objectId];
+        if (!pObject) return;
+
+        const auto pObjectEntity = pObject->m_pGameEntity;
+        if (!pObjectEntity) return;
+
+        const auto pObjectMatrix = pObjectEntity->GetMatrix();
+        if (!pObjectMatrix) return;
+
+        BASS_ChannelSet3DPosition(channel.handle,
+            reinterpret_cast<BASS_3DVECTOR*>(&pObjectMatrix->pos),
+            &kZeroVector, &kZeroVector);
+    }
+
+private:
+
+    const WORD objectId { NULL };
 
 };
 

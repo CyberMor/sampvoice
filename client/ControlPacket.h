@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -13,17 +13,18 @@
 
 #include <util/Memory.hpp>
 
-struct ControlPacket {
 #pragma pack(push, 1)
 
-	WORD packet;
-	WORD length;
-	BYTE data[];
+struct ControlPacket
+{
+    WORD packet;
+    WORD length;
+    BYTE data[];
 
-	DWORD GetFullSize() const;
+    DWORD GetFullSize() const noexcept;
+};
 
 #pragma pack(pop)
-};
 
 using ControlPacketContainer = Memory::ObjectContainer<ControlPacket>;
 using ControlPacketContainerPtr = Memory::ObjectContainerPtr<ControlPacket>;

@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -15,25 +15,27 @@
 #include "LocalStream.h"
 
 class PointStream : public virtual LocalStream {
+
+    PointStream() = delete;
+    PointStream(const PointStream&) = delete;
+    PointStream(PointStream&&) = delete;
+    PointStream& operator=(const PointStream&) = delete;
+    PointStream& operator=(PointStream&&) = delete;
+
 protected:
 
-	ControlPacketContainerPtr packetStreamUpdatePosition = nullptr;
-
-protected:
-
-	PointStream(const float distance, const CVector& position);
+    explicit PointStream(float distance, const CVector& position);
 
 public:
 
-	PointStream() = delete;
-	PointStream(const PointStream& object) = delete;
-	PointStream(PointStream&& object) = delete;
+    virtual ~PointStream() noexcept = default;
 
-	PointStream& operator=(const PointStream& object) = delete;
-	PointStream& operator=(PointStream&& object) = delete;
+public:
 
-	void UpdatePosition(const CVector& position);
+    void UpdatePosition(const CVector& position);
 
-	virtual ~PointStream();
+protected:
+
+    ControlPacketContainerPtr packetStreamUpdatePosition { nullptr };
 
 };

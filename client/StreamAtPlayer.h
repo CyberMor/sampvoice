@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -23,94 +23,95 @@
 #include "Channel.h"
 
 class StreamAtPlayer : public LocalStream {
-private:
 
-	const WORD playerId;
-
-	void ChannelCreationHandler(const Channel& channel) override {
-
-		this->LocalStream::ChannelCreationHandler(channel);
-
-		const auto pNetGame = SAMP::pNetGame();
-		if (!pNetGame) return;
-
-		const auto pPlayerPool = pNetGame->GetPlayerPool();
-		if (!pPlayerPool) return;
-
-		const auto pPlayer = pPlayerPool->GetPlayer(this->playerId);
-		if (!pPlayer) return;
-
-		const auto pPlayerPed = pPlayer->m_pPed;
-		if (!pPlayerPed) return;
-
-		const auto pPlayerGamePed = pPlayerPed->m_pGamePed;
-		if (!pPlayerGamePed) return;
-
-		const auto pPlayerMatrix = pPlayerGamePed->GetMatrix();
-		if (!pPlayerMatrix) return;
-
-		BASS_ChannelSet3DPosition(
-			channel.handle, (BASS_3DVECTOR*)(&pPlayerMatrix->pos),
-			&BASS_3DVECTOR(0, 0, 0), &BASS_3DVECTOR(0, 0, 0)
-		);
-
-	}
+    StreamAtPlayer() = delete;
+    StreamAtPlayer(const StreamAtPlayer&) = delete;
+    StreamAtPlayer(StreamAtPlayer&&) = delete;
+    StreamAtPlayer& operator=(const StreamAtPlayer&) = delete;
+    StreamAtPlayer& operator=(StreamAtPlayer&&) = delete;
 
 public:
 
-	StreamAtPlayer() = delete;
-	StreamAtPlayer(const StreamAtPlayer& object) = delete;
-	StreamAtPlayer(StreamAtPlayer&& object) = delete;
+    explicit StreamAtPlayer(PlayHandlerType&& playHandler, StopHandlerType&& stopHandler,
+                            const std::string& name, const D3DCOLOR color,
+                            const WORD playerId, const float distance)
+        : LocalStream(BASS_SAMPLE_3D | BASS_SAMPLE_MUTEMAX,
+                      std::move(playHandler), std::move(stopHandler),
+                      StreamType::LocalStreamAtPlayer,
+                      name, color, distance)
+        , playerId(playerId) {}
 
-	StreamAtPlayer& operator=(const StreamAtPlayer& object) = delete;
-	StreamAtPlayer& operator=(StreamAtPlayer&& object) = delete;
+    ~StreamAtPlayer() noexcept = default;
 
-	StreamAtPlayer(
-		const PlayHandlerType& playHandler,
-		const StopHandlerType& stopHandler,
-		const std::string& name,
-		const D3DCOLOR color,
-		const WORD playerId,
-		const float distance
-	) :
+public:
 
-		LocalStream(
-			BASS_SAMPLE_3D | BASS_SAMPLE_MUTEMAX,
-			playHandler, stopHandler,
-			StreamType::LocalStreamAtPlayer,
-			name, color, distance
-		),
+    void Tick() noexcept override
+    {
+        this->LocalStream::Tick();
 
-		playerId(playerId)
+        const auto pNetGame = SAMP::pNetGame();
+        if (!pNetGame) return;
 
-	{}
+        const auto pPlayerPool = pNetGame->GetPlayerPool();
+        if (!pPlayerPool) return;
 
-	void Tick() override {
+        const auto pPlayer = pPlayerPool->GetPlayer(this->playerId);
+        if (!pPlayer) return;
 
-		this->LocalStream::Tick();
+        const auto pPlayerPed = pPlayer->m_pPed;
+        if (!pPlayerPed) return;
 
-		const auto pNetGame = SAMP::pNetGame();
-		if (!pNetGame) return;
+        const auto pPlayerGamePed = pPlayerPed->m_pGamePed;
+        if (!pPlayerGamePed) return;
 
-		const auto pPlayerPool = pNetGame->GetPlayerPool();
-		if (!pPlayerPool) return;
+        const auto pPlayerMatrix = pPlayerGamePed->GetMatrix();
+        if (!pPlayerMatrix) return;
 
-		const auto pPlayer = pPlayerPool->GetPlayer(this->playerId);
-		if (!pPlayer) return;
+        for (const auto& iChan : this->channels)
+        {
+            if (iChan->speaker != SV::NonePlayer)
+            {
+                BASS_ChannelSet3DPosition(iChan->handle,
+                    reinterpret_cast<BASS_3DVECTOR*>(&pPlayerMatrix->pos),
+                    nullptr, nullptr);
+            }
+        }
+    }
 
-		const auto pPlayerPed = pPlayer->m_pPed;
-		if (!pPlayerPed) return;
+private:
 
-		const auto pPlayerGamePed = pPlayerPed->m_pGamePed;
-		if (!pPlayerGamePed) return;
+    void ChannelCreationHandler(const Channel& channel) noexcept override
+    {
+        static const BASS_3DVECTOR kZeroVector { 0, 0, 0 };
 
-		const auto pPlayerMatrix = pPlayerGamePed->GetMatrix();
-		if (!pPlayerMatrix) return;
+        this->LocalStream::ChannelCreationHandler(channel);
 
-		for (const auto& iChan : this->channels) if (iChan->speaker != SV::NonePlayer)
-			BASS_ChannelSet3DPosition(iChan->handle, (BASS_3DVECTOR*)(&pPlayerMatrix->pos), nullptr, nullptr);
+        const auto pNetGame = SAMP::pNetGame();
+        if (!pNetGame) return;
 
-	}
+        const auto pPlayerPool = pNetGame->GetPlayerPool();
+        if (!pPlayerPool) return;
+
+        const auto pPlayer = pPlayerPool->GetPlayer(this->playerId);
+        if (!pPlayer) return;
+
+        const auto pPlayerPed = pPlayer->m_pPed;
+        if (!pPlayerPed) return;
+
+        const auto pPlayerGamePed = pPlayerPed->m_pGamePed;
+        if (!pPlayerGamePed) return;
+
+        const auto pPlayerMatrix = pPlayerGamePed->GetMatrix();
+        if (!pPlayerMatrix) return;
+
+        BASS_ChannelSet3DPosition(channel.handle,
+            reinterpret_cast<BASS_3DVECTOR*>(&pPlayerMatrix->pos),
+            &kZeroVector, &kZeroVector);
+    }
+
+private:
+
+    const WORD playerId { NULL };
 
 };
 

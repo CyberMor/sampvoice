@@ -1,140 +1,121 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #include "ImGuiUtil.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_dx9.h>
 #include <imgui/imgui_impl_win32.h>
 
-bool ImGuiUtil::initStatus(false);
-bool ImGuiUtil::win32loadStatus(false);
-bool ImGuiUtil::dx9loadStatus(false);
-bool ImGuiUtil::renderStatus(false);
+bool ImGuiUtil::Init(IDirect3DDevice9* pDevice,
+                     D3DPRESENT_PARAMETERS* pParameters) noexcept
+{
+    assert(pDevice);
+    assert(pParameters);
 
-bool ImGuiUtil::Init(
-	IDirect3DDevice9* pDevice,
-	D3DPRESENT_PARAMETERS* pParameters
-) {
+    if (ImGuiUtil::initStatus)
+        return false;
 
-	assert(pDevice);
-	assert(pParameters);
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
 
-	if (ImGuiUtil::initStatus)
-		return false;
+    ImGui::GetIO().IniFilename = NULL;
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
+    ImGuiUtil::win32loadStatus = ImGui_ImplWin32_Init(pParameters->hDeviceWindow);
+    ImGuiUtil::dx9loadStatus = ImGui_ImplDX9_Init(pDevice);
 
-	ImGui::GetIO().IniFilename = NULL;
-	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    ImGuiUtil::renderStatus = false;
+    ImGuiUtil::initStatus = true;
 
-	ImGuiUtil::win32loadStatus = ImGui_ImplWin32_Init(pParameters->hDeviceWindow);
-	ImGuiUtil::dx9loadStatus = ImGui_ImplDX9_Init(pDevice);
-
-	ImGuiUtil::renderStatus = false;
-
-	return ImGuiUtil::initStatus = true;
-
+    return true;
 }
 
-bool ImGuiUtil::IsInited() {
-
-	return ImGuiUtil::initStatus;
-
+bool ImGuiUtil::IsInited() noexcept
+{
+    return ImGuiUtil::initStatus;
 }
 
-bool ImGuiUtil::RenderBegin() {
+void ImGuiUtil::Free() noexcept
+{
+    ImGuiUtil::RenderEnd();
 
-	if (!ImGuiUtil::initStatus) return false;
-	if (ImGuiUtil::renderStatus) return false;
+    if (!ImGuiUtil::initStatus) return;
 
-	if (ImGuiUtil::dx9loadStatus) ImGui_ImplDX9_NewFrame();
-	if (ImGuiUtil::win32loadStatus) ImGui_ImplWin32_NewFrame();
+    if (ImGuiUtil::dx9loadStatus) ImGui_ImplDX9_Shutdown();
+    if (ImGuiUtil::win32loadStatus) ImGui_ImplWin32_Shutdown();
 
-	ImGui::NewFrame();
+    ImGuiUtil::dx9loadStatus = false;
+    ImGuiUtil::win32loadStatus = false;
 
-	return ImGuiUtil::renderStatus = true;
+    ImGui::DestroyContext();
 
+    ImGuiUtil::initStatus = false;
 }
 
-bool ImGuiUtil::IsRendering() {
+bool ImGuiUtil::RenderBegin() noexcept
+{
+    if (!ImGuiUtil::initStatus) return false;
+    if (ImGuiUtil::renderStatus) return false;
 
-	return ImGuiUtil::renderStatus;
+    if (ImGuiUtil::dx9loadStatus) ImGui_ImplDX9_NewFrame();
+    if (ImGuiUtil::win32loadStatus) ImGui_ImplWin32_NewFrame();
 
+    ImGui::NewFrame();
+
+    ImGuiUtil::renderStatus = true;
+
+    return true;
 }
 
-void ImGuiUtil::RenderEnd() {
-
-	if (!ImGuiUtil::initStatus) return;
-	if (!ImGuiUtil::renderStatus) return;
-
-	ImGui::EndFrame();
-	ImGui::Render();
-
-	if (ImGuiUtil::dx9loadStatus)
-		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-
-	ImGuiUtil::renderStatus = false;
-
+bool ImGuiUtil::IsRendering() noexcept
+{
+    return ImGuiUtil::renderStatus;
 }
 
-LRESULT ImGuiUtil::OnWndMessage(
-	HWND hWnd, UINT uMsg,
-	WPARAM wParam, LPARAM lParam
-) {
+void ImGuiUtil::RenderEnd() noexcept
+{
+    if (!ImGuiUtil::initStatus) return;
+    if (!ImGuiUtil::renderStatus) return;
 
-	extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
+    ImGui::EndFrame();
+    ImGui::Render();
 
-	if (!ImGuiUtil::initStatus) return FALSE;
-	if (!ImGuiUtil::win32loadStatus) return FALSE;
+    if (ImGuiUtil::dx9loadStatus)
+    {
+        ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+    }
 
-	if (uMsg == WM_CHAR) {
-
-		wchar_t wChar = NULL;
-		MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, (char*)(&wParam), 1, &wChar, 1);
-		ImGui::GetIO().AddInputCharacter(wChar);
-
-		return TRUE;
-
-	}
-
-	return ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
-
+    ImGuiUtil::renderStatus = false;
 }
 
-void ImGuiUtil::Free() {
+LRESULT ImGuiUtil::OnWndMessage(HWND hWnd, UINT uMsg,
+                                WPARAM wParam, LPARAM lParam) noexcept
+{
+    if (!ImGuiUtil::initStatus) return FALSE;
+    if (!ImGuiUtil::win32loadStatus) return FALSE;
 
-	ImGuiUtil::RenderEnd();
+    if (uMsg == WM_CHAR)
+    {
+        wchar_t wChar { NULL };
+        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, (char*)(&wParam), 1, &wChar, 1);
+        ImGui::GetIO().AddInputCharacter(wChar);
+        return TRUE;
+    }
 
-	if (!ImGuiUtil::initStatus) return;
-
-	if (ImGuiUtil::dx9loadStatus) {
-
-		ImGui_ImplDX9_Shutdown();
-
-		ImGuiUtil::dx9loadStatus = false;
-
-	}
-
-	if (ImGuiUtil::win32loadStatus) {
-
-		ImGui_ImplWin32_Shutdown();
-
-		ImGuiUtil::win32loadStatus = false;
-
-	}
-
-	ImGui::DestroyContext();
-
-	ImGuiUtil::initStatus = false;
-
+    extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
+    return ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
 }
+
+bool ImGuiUtil::initStatus { false };
+bool ImGuiUtil::win32loadStatus { false };
+bool ImGuiUtil::dx9loadStatus { false };
+bool ImGuiUtil::renderStatus { false };

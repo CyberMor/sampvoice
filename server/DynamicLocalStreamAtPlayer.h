@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -15,23 +15,23 @@
 #include "DynamicStream.h"
 
 class DynamicLocalStreamAtPlayer : public DynamicStream {
+
+    DynamicLocalStreamAtPlayer() = delete;
+    DynamicLocalStreamAtPlayer(const DynamicLocalStreamAtPlayer&) = delete;
+    DynamicLocalStreamAtPlayer(DynamicLocalStreamAtPlayer&&) = delete;
+    DynamicLocalStreamAtPlayer& operator=(const DynamicLocalStreamAtPlayer&) = delete;
+    DynamicLocalStreamAtPlayer& operator=(DynamicLocalStreamAtPlayer&&) = delete;
+
 public:
 
-	DynamicLocalStreamAtPlayer() = delete;
-	DynamicLocalStreamAtPlayer(const DynamicLocalStreamAtPlayer& object) = delete;
-	DynamicLocalStreamAtPlayer(DynamicLocalStreamAtPlayer&& object) = delete;
+    explicit DynamicLocalStreamAtPlayer(float distance, uint32_t maxPlayers,
+                                        uint16_t playerId, uint32_t color,
+                                        const std::string& name);
 
-	DynamicLocalStreamAtPlayer& operator=(const DynamicLocalStreamAtPlayer& object) = delete;
-	DynamicLocalStreamAtPlayer& operator=(DynamicLocalStreamAtPlayer&& object) = delete;
+    ~DynamicLocalStreamAtPlayer() noexcept = default;
 
-	DynamicLocalStreamAtPlayer(
-		const float distance,
-		const uint32_t maxPlayers,
-		const uint16_t playerId,
-		const uint32_t color,
-		const std::string& name
-	);
+public:
 
-	void Tick() override;
+    void Tick() override;
 
 };

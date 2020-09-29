@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -22,62 +22,56 @@
 #include "Channel.h"
 
 class StreamAtPoint : public LocalStream {
-private:
 
-	CVector position;
-
-	void ChannelCreationHandler(const Channel& channel) override {
-
-		this->LocalStream::ChannelCreationHandler(channel);
-
-		BASS_ChannelSet3DPosition(
-			channel.handle, (BASS_3DVECTOR*)(&this->position),
-			&BASS_3DVECTOR(0, 0, 0), &BASS_3DVECTOR(0, 0, 0)
-		);
-
-	}
+    StreamAtPoint() = delete;
+    StreamAtPoint(const StreamAtPoint&) = delete;
+    StreamAtPoint(StreamAtPoint&&) = delete;
+    StreamAtPoint& operator=(const StreamAtPoint&) = delete;
+    StreamAtPoint& operator=(StreamAtPoint&&) = delete;
 
 public:
 
-	StreamAtPoint() = delete;
-	StreamAtPoint(const StreamAtPoint& object) = delete;
-	StreamAtPoint(StreamAtPoint&& object) = delete;
+    explicit StreamAtPoint(PlayHandlerType&& playHandler, StopHandlerType&& stopHandler,
+                           const std::string& name, const D3DCOLOR color,
+                           const CVector& position, const float distance)
+        : LocalStream(BASS_SAMPLE_3D | BASS_SAMPLE_MUTEMAX,
+                      std::move(playHandler), std::move(stopHandler),
+                      StreamType::LocalStreamAtPoint,
+                      name, color, distance)
+        , position(position) {}
 
-	StreamAtPoint& operator=(const StreamAtPoint& object) = delete;
-	StreamAtPoint& operator=(StreamAtPoint&& object) = delete;
+    ~StreamAtPoint() noexcept = default;
 
-	StreamAtPoint(
-		const PlayHandlerType& playHandler,
-		const StopHandlerType& stopHandler,
-		const std::string& name,
-		const D3DCOLOR color,
-		const CVector& position,
-		const float distance
-	) :
+public:
 
-		LocalStream(
-			BASS_SAMPLE_3D | BASS_SAMPLE_MUTEMAX,
-			playHandler, stopHandler,
-			StreamType::LocalStreamAtPoint,
-			name, color, distance
-		),
+    void UpdatePosition(const CVector& position) noexcept
+    {
+        this->position = position;
 
-		position(position)
+        for (const auto& iChan : this->channels)
+        {
+            BASS_ChannelSet3DPosition(iChan->handle,
+                reinterpret_cast<BASS_3DVECTOR*>(&this->position),
+                nullptr, nullptr);
+        }
+    }
 
-	{}
+private:
 
-	void UpdatePosition(const CVector& position) {
+    void ChannelCreationHandler(const Channel& channel) noexcept override
+    {
+        static const BASS_3DVECTOR kZeroVector { 0, 0, 0 };
 
-		this->position = position;
+        this->LocalStream::ChannelCreationHandler(channel);
 
-		for (const auto& iChan : this->channels)
-			BASS_ChannelSet3DPosition(
-				iChan->handle,
-				(BASS_3DVECTOR*)(&this->position),
-				nullptr, nullptr
-			);
+        BASS_ChannelSet3DPosition(channel.handle,
+            reinterpret_cast<BASS_3DVECTOR*>(&this->position),
+            &kZeroVector, &kZeroVector);
+    }
 
-	}
+private:
+
+    CVector position { 0, 0, 0 };
 
 };
 

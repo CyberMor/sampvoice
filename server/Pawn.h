@@ -1,17 +1,17 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
 
-#include <cstdint>
-#include <functional>
 #include <vector>
+#include <memory>
+#include <cstdint>
 #include <string>
 
 #include <pawn/amx/amx.h>
@@ -21,209 +21,235 @@
 #include "LocalStream.h"
 #include "PointStream.h"
 
+class PawnInterface {
+public:
+
+    virtual void    SvInit                         (uint32_t bitrate) = 0;
+
+    virtual uint8_t SvGetVersion                   (uint16_t playerid) = 0;
+
+    // --------------------------------------------------------------------------
+
+    virtual bool    SvHasMicro                     (uint16_t playerid) = 0;
+
+    virtual bool    SvStartRecord                  (uint16_t playerid) = 0;
+
+    virtual bool    SvStopRecord                   (uint16_t playerid) = 0;
+
+    // --------------------------------------------------------------------------
+
+    virtual bool    SvAddKey                       (uint16_t playerid,
+                                                    uint8_t keyid) = 0;
+
+    virtual bool    SvHasKey                       (uint16_t playerid,
+                                                    uint8_t keyid) = 0;
+
+    virtual bool    SvRemoveKey                    (uint16_t playerid,
+                                                    uint8_t keyid) = 0;
+
+    virtual void    SvRemoveAllKeys                (uint16_t playerid) = 0;
+
+    // --------------------------------------------------------------------------
+
+    virtual bool    SvMutePlayerStatus             (uint16_t playerid) = 0;
+
+    virtual void    SvMutePlayerEnable             (uint16_t playerid) = 0;
+
+    virtual void    SvMutePlayerDisable            (uint16_t playerid) = 0;
+
+    // --------------------------------------------------------------------------
+
+    virtual Stream* SvCreateGStream                (uint32_t color,
+                                                    const std::string& name) = 0;
+
+    // --------------------------------------------------------------------------
+
+    virtual Stream* SvCreateSLStreamAtPoint        (float distance,
+                                                    float posx,
+                                                    float posy,
+                                                    float posz,
+                                                    uint32_t color,
+                                                    const std::string& name) = 0;
+
+    virtual Stream* SvCreateSLStreamAtVehicle      (float distance,
+                                                    uint16_t vehicleid,
+                                                    uint32_t color,
+                                                    const std::string& name) = 0;
+
+    virtual Stream* SvCreateSLStreamAtPlayer       (float distance,
+                                                    uint16_t playerid,
+                                                    uint32_t color,
+                                                    const std::string& name) = 0;
+
+    virtual Stream* SvCreateSLStreamAtObject       (float distance,
+                                                    uint16_t objectid,
+                                                    uint32_t color,
+                                                    const std::string& name) = 0;
+
+    // --------------------------------------------------------------------------
+
+    virtual Stream* SvCreateDLStreamAtPoint        (float distance,
+                                                    uint32_t maxplayers,
+                                                    float posx,
+                                                    float posy,
+                                                    float posz,
+                                                    uint32_t color,
+                                                    const std::string& name) = 0;
+
+    virtual Stream* SvCreateDLStreamAtVehicle      (float distance,
+                                                    uint32_t maxplayers,
+                                                    uint16_t vehicleid,
+                                                    uint32_t color,
+                                                    const std::string& name) = 0;
+
+    virtual Stream* SvCreateDLStreamAtPlayer       (float distance,
+                                                    uint32_t maxplayers,
+                                                    uint16_t playerid,
+                                                    uint32_t color,
+                                                    const std::string& name) = 0;
+
+    virtual Stream* SvCreateDLStreamAtObject       (float distance,
+                                                    uint32_t maxplayers,
+                                                    uint16_t objectid,
+                                                    uint32_t color,
+                                                    const std::string& name) = 0;
+
+    // --------------------------------------------------------------------------
+
+    virtual void    SvUpdatePositionForLPStream    (PointStream* lpstream,
+                                                    float posx,
+                                                    float posy,
+                                                    float posz) = 0;
+
+    virtual void    SvUpdateDistanceForLStream     (LocalStream* lstream,
+                                                    float distance) = 0;
+
+    // --------------------------------------------------------------------------
+
+    virtual bool    SvAttachListenerToStream       (Stream* stream,
+                                                    uint16_t playerid) = 0;
+
+    virtual bool    SvHasListenerInStream          (Stream* stream,
+                                                    uint16_t playerid) = 0;
+
+    virtual bool    SvDetachListenerFromStream     (Stream* stream,
+                                                    uint16_t playerid) = 0;
+
+    virtual void    SvDetachAllListenersFromStream (Stream* stream) = 0;
+
+    // --------------------------------------------------------------------------
+
+    virtual bool    SvAttachSpeakerToStream        (Stream* stream,
+                                                    uint16_t playerid) = 0;
+
+    virtual bool    SvHasSpeakerInStream           (Stream* stream,
+                                                    uint16_t playerid) = 0;
+
+    virtual bool    SvDetachSpeakerFromStream      (Stream* stream,
+                                                    uint16_t playerid) = 0;
+
+    virtual void    SvDetachAllSpeakersFromStream  (Stream* stream) = 0;
+
+    // --------------------------------------------------------------------------
+
+    virtual void    SvDeleteStream                 (Stream* stream) = 0;
+
+};
+
+using PawnInterfacePtr = std::unique_ptr<PawnInterface>;
+
 class Pawn {
 public:
 
-	using InitHandlerType							= std::function<void(const uint32_t)>;
-	using GetVersionHandlerType						= std::function<uint8_t(const uint16_t)>;
+    static bool Init(PawnInterfacePtr&& pInterface) noexcept;
+    static void Free() noexcept;
 
-	using HasMicroHandlerType						= std::function<bool(const uint16_t)>;
-	using StartRecordHandlerType					= std::function<bool(const uint16_t)>;
-	using StopRecordHandlerType						= std::function<bool(const uint16_t)>;
+    static void RegisterScript(AMX* amx);
 
-	using AddKeyHandlerType							= std::function<bool(const uint16_t, const uint8_t)>;
-	using HasKeyHandlerType							= std::function<bool(const uint16_t, const uint8_t)>;
-	using RemoveKeyHandlerType						= std::function<bool(const uint16_t, const uint8_t)>;
-	using RemoveAllKeysHandlerType					= std::function<void(const uint16_t)>;
-
-	using MutePlayerStatusHandlerType				= std::function<bool(const uint16_t)>;
-	using MutePlayerEnableHandlerType				= std::function<void(const uint16_t)>;
-	using MutePlayerDisableHandlerType				= std::function<void(const uint16_t)>;
-
-	using CreateGStreamHandlerType					= std::function<Stream* (const uint32_t, const std::string&)>;
-	using CreateSLStreamAtPointHandlerType			= std::function<Stream* (const float, const float, const float, const float, const uint32_t, const std::string&)>;
-	using CreateSLStreamAtVehicleHandlerType		= std::function<Stream* (const float, const uint16_t, const uint32_t, const std::string&)>;
-	using CreateSLStreamAtPlayerHandlerType			= std::function<Stream* (const float, const uint16_t, const uint32_t, const std::string&)>;
-	using CreateSLStreamAtObjectHandlerType			= std::function<Stream* (const float, const uint16_t, const uint32_t, const std::string&)>;
-	using CreateDLStreamAtPointHandlerType			= std::function<Stream* (const float, const uint32_t, const float, const float, const float, const uint32_t, const std::string&)>;
-	using CreateDLStreamAtVehicleHandlerType		= std::function<Stream* (const float, const uint32_t, const uint16_t, const uint32_t, const std::string&)>;
-	using CreateDLStreamAtPlayerHandlerType			= std::function<Stream* (const float, const uint32_t, const uint16_t, const uint32_t, const std::string&)>;
-	using CreateDLStreamAtObjectHandlerType			= std::function<Stream* (const float, const uint32_t, const uint16_t, const uint32_t, const std::string&)>;
-
-	using UpdatePositionForLPStreamHandlerType		= std::function<void(PointStream* const, const float, const float, const float)>;
-	using UpdateDistanceForLStreamHandlerType		= std::function<void(LocalStream* const, const float)>;
-
-	using AttachListenerToStreamHandlerType			= std::function<bool(Stream* const, const uint16_t)>;
-	using HasListenerInStreamHandlerType			= std::function<bool(Stream* const, const uint16_t)>;
-	using DetachListenerFromStreamHandlerType		= std::function<bool(Stream* const, const uint16_t)>;
-	using DetachAllListenersFromStreamHandlerType	= std::function<void(Stream* const)>;
-
-	using AttachSpeakerToStreamHandlerType			= std::function<bool(Stream* const, const uint16_t)>;
-	using HasSpeakerInStreamHandlerType				= std::function<bool(Stream* const, const uint16_t)>;
-	using DetachSpeakerFromStreamHandlerType		= std::function<bool(Stream* const, const uint16_t)>;
-	using DetachAllSpeakersFromStreamHandlerType	= std::function<void(Stream* const)>;
-
-	using DeleteStreamHandlerType					= std::function<void(Stream* const)>;
+    static void OnPlayerActivationKeyPressForAll(uint16_t playerid, uint8_t keyid) noexcept;
+    static void OnPlayerActivationKeyReleaseForAll(uint16_t playerid, uint8_t keyid) noexcept;
 
 private:
 
-	static InitHandlerType							initHandler;
-	static GetVersionHandlerType					getVersionHandler;
+    static cell AMX_NATIVE_CALL n_SvDebug(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvInit(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvGetVersion(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvHasMicro(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvStartRecord(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvStopRecord(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvAddKey(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvHasKey(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvRemoveKey(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvRemoveAllKeys(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvMutePlayerStatus(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvMutePlayerEnable(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvMutePlayerDisable(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvCreateGStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvCreateSLStreamAtPoint(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvCreateSLStreamAtVehicle(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvCreateSLStreamAtPlayer(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvCreateSLStreamAtObject(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvCreateDLStreamAtPoint(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvCreateDLStreamAtVehicle(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvCreateDLStreamAtPlayer(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvCreateDLStreamAtObject(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvUpdateDistanceForLStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvUpdatePositionForLPStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvAttachListenerToStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvHasListenerInStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvDetachListenerFromStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvDetachAllListenersFromStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvAttachSpeakerToStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvHasSpeakerInStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvDetachSpeakerFromStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvDetachAllSpeakersFromStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvDeleteStream(AMX* amx, cell* params);
 
-	static HasMicroHandlerType						hasMicroHandler;
-	static StartRecordHandlerType					startRecordHandler;
-	static StopRecordHandlerType					stopRecordHandler;
+private:
 
-	static AddKeyHandlerType						addKeyHandler;
-	static HasKeyHandlerType						hasKeyHandler;
-	static RemoveKeyHandlerType						removeKeyHandler;
-	static RemoveAllKeysHandlerType					removeAllKeysHandler;
+    static PawnInterfacePtr pInterface;
 
-	static MutePlayerStatusHandlerType				mutePlayerStatusHandler;
-	static MutePlayerEnableHandlerType				mutePlayerEnableHandler;
-	static MutePlayerDisableHandlerType				mutePlayerDisableHandler;
+    static bool debugStatus;
 
-	static CreateGStreamHandlerType					createGStreamHandler;
-	static CreateSLStreamAtPointHandlerType			createSLStreamAtPointHandler;
-	static CreateSLStreamAtVehicleHandlerType		createSLStreamAtVehicleHandler;
-	static CreateSLStreamAtPlayerHandlerType		createSLStreamAtPlayerHandler;
-	static CreateSLStreamAtObjectHandlerType		createSLStreamAtObjectHandler;
-	static CreateDLStreamAtPointHandlerType			createDLStreamAtPointHandler;
-	static CreateDLStreamAtVehicleHandlerType		createDLStreamAtVehicleHandler;
-	static CreateDLStreamAtPlayerHandlerType		createDLStreamAtPlayerHandler;
-	static CreateDLStreamAtObjectHandlerType		createDLStreamAtObjectHandler;
+private:
 
-	static UpdatePositionForLPStreamHandlerType		updatePositionForLPStreamHandler;
-	static UpdateDistanceForLStreamHandlerType		updateDistanceForLStreamHandler;
+    class AmxCallback {
+    public:
 
-	static AttachListenerToStreamHandlerType		attachListenerToStreamHandler;
-	static HasListenerInStreamHandlerType			hasListenerInStreamHandler;
-	static DetachListenerFromStreamHandlerType		detachListenerFromStreamHandler;
-	static DetachAllListenersFromStreamHandlerType	detachAllListenersFromStreamHandler;
+        AmxCallback() = delete;
+        AmxCallback(const AmxCallback&) noexcept = default;
+        AmxCallback(AmxCallback&&) noexcept = default;
+        AmxCallback& operator=(const AmxCallback&) noexcept = default;
+        AmxCallback& operator=(AmxCallback&&) noexcept = default;
 
-	static AttachSpeakerToStreamHandlerType			attachSpeakerToStreamHandler;
-	static HasSpeakerInStreamHandlerType			hasSpeakerInStreamHandler;
-	static DetachSpeakerFromStreamHandlerType		detachSpeakerFromStreamHandler;
-	static DetachAllSpeakersFromStreamHandlerType	detachAllSpeakersFromStreamHandler;
+    public:
 
-	static DeleteStreamHandlerType					deleteStreamHandler;
+        explicit AmxCallback(AMX* amx, int index) noexcept
+            : amx(amx), index(index) {}
 
-	class AmxCallback {
-	private:
+        ~AmxCallback() noexcept = default;
 
-		AMX* const amx;
-		const int index;
+    public:
 
-	public:
+        template<class... ARGS>
+        cell Call(ARGS... args) const noexcept
+        {
+            cell returnValue { NULL };
 
-		AmxCallback(AMX* const amx, const int index)
-			: amx(amx), index(index) {}
+            (amx_Push(this->amx, static_cast<cell>(args)), ...);
+            amx_Exec(this->amx, &returnValue, this->index);
 
-		template<class... ARGS>
-		inline cell Call(ARGS... args) const {
+            return returnValue;
+        }
 
-			cell returnValue = NULL;
+    private:
 
-			(amx_Push(this->amx, static_cast<cell>(args)), ...); // reverse order of arguments
-			amx_Exec(this->amx, &returnValue, this->index);
+        AMX* amx { nullptr };
+        int index { -1 };
 
-			return returnValue;
+    };
 
-		}
-
-	};
-
-	static bool initStatus;
-	static bool debugStatus;
-
-	static std::vector<AmxCallback> callbacksOnPlayerActivationKeyPress;
-	static std::vector<AmxCallback> callbacksOnPlayerActivationKeyRelease;
-
-	static cell AMX_NATIVE_CALL n_SvDebug(AMX* amx, cell* params);
-
-	static cell AMX_NATIVE_CALL n_SvInit(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvGetVersion(AMX* amx, cell* params);
-
-	static cell AMX_NATIVE_CALL n_SvHasMicro(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvStartRecord(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvStopRecord(AMX* amx, cell* params);
-
-	static cell AMX_NATIVE_CALL n_SvAddKey(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvHasKey(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvRemoveKey(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvRemoveAllKeys(AMX* amx, cell* params);
-
-	static cell AMX_NATIVE_CALL n_SvMutePlayerStatus(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvMutePlayerEnable(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvMutePlayerDisable(AMX* amx, cell* params);
-
-	static cell AMX_NATIVE_CALL n_SvCreateGStream(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvCreateSLStreamAtPoint(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvCreateSLStreamAtVehicle(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvCreateSLStreamAtPlayer(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvCreateSLStreamAtObject(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvCreateDLStreamAtPoint(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvCreateDLStreamAtVehicle(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvCreateDLStreamAtPlayer(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvCreateDLStreamAtObject(AMX* amx, cell* params);
-
-	static cell AMX_NATIVE_CALL n_SvUpdateDistanceForLStream(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvUpdatePositionForLPStream(AMX* amx, cell* params);
-
-	static cell AMX_NATIVE_CALL n_SvAttachListenerToStream(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvHasListenerInStream(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvDetachListenerFromStream(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvDetachAllListenersFromStream(AMX* amx, cell* params);
-
-	static cell AMX_NATIVE_CALL n_SvAttachSpeakerToStream(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvHasSpeakerInStream(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvDetachSpeakerFromStream(AMX* amx, cell* params);
-	static cell AMX_NATIVE_CALL n_SvDetachAllSpeakersFromStream(AMX* amx, cell* params);
-
-	static cell AMX_NATIVE_CALL n_SvDeleteStream(AMX* amx, cell* params);
-
-public:
-
-	static bool Init(
-		const InitHandlerType& initHandler,
-		const GetVersionHandlerType& getVersionHandler,
-		const HasMicroHandlerType& hasMicroHandler,
-		const StartRecordHandlerType& startRecordHandler,
-		const StopRecordHandlerType& stopRecordHandler,
-		const AddKeyHandlerType& addKeyHandler,
-		const HasKeyHandlerType& hasKeyHandler,
-		const RemoveKeyHandlerType& removeKeyHandler,
-		const RemoveAllKeysHandlerType& removeAllKeysHandler,
-		const MutePlayerStatusHandlerType& mutePlayerStatusHandler,
-		const MutePlayerEnableHandlerType& mutePlayerEnableHandler,
-		const MutePlayerDisableHandlerType& mutePlayerDisableHandler,
-		const CreateGStreamHandlerType& createGStreamHandler,
-		const CreateSLStreamAtPointHandlerType& createSLStreamAtPointHandler,
-		const CreateSLStreamAtVehicleHandlerType& createSLStreamAtVehicleHandler,
-		const CreateSLStreamAtPlayerHandlerType& createSLStreamAtPlayerHandler,
-		const CreateSLStreamAtObjectHandlerType& createSLStreamAtObjectHandler,
-		const CreateDLStreamAtPointHandlerType& createDLStreamAtPointHandler,
-		const CreateDLStreamAtVehicleHandlerType& createDLStreamAtVehicleHandler,
-		const CreateDLStreamAtPlayerHandlerType& createDLStreamAtPlayerHandler,
-		const CreateDLStreamAtObjectHandlerType& createDLStreamAtObjectHandler,
-		const UpdatePositionForLPStreamHandlerType& updatePositionForLPStreamHandler,
-		const UpdateDistanceForLStreamHandlerType& updateDistanceForLStreamHandler,
-		const AttachListenerToStreamHandlerType& attachListenerToStreamHandler,
-		const HasListenerInStreamHandlerType& hasListenerInStreamHandler,
-		const DetachListenerFromStreamHandlerType& detachListenerFromStreamHandler,
-		const DetachAllListenersFromStreamHandlerType& detachAllListenersFromStreamHandler,
-		const AttachSpeakerToStreamHandlerType& attachSpeakerToStreamHandler,
-		const HasSpeakerInStreamHandlerType& hasSpeakerInStreamHandler,
-		const DetachSpeakerFromStreamHandlerType& detachSpeakerFromStreamHandler,
-		const DetachAllSpeakersFromStreamHandlerType& detachAllSpeakersFromStreamHandler,
-		const DeleteStreamHandlerType& deleteStreamHandler
-	);
-
-	static void OnPlayerActivationKeyPressForAll(const uint16_t playerid, const uint8_t keyid);
-	static void OnPlayerActivationKeyReleaseForAll(const uint16_t playerid, const uint8_t keyid);
-
-	static void RegisterScript(AMX* const amx);
-
-	static void Free();
+    static std::vector<AmxCallback> callbacksOnPlayerActivationKeyPress;
+    static std::vector<AmxCallback> callbacksOnPlayerActivationKeyRelease;
 
 };

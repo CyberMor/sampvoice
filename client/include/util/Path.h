@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -13,21 +13,30 @@
 #include <string>
 
 class Path {
-private:
+public:
 
-	std::string pathString;
+    Path(const Path&) = default;
+    Path(Path&&) noexcept = default;
+    Path& operator=(const Path&) = default;
+    Path& operator=(Path&&) noexcept = default;
 
 public:
 
-	Path();
+    explicit Path();
 
-	operator const char* () const;
-	operator const std::string& () const;
+public:
 
-	Path& operator/(const std::string& rPath);
-	Path& operator+(const std::string& cName);
+    operator const char* () const noexcept;
+    operator const std::string& () const noexcept;
+
+    Path& operator/(const std::string& rPath);
+    Path& operator+(const std::string& cName);
+
+private:
+
+    std::string pathString;
 
 };
 
-typedef std::shared_ptr<Path> PathPtr;
+using PathPtr = std::shared_ptr<Path>;
 #define MakePath std::make_shared<Path>

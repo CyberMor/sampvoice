@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -15,71 +15,70 @@
 #include <util/Texture.h>
 
 class MicroIcon {
-public:
 
-	static constexpr float BaseIconSize = 35.f;
-	static constexpr float BaseIconPadding = 15.f;
+    static constexpr float kBaseIconSize = 35.f;
+    static constexpr float kBaseIconPadding = 15.f;
 
-	static constexpr int AlphaLevelIncrementDeviation = 12;
-	static constexpr int AlphaLevelDecrementDeviation = -12;
+    static constexpr int kAlphaLevelIncrementDeviation = 12;
+    static constexpr int kAlphaLevelDecrementDeviation = -12;
 
 private:
 
-	static bool initStatus;
-	static bool showStatus;
+    static bool initStatus;
+    static bool showStatus;
 
-	static int alphaLevelPassiveIcon;
-	static int alphaLevelDeviationPassiveIcon;
-	static TexturePtr tPassiveIcon;
+    static int alphaLevelPassiveIcon;
+    static int alphaLevelDeviationPassiveIcon;
+    static TexturePtr tPassiveIcon;
 
-	static int alphaLevelActiveIcon;
-	static int alphaLevelDeviationActiveIcon;
-	static TexturePtr tActiveIcon;
+    static int alphaLevelActiveIcon;
+    static int alphaLevelDeviationActiveIcon;
+    static TexturePtr tActiveIcon;
 
-	static int alphaLevelMutedIcon;
-	static int alphaLevelDeviationMutedIcon;
-	static TexturePtr tMutedIcon;
+    static int alphaLevelMutedIcon;
+    static int alphaLevelDeviationMutedIcon;
+    static TexturePtr tMutedIcon;
 
 public:
 
-	static bool Init(
-		IDirect3DDevice9* pDevice,
-		const Resource& rPassiveIcon,
-		const Resource& rActiveIcon,
-		const Resource& rMutedIcon
-	);
+    static bool Init(
+        IDirect3DDevice9* pDevice,
+        const Resource& rPassiveIcon,
+        const Resource& rActiveIcon,
+        const Resource& rMutedIcon
+    ) noexcept;
 
-	static int GetMicroIconPositionX();
-	static int GetMicroIconPositionY();
-	static D3DCOLOR GetMicroIconColor();
-	static float GetMicroIconAngle();
-	static float GetMicroIconScale();
+    static int GetMicroIconPositionX() noexcept;
+    static int GetMicroIconPositionY() noexcept;
+    static D3DCOLOR GetMicroIconColor() noexcept;
+    static float GetMicroIconAngle() noexcept;
+    static float GetMicroIconScale() noexcept;
 
-	static void SetMicroIconPositionX(int x);
-	static void SetMicroIconPositionY(int y);
-	static void SetMicroIconPosition(int x, int y);
-	static void SetMicroIconColor(D3DCOLOR color);
-	static void SetMicroIconAngle(float angle);
-	static void SetMicroIconScale(float scale);
+    static void SetMicroIconPositionX(int x) noexcept;
+    static void SetMicroIconPositionY(int y) noexcept;
+    static void SetMicroIconPosition(int x, int y) noexcept;
+    static void SetMicroIconColor(D3DCOLOR color) noexcept;
+    static void SetMicroIconAngle(float angle) noexcept;
+    static void SetMicroIconScale(float scale) noexcept;
 
-	static void ResetConfigs();
-	static void SyncConfigs();
+    static void ResetConfigs() noexcept;
+    static void SyncConfigs() noexcept;
 
-	static void SetPassiveIcon();
-	static void SetActiveIcon();
-	static void SetMutedIcon();
+    static void SetPassiveIcon() noexcept;
+    static void SetActiveIcon() noexcept;
+    static void SetMutedIcon() noexcept;
 
-	static void SwitchToPassiveIcon();
-	static void SwitchToActiveIcon();
-	static void SwitchToMutedIcon();
+    static void SwitchToPassiveIcon() noexcept;
+    static void SwitchToActiveIcon() noexcept;
+    static void SwitchToMutedIcon() noexcept;
 
-	static void Render();
-	static void Update();
+    static void Render() noexcept;
+    static void Update() noexcept;
 
-	static void Show();
-	static bool IsShowed();
-	static void Hide();
+    static void Show() noexcept;
+    static bool IsShowed() noexcept;
+    static void Hide() noexcept;
 
-	static void Free();
+    static void Free() noexcept;
 
 };

@@ -1,13 +1,15 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #include "LocalStream.h"
+
+#include <cassert>
 
 #include <ysf/globals.h>
 
@@ -15,30 +17,29 @@
 #include "PlayerStore.h"
 #include "Header.h"
 
-LocalStream::LocalStream(const float distance) {
+LocalStream::LocalStream(const float distance)
+{
+    PackWrap(this->packetStreamUpdateDistance, SV::ControlPacketType::updateLPStreamDistance, sizeof(SV::UpdateLPStreamDistancePacket));
 
-	if (PackWrap(this->packetStreamUpdateDistance, SV::ControlPacketType::updateLPStreamDistance, sizeof(SV::UpdateLPStreamDistancePacket))) {
-
-		PackGetStruct(&*this->packetStreamUpdateDistance, SV::UpdateLPStreamDistancePacket)->stream = (uint32_t)(static_cast<Stream*>(this));
-		PackGetStruct(&*this->packetStreamUpdateDistance, SV::UpdateLPStreamDistancePacket)->distance = distance;
-
-	}
-
+    PackGetStruct(&*this->packetStreamUpdateDistance, SV::UpdateLPStreamDistancePacket)->stream = reinterpret_cast<uint32_t>(static_cast<Stream*>(this));
+    PackGetStruct(&*this->packetStreamUpdateDistance, SV::UpdateLPStreamDistancePacket)->distance = distance;
 }
 
-void LocalStream::UpdateDistance(const float distance) {
+void LocalStream::UpdateDistance(const float distance)
+{
+    assert(pNetGame);
+    assert(pNetGame->pPlayerPool);
 
-	if (!this->packetStreamUpdateDistance) return;
+    PackGetStruct(&*this->packetStreamUpdateDistance, SV::UpdateLPStreamDistancePacket)->distance = distance;
 
-	PackGetStruct(&*this->packetStreamUpdateDistance, SV::UpdateLPStreamDistancePacket)->distance = distance;
+    if (pNetGame->pPlayerPool->dwConnectedPlayers)
+    {
+        const auto playerPoolSize = pNetGame->pPlayerPool->dwPlayerPoolSize;
 
-	const auto playerPoolSize = pNetGame->pPlayerPool->dwPlayerPoolSize;
-	const auto connectedPlayers = pNetGame->pPlayerPool->dwConnectedPlayers;
-
-	if (connectedPlayers) for (uint16_t iPlayerId = 0; iPlayerId <= playerPoolSize; ++iPlayerId)
-		if (this->attachedListeners[iPlayerId].load() && PlayerStore::IsPlayerHasPlugin(iPlayerId))
-			Network::SendControlPacket(iPlayerId, *&*this->packetStreamUpdateDistance);
-
+        for (uint16_t iPlayerId = 0; iPlayerId <= playerPoolSize; ++iPlayerId)
+        {
+            if (this->HasListener(iPlayerId) && PlayerStore::IsPlayerConnected(iPlayerId))
+                Network::SendControlPacket(iPlayerId, *&*this->packetStreamUpdateDistance);
+        }
+    }
 }
-
-LocalStream::~LocalStream() {}

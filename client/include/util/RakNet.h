@@ -1,10 +1,10 @@
 ﻿/*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -20,237 +20,180 @@
 #include "Logger.h"
 
 class RakNet {
+
+    using ConnectHandlerType = std::function<void(const char* ip, uint16_t host)>;
+    using PacketIncomingHandlerType = std::function<bool(Packet* packet)>;
+    using PacketOutcomingHandlerType = std::function<bool(BitStream* data)>;
+    using RpcOutcomingHandlerType = std::function<bool(int rpc, BitStream* data)>;
+    using DisconnectHandlerType = std::function<void()>;
+
 public:
 
-	using ConnectHandlerType         = std::function<void(const char*, uint16_t)>;
-	using PacketIncomingHandlerType  = std::function<bool(Packet*)>;
-	using PacketOutcomingHandlerType = std::function<bool(BitStream*)>;
-	using RpcOutcomingHandlerType    = std::function<bool(int, BitStream*)>;
-	using DisconnectHandlerType      = std::function<void()>;
+    static bool Init(
+        const AddressesBase& addrBase,
+        ConnectHandlerType&& connectHandler,
+        PacketIncomingHandlerType&& packetIncomingHandler,
+        PacketOutcomingHandlerType&& packetOutcomingHandler,
+        RpcOutcomingHandlerType&& rpcOutcomingHandler,
+        DisconnectHandlerType&& disconnectHandler
+    ) noexcept;
+
+    static bool IsInited() noexcept;
+    static bool IsLoaded() noexcept;
+    static bool IsConnected() noexcept;
+
+    static bool Send(BitStream* bitStream) noexcept;
+
+    static void Free() noexcept;
 
 private:
 
-	static bool initStatus;
-	static bool loadStatus;
-	static bool connectStatus;
-
-	static ConnectHandlerType connectHandler;
-	static PacketIncomingHandlerType packetIncomingHandler;
-	static PacketOutcomingHandlerType packetOutcomingHandler;
-	static RpcOutcomingHandlerType rpcOutcomingHandler;
-	static DisconnectHandlerType disconnectHandler;
-
-	static RakClientInterface* pRakClientInterface;
-	static RakClientInterface** ppRakClientInterface;
-
-	static Memory::JumpHookPtr rakClientInitHook;
-	static Memory::JumpHookPtr sampDestructHook;
-
-	class RakClientHookInterface : public RakClientInterface {
-	private:
-
-		RakClientInterface* const pOrigInterface;
-
-	public:
-
-		RakClientHookInterface(RakClientInterface* pOrigInterface);
-
-		bool RPC(
-			int* rpcIdPointer,
-			BitStream* parameters,
-			PacketPriority priority,
-			PacketReliability reliability,
-			char orderingChannel,
-			bool shiftTimestamp
-		);
-
-		bool Send(
-			BitStream* bitStream,
-			PacketPriority priority,
-			PacketReliability reliability,
-			char orderingChannel
-		);
-
-		Packet* Receive();
-
-		bool Connect(
-			const char* hostIp,
-			unsigned short serverPort,
-			unsigned short clientPort,
-			unsigned int depreciated,
-			int threadSleepTimer
-		);
-
-		void Disconnect(
-			unsigned int blockDuration,
-			unsigned char orderingChannel
-		);
-
-		void InitializeSecurity(
-			const char* privateKeyP,
-			const char* privateKeyQ
-		);
-
-		void SetPassword(const char* password);
-
-		bool HasPassword();
-
-		bool Send(
-			const char* dataPointer,
-			const int dataLength,
-			PacketPriority priority,
-			PacketReliability reliability,
-			char orderingChannel
-		);
-
-		void DeallocatePacket(Packet* packetPointer);
-
-		void PingServer();
-
-		void PingServer(
-			const char* hostIp,
-			unsigned short serverPort,
-			unsigned short clientPort,
-			bool onlyReplyOnAcceptingConnections
-		);
-
-		int GetAveragePing();
-
-		int GetLastPing();
-
-		int GetLowestPing();
-
-		int GetPlayerPing(PlayerID playerId);
-
-		void StartOccasionalPing();
-
-		void StopOccasionalPing();
-
-		bool IsConnected();
-
-		unsigned int GetSynchronizedRandomInteger();
-
-		bool GenerateCompressionLayer(unsigned int inputFrequencyTable[256], bool inputLayer);
-
-		bool DeleteCompressionLayer(bool inputLayer);
-
-		void RegisterAsRemoteProcedureCall(int* rpcIdPointer, RPCFunction rpcHandler);
-
-		void RegisterClassMemberRPC(int* rpcIdPointer, void* rpcHandler);
-
-		void UnregisterAsRemoteProcedureCall(int* rpcIdPointer);
-
-		bool RPC(
-			int* rpcIdPointer,
-			const char* dataPointer,
-			unsigned int bitLength,
-			PacketPriority priority,
-			PacketReliability reliability,
-			char orderingChannel,
-			bool shiftTimestamp
-		);
-
-		void SetTrackFrequencyTable(bool trackFrequencyTable);
-
-		bool GetSendFrequencyTable(unsigned int outputFrequencyTable[256]);
-
-		float GetCompressionRatio();
-		float GetDecompressionRatio();
-
-		void AttachPlugin(void* messageHandler);
-		void DetachPlugin(void* messageHandler);
-
-		BitStream* GetStaticServerData();
-
-		void SetStaticServerData(
-			const char* dataPointer,
-			const int dataLength
-		);
-
-		BitStream* GetStaticClientData(PlayerID playerId);
-
-		void SetStaticClientData(
-			const PlayerID playerId,
-			const char* dataPointer,
-			const int dataLength
-		);
-
-		void SendStaticClientDataToServer();
-
-		PlayerID GetServerID();
-
-		PlayerID GetPlayerID();
-
-		PlayerID GetInternalID();
-
-		const char* PlayerIDToDottedIP(PlayerID playerId);
-
-		void PushBackPacket(Packet* packetPointer, bool pushAtHead);
-
-		void SetRouterInterface(void* routerInterface);
-
-		void RemoveRouterInterface(void* routerInterface);
-
-		void SetTimeoutTime(RakNetTime timeMs);
-
-		bool SetMTUSize(int mtuSize);
-
-		int GetMTUSize();
-
-		void AllowConnectionResponseIPMigration(bool allowConnectionResponseIpMigration);
-
-		void AdvertiseSystem(
-			const char* hostIp,
-			unsigned short hostPort,
-			const char* dataPointer,
-			int dataLength
-		);
-
-		RakNetStatisticsStruct* GetStatistics();
-
-		void ApplyNetworkSimulator(
-			double maxSendBps,
-			unsigned short minExtraPing,
-			unsigned short extraPingVariance
-		);
-
-		bool IsNetworkSimulatorActive();
-
-		PlayerIndex GetPlayerIndex();
-
-		bool RPC_(
-			int* rpcIdPointer,
-			BitStream* bitStream,
-			PacketPriority priority,
-			PacketReliability reliability,
-			char orderingChannel,
-			bool shiftTimestamp,
-			NetworkID networkId
-		);
-
-	};
-
-	static void SampDestructHookFunc();
-	static RakClientHookInterface* MakeHookInterface();
-	static void RakClientInitHookFunc();
-
-public:
-
-	static bool Init(
-		const AddressesBase& addrBase,
-		const ConnectHandlerType& connectHandler,
-		const PacketIncomingHandlerType& packetIncomingHandler,
-		const PacketOutcomingHandlerType& packetOutcomingHandler,
-		const RpcOutcomingHandlerType& rpcOutcomingHandler,
-		const DisconnectHandlerType& disconnectHandler
-	);
-
-	static bool IsInited();
-	static bool IsLoaded();
-	static bool IsConnected();
-
-	static bool Send(BitStream* bitStream);
-
-	static void Free();
+    class RakClientHookInterface : public RakClientInterface {
+    public:
+
+        explicit RakClientHookInterface(RakClientInterface* pOrigInterface) noexcept;
+
+        // RakClient Interface methods...
+        // ------------------------------------------------
+
+        bool RPC(
+            int* rpcIdPointer,
+            BitStream* parameters,
+            PacketPriority priority,
+            PacketReliability reliability,
+            char orderingChannel,
+            bool shiftTimestamp
+        ) noexcept override;
+
+        bool Send(
+            BitStream* bitStream,
+            PacketPriority priority,
+            PacketReliability reliability,
+            char orderingChannel
+        ) noexcept override;
+
+        Packet* Receive() noexcept override;
+
+        bool Connect(
+            const char* hostIp,
+            uint16_t serverPort,
+            uint16_t clientPort,
+            uint32_t depreciated,
+            int threadSleepTimer
+        ) noexcept override;
+
+        void Disconnect(uint32_t blockDuration, uint8_t orderingChannel) noexcept override;
+        void InitializeSecurity(const char* privateKeyP, const char* privateKeyQ) noexcept override;
+        void SetPassword(const char* password) noexcept override;
+        bool HasPassword() noexcept override;
+
+        bool Send(
+            const char* dataPointer,
+            int dataLength,
+            PacketPriority priority,
+            PacketReliability reliability,
+            char orderingChannel
+        ) noexcept override;
+
+        void DeallocatePacket(Packet* packetPointer) noexcept override;
+        void PingServer() noexcept override;
+
+        void PingServer(
+            const char* hostIp,
+            uint16_t serverPort,
+            uint16_t clientPort,
+            bool onlyReplyOnAcceptingConnections
+        ) noexcept override;
+
+        int GetAveragePing() noexcept override;
+        int GetLastPing() noexcept override;
+        int GetLowestPing() noexcept override;
+        int GetPlayerPing(PlayerID playerId) noexcept override;
+        void StartOccasionalPing() noexcept override;
+        void StopOccasionalPing() noexcept override;
+        bool IsConnected() noexcept override;
+        uint32_t GetSynchronizedRandomInteger() noexcept override;
+        bool GenerateCompressionLayer(uint32_t inputFrequencyTable[256], bool inputLayer) noexcept override;
+        bool DeleteCompressionLayer(bool inputLayer) noexcept override;
+        void RegisterAsRemoteProcedureCall(int* rpcIdPointer, RPCFunction rpcHandler) noexcept override;
+        void RegisterClassMemberRPC(int* rpcIdPointer, void* rpcHandler) noexcept override;
+        void UnregisterAsRemoteProcedureCall(int* rpcIdPointer) noexcept override;
+
+        bool RPC(
+            int* rpcIdPointer,
+            const char* dataPointer,
+            uint32_t bitLength,
+            PacketPriority priority,
+            PacketReliability reliability,
+            char orderingChannel,
+            bool shiftTimestamp
+        ) noexcept override;
+
+        void SetTrackFrequencyTable(bool trackFrequencyTable) noexcept override;
+        bool GetSendFrequencyTable(uint32_t outputFrequencyTable[256]) noexcept override;
+        float GetCompressionRatio() noexcept override;
+        float GetDecompressionRatio() noexcept override;
+        void AttachPlugin(void* messageHandler) noexcept override;
+        void DetachPlugin(void* messageHandler) noexcept override;
+        BitStream* GetStaticServerData() noexcept override;
+        void SetStaticServerData(const char* dataPointer, int dataLength) noexcept override;
+        BitStream* GetStaticClientData(PlayerID playerId) noexcept override;
+        void SetStaticClientData(PlayerID playerId, const char* dataPointer, int dataLength) noexcept override;
+        void SendStaticClientDataToServer() noexcept override;
+        PlayerID GetServerID() noexcept override;
+        PlayerID GetPlayerID() noexcept override;
+        PlayerID GetInternalID() noexcept override;
+        const char* PlayerIDToDottedIP(PlayerID playerId) noexcept override;
+        void PushBackPacket(Packet* packetPointer, bool pushAtHead) noexcept override;
+        void SetRouterInterface(void* routerInterface) noexcept override;
+        void RemoveRouterInterface(void* routerInterface) noexcept override;
+        void SetTimeoutTime(RakNetTime timeMs) noexcept override;
+        bool SetMTUSize(int mtuSize) noexcept override;
+        int GetMTUSize() noexcept override;
+        void AllowConnectionResponseIPMigration(bool allowConnectionResponseIpMigration) noexcept override;
+        void AdvertiseSystem(const char* hostIp, uint16_t hostPort, const char* dataPointer, int dataLength) noexcept override;
+        RakNetStatisticsStruct* GetStatistics() noexcept override;
+        void ApplyNetworkSimulator(double maxSendBps, uint16_t minExtraPing, uint16_t extraPingVariance) noexcept override;
+        bool IsNetworkSimulatorActive() noexcept override;
+        PlayerIndex GetPlayerIndex() noexcept override;
+
+        bool RPC_(
+            int* rpcIdPointer,
+            BitStream* bitStream,
+            PacketPriority priority,
+            PacketReliability reliability,
+            char orderingChannel,
+            bool shiftTimestamp,
+            NetworkID networkId
+        ) noexcept override;
+
+    private:
+
+        RakClientInterface* pOrigInterface { nullptr };
+
+    };
+
+private:
+
+    static void SampDestructHookFunc() noexcept;
+    static void RakClientInitHookFunc() noexcept;
+
+private:
+
+    static bool initStatus;
+    static bool loadStatus;
+    static bool connectStatus;
+
+    static ConnectHandlerType connectHandler;
+    static PacketIncomingHandlerType packetIncomingHandler;
+    static PacketOutcomingHandlerType packetOutcomingHandler;
+    static RpcOutcomingHandlerType rpcOutcomingHandler;
+    static DisconnectHandlerType disconnectHandler;
+
+    static RakClientInterface* pRakClientInterface;
+    static RakClientInterface** ppRakClientInterface;
+
+    static Memory::JumpHookPtr rakClientInitHook;
+    static Memory::JumpHookPtr sampDestructHook;
 
 };

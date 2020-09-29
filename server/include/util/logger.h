@@ -1,80 +1,80 @@
 ﻿/*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
 
-#include <mutex>
-#include <iostream>
 #include <ctime>
+#include <iostream>
+#include <mutex>
 
 #include <ysf/globals.h>
 
 class Logger {
-private:
 
-	static FILE* logFile;
-	static logprintf_t logFunc;
-
-	static std::mutex logFileMutex;
-	static std::mutex logConsoleMutex;
+    Logger() = delete;
+    ~Logger() = delete;
+    Logger(const Logger&) = delete;
+    Logger(Logger&&) = delete;
+    Logger& operator=(const Logger&) = delete;
+    Logger& operator=(Logger&&) = delete;
 
 public:
 
-	template<class... ARGS>
-	static void LogToFile(const char* message, const ARGS... args) {
+    static bool Init(const char* logFile, logprintf_t logFunc) noexcept;
+    static void Free() noexcept;
 
-		const std::lock_guard<std::mutex> lock(Logger::logFileMutex);
+    template<class... ARGS>
+    static bool LogToFile(const char* message, const ARGS... args) noexcept
+    {
+        const std::lock_guard<std::mutex> lock { Logger::logFileMutex };
 
-		if (!Logger::logFile) return;
+        if (!Logger::logFile) return false;
 
-		const auto cTime = time(nullptr);
-		const auto timeOfDay = localtime(&cTime);
+        const auto cTime = std::time(nullptr);
+        const auto timeOfDay = std::localtime(&cTime);
 
-		if (!timeOfDay) return;
+        if (!timeOfDay) return false;
 
-		fprintf(
-			Logger::logFile,
-			"[%.2d:%.2d:%.2d] : ",
-			timeOfDay->tm_hour,
-			timeOfDay->tm_min,
-			timeOfDay->tm_sec
-		);
+        std::fprintf(Logger::logFile, "[%.2d:%.2d:%.2d] : ",
+            timeOfDay->tm_hour, timeOfDay->tm_min, timeOfDay->tm_sec);
+        std::fprintf(Logger::logFile, message, args...);
+        std::fputc('\n', Logger::logFile);
+        std::fflush(Logger::logFile);
 
-		fprintf(
-			Logger::logFile,
-			message, args...
-		);
+        return true;
+    }
 
-		fputc('\n', Logger::logFile);
-		fflush(Logger::logFile);
+    template<class... ARGS>
+    static bool LogToConsole(const char* message, const ARGS... args) noexcept
+    {
+        const std::lock_guard<std::mutex> lock { Logger::logConsoleMutex };
 
-	}
+        if (!Logger::logFunc) return false;
 
-	template<class... ARGS>
-	static void LogToConsole(const char* message, const ARGS... args) {
+        Logger::logFunc(message, args...);
 
-		const std::lock_guard<std::mutex> lock(Logger::logConsoleMutex);
+        return true;
+    }
 
-		if (Logger::logFunc) Logger::logFunc(message, args...);
+    template<class... ARGS>
+    static inline void Log(const char* message, const ARGS... args) noexcept
+    {
+        Logger::LogToFile(message, args...);
+        Logger::LogToConsole(message, args...);
+    }
 
-	}
+private:
 
-	template<class... ARGS>
-	static inline void Log(const char* message, const ARGS... args) {
+    static FILE* logFile;
+    static logprintf_t logFunc;
 
-		Logger::LogToFile(message, args...);
-		Logger::LogToConsole(message, args...);
-
-	}
-
-	static bool Init(const char* logFile, const logprintf_t logFunc);
-
-	static void Free();
+    static std::mutex logFileMutex;
+    static std::mutex logConsoleMutex;
 
 };

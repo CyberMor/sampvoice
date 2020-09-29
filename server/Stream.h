@@ -1,18 +1,18 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
 
-#include <array>
 #include <atomic>
 #include <cstdint>
 #include <vector>
+#include <array>
 
 #include <ysf/structs.h>
 
@@ -20,41 +20,43 @@
 #include "VoicePacket.h"
 
 class Stream {
-protected:
 
-	int attachedSpeakersCount = 0;
-	int attachedListenersCount = 0;
-
-	std::array<std::atomic_bool, MAX_PLAYERS> attachedSpeakers = {};
-	std::array<std::atomic_bool, MAX_PLAYERS> attachedListeners = {};
-
-	ControlPacketContainerPtr packetCreateStream = nullptr;
-	ControlPacketContainerPtr packetDeleteStream = nullptr;
+    Stream(const Stream&) = delete;
+    Stream(Stream&&) = delete;
+    Stream& operator=(const Stream&) = delete;
+    Stream& operator=(Stream&&) = delete;
 
 protected:
 
-	Stream();
+    explicit Stream();
 
 public:
 
-	Stream(const Stream& object) = delete;
-	Stream(Stream&& object) = delete;
+    virtual ~Stream() noexcept = default;
 
-	Stream& operator=(const Stream& object) = delete;
-	Stream& operator=(Stream&& object) = delete;
+public:
 
-	void PushVoicePacket(VoicePacket& packet);
+    void PushVoicePacket(VoicePacket& packet) const;
 
-	virtual bool AttachListener(const uint16_t playerId);
-	bool HasListener(const uint16_t playerId);
-	virtual bool DetachListener(const uint16_t playerId);
-	virtual void DetachAllListeners(std::vector<uint16_t>& detachedListeners);
+    virtual bool AttachListener(uint16_t playerId);
+    bool HasListener(uint16_t playerId) const noexcept;
+    virtual bool DetachListener(uint16_t playerId);
+    virtual std::vector<uint16_t> DetachAllListeners();
 
-	bool AttachSpeaker(const uint16_t playerId);
-	bool HasSpeaker(const uint16_t playerId);
-	bool DetachSpeaker(const uint16_t playerId);
-	void DetachAllSpeakers(std::vector<uint16_t>& detachedSpeakers);
+    bool AttachSpeaker(uint16_t playerId) noexcept;
+    bool HasSpeaker(uint16_t playerId) const noexcept;
+    bool DetachSpeaker(uint16_t playerId) noexcept;
+    std::vector<uint16_t> DetachAllSpeakers();
 
-	virtual ~Stream();
+protected:
+
+    int attachedSpeakersCount { 0 };
+    int attachedListenersCount { 0 };
+
+    std::array<std::atomic_bool, MAX_PLAYERS> attachedSpeakers {};
+    std::array<std::atomic_bool, MAX_PLAYERS> attachedListeners {};
+
+    ControlPacketContainerPtr packetCreateStream { nullptr };
+    ControlPacketContainerPtr packetDeleteStream { nullptr };
 
 };

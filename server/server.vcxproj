@@ -111,7 +111,7 @@
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
-      <PreprocessorDefinitions>_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDLL;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>

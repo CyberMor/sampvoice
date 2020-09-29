@@ -1,10 +1,10 @@
 ﻿/*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -14,32 +14,53 @@
 #include <Windows.h>
 
 struct AddressesBase {
+public:
 
-	const DWORD baseAddr = NULL;
+    AddressesBase() noexcept = default;
+    AddressesBase(const AddressesBase&) noexcept = default;
+    AddressesBase(AddressesBase&&) noexcept = default;
+    AddressesBase& operator=(const AddressesBase&) noexcept = default;
+    AddressesBase& operator=(AddressesBase&&) noexcept = default;
 
-	const DWORD rcInitAddr = NULL;
+public:
 
-	const DWORD bassInitCallAddr = NULL;
-	const DWORD bassSetConfigAddr = NULL;
+    explicit AddressesBase(DWORD baseAddr) noexcept;
 
-	const DWORD sampInitAddr = NULL;
-	const DWORD sampDestructAddr = NULL;
-	const DWORD sampOpenChatFunc = NULL;
-	const DWORD sampSwitchModeFunc = NULL;
-	const DWORD sampOpenScoreboardFunc = NULL;
-	const DWORD sampCreatePlayerInPoolFunc = NULL;
-	const DWORD sampDeletePlayerFromPoolFunc = NULL;
-	const DWORD sampSpawnLocalPlayerFunc = NULL;
-	const DWORD sampDrawLabelFunc = NULL;
+    ~AddressesBase() noexcept = default;
 
-	AddressesBase() = delete;
+public:
 
-	AddressesBase& operator=(const AddressesBase& object) = delete;
-	AddressesBase& operator=(AddressesBase&& object) = delete;
+    DWORD GetBaseAddr() const noexcept;
+    DWORD GetRcInitAddr() const noexcept;
+    DWORD GetBassInitCallAddr() const noexcept;
+    DWORD GetBassSetConfigAddr() const noexcept;
+    DWORD GetSampInitAddr() const noexcept;
+    DWORD GetSampDestructAddr() const noexcept;
+    DWORD GetSampOpenChatFunc() const noexcept;
+    DWORD GetSampSwitchModeFunc() const noexcept;
+    DWORD GetSampOpenScoreboardFunc() const noexcept;
+    DWORD GetSampCreatePlayerInPoolFunc() const noexcept;
+    DWORD GetSampDeletePlayerFromPoolFunc() const noexcept;
+    DWORD GetSampSpawnLocalPlayerFunc() const noexcept;
+    DWORD GetSampDrawLabelFunc() const noexcept;
 
-	AddressesBase(const DWORD baseAddr);
+private:
+
+    DWORD baseAddr { NULL };
+    DWORD rcInitAddr { NULL };
+    DWORD bassInitCallAddr { NULL };
+    DWORD bassSetConfigAddr { NULL };
+    DWORD sampInitAddr { NULL };
+    DWORD sampDestructAddr { NULL };
+    DWORD sampOpenChatFunc { NULL };
+    DWORD sampSwitchModeFunc { NULL };
+    DWORD sampOpenScoreboardFunc { NULL };
+    DWORD sampCreatePlayerInPoolFunc { NULL };
+    DWORD sampDeletePlayerFromPoolFunc { NULL };
+    DWORD sampSpawnLocalPlayerFunc { NULL };
+    DWORD sampDrawLabelFunc { NULL };
 
 };
 
-typedef std::shared_ptr<AddressesBase> AddressesBasePtr;
+using AddressesBasePtr = std::shared_ptr<AddressesBase>;
 #define MakeAddressesBase std::make_shared<AddressesBase>

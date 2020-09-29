@@ -1,17 +1,17 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
 
-#include <memory>
-#include <functional>
 #include <vector>
+#include <functional>
+#include <memory>
 
 #include <audio/bass.h>
 
@@ -22,140 +22,145 @@
 #include "Channel.h"
 
 class Stream {
-public:
 
-	using PlayHandlerType = std::function<void(const Stream& stream, WORD speaker)>;
-	using StopHandlerType = std::function<void(const Stream& stream, WORD speaker)>;
-
-private:
-
-	const DWORD streamFlags;
-	const StreamInfoPtr streamInfo;
-
-	const PlayHandlerType playHandler;
-	const StopHandlerType stopHandler;
-
-	void OnPlayChannel(const Channel& channel) {
-
-		if (channel.speaker != SV::NonePlayer && this->playHandler)
-			this->playHandler(*this, channel.speaker);
-
-	}
-
-	void OnStopChannel(const Channel& channel) {
-
-		if (channel.speaker != SV::NonePlayer && this->stopHandler)
-			this->stopHandler(*this, channel.speaker);
-
-	}
+    Stream() = delete;
+    Stream(const Stream&) = delete;
+    Stream(Stream&&) = delete;
+    Stream& operator=(const Stream&) = delete;
+    Stream& operator=(Stream&&) = delete;
 
 protected:
 
-	std::vector<ChannelPtr> channels;
-
-	virtual void ChannelCreationHandler(const Channel& channel) {
-
-		BASS_ChannelSetAttribute(channel.handle, BASS_ATTRIB_VOL, 4.f);
-
-	}
+    using PlayHandlerType = std::function<void(const Stream&, const WORD)>;
+    using StopHandlerType = std::function<void(const Stream&, const WORD)>;
 
 public:
 
-	Stream() = delete;
-	Stream(const Stream& object) = delete;
-	Stream(Stream&& object) = delete;
+    explicit Stream(
+        const DWORD streamFlags,
+        PlayHandlerType&& playHandler,
+        StopHandlerType&& stopHandler,
+        const StreamType type,
+        const std::string& name,
+        const D3DCOLOR color
+    ) :
+        streamFlags(streamFlags),
+        streamInfo(MakeStreamInfo(type, name, color)),
+        playHandler(std::move(playHandler)),
+        stopHandler(std::move(stopHandler))
+    {}
 
-	Stream& operator=(const Stream& object) = delete;
-	Stream& operator=(Stream&& object) = delete;
+    virtual ~Stream() noexcept = default;
 
-	Stream(
-		const DWORD streamFlags,
-		const PlayHandlerType& playHandler,
-		const StopHandlerType& stopHandler,
-		const StreamType type,
-		const std::string& name,
-		const D3DCOLOR color
-	) :
+public:
 
-		streamFlags(streamFlags),
-		streamInfo(MakeStreamInfo(type, name, color)),
+    const StreamInfoPtr& GetInfo() const noexcept
+    {
+        return this->streamInfo;
+    }
 
-		playHandler(playHandler),
-		stopHandler(stopHandler)
+    virtual void Tick() noexcept
+    {
+        for (const auto& iChan : this->channels)
+        {
+            if (iChan->speaker != SV::NonePlayer && !iChan->IsActive())
+            {
+                iChan->Reset();
+            }
+        }
+    }
 
-	{}
+    void Push(const VoicePacket& packet)
+    {
+        ChannelPtr channel { nullptr };
 
-	const StreamInfoPtr& GetInfo() const {
+        for (const auto& iChan : this->channels)
+        {
+            if (iChan->speaker == packet.sender)
+            {
+                channel = iChan;
+                break;
+            }
+        }
 
-		return this->streamInfo;
+        if (!channel) for (const auto& iChan : this->channels)
+        {
+            if (iChan->speaker == SV::NonePlayer)
+            {
+                Logger::LogToFile(
+                    "[sv:dbg:stream_%p:push] : channel %p was occupied by player %hu",
+                    this, iChan.get(), packet.sender);
 
-	}
+                iChan->speaker = packet.sender;
 
-	virtual void Tick() {
+                channel = iChan;
+                break;
+            }
+        }
 
-		for (const auto& iChan : this->channels)
-			if (iChan->speaker != SV::NonePlayer && !iChan->IsActive())
-				iChan->Reset();
+        if (!channel)
+        {
+            channel = MakeChannel(this->streamFlags,
+                std::bind(&Stream::OnPlayChannel, this, std::placeholders::_1),
+                std::bind(&Stream::OnStopChannel, this, std::placeholders::_1),
+                packet.sender);
 
-	}
+            Logger::LogToFile(
+                "[sv:dbg:stream_%p:push] : channel %p for player %hu created",
+                this, channel.get(), packet.sender);
 
-	void Push(const VoicePacket& packet) {
+            this->ChannelCreationHandler(*channel);
+            channel->Push(packet.packid, packet.data, packet.length);
+            this->channels.emplace_back(std::move(channel));
 
-		ChannelPtr channel = nullptr;
+            return;
+        }
 
-		for (const auto& iChan : this->channels)
-			if (iChan->speaker == packet.sender) {
+        channel->Push(packet.packid, packet.data, packet.length);
+    }
 
-				channel = iChan;
-				break;
+    void Reset() noexcept
+    {
+        Logger::LogToFile("[sv:dbg:stream_%p:reset] : resetting stream...", this);
 
-			}
+        for (const auto& iChan : this->channels)
+        {
+            iChan->Reset();
+        }
+    }
 
-		if (!channel) for (const auto& iChan : this->channels)
-			if (iChan->speaker == SV::NonePlayer) {
+protected:
 
-				Logger::LogToFile(
-					"[sv:dbg:stream_%p:push] : channel %p was occupied by player %hu",
-					this, iChan.get(), packet.sender
-				);
+    virtual void ChannelCreationHandler(const Channel& channel) noexcept
+    {
+        BASS_ChannelSetAttribute(channel.handle, BASS_ATTRIB_VOL, 4.f);
+    }
 
-				iChan->speaker = packet.sender;
+protected:
 
-				channel = iChan;
-				break;
+    std::vector<ChannelPtr> channels;
 
-			}
+private:
 
-		if (!channel) {
+    void OnPlayChannel(const Channel& channel) noexcept
+    {
+        if (channel.speaker != SV::NonePlayer && this->playHandler)
+            this->playHandler(*this, channel.speaker);
+    }
 
-			if (!(channel = MakeChannel(this->streamFlags,
-				std::bind(&Stream::OnPlayChannel, this, std::placeholders::_1),
-				std::bind(&Stream::OnStopChannel, this, std::placeholders::_1),
-				packet.sender))) return;
+    void OnStopChannel(const Channel& channel) noexcept
+    {
+        if (channel.speaker != SV::NonePlayer && this->stopHandler)
+            this->stopHandler(*this, channel.speaker);
+    }
 
-			Logger::LogToFile(
-				"[sv:dbg:stream_%p:push] : channel %p for player %hu created",
-				this, channel.get(), packet.sender
-			);
+private:
 
-			this->ChannelCreationHandler(*channel);
-			this->channels.push_back(channel);
+    const DWORD streamFlags { NULL };
+    const StreamInfoPtr streamInfo { nullptr };
 
-		}
-
-		channel->Push(packet.packid, packet.data, packet.length);
-
-	}
-
-	void Reset() {
-
-		Logger::LogToFile("[sv:dbg:stream_%p:reset] : resetting stream...", this);
-
-		for (const auto& iChan : this->channels) iChan->Reset();
-
-	}
-
-	virtual ~Stream() {}
+    const PlayHandlerType playHandler { nullptr };
+    const StopHandlerType stopHandler { nullptr };
 
 };
 

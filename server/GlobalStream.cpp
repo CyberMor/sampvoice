@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #include "GlobalStream.h"
@@ -14,17 +14,14 @@
 #include "ControlPacket.h"
 #include "Header.h"
 
-GlobalStream::GlobalStream(const uint32_t color, const std::string& name) {
+GlobalStream::GlobalStream(const uint32_t color, const std::string& name)
+{
+    const auto nameString = name.c_str();
+    const auto nameLength = name.size() + 1;
 
-	const auto nameString = name.c_str();
-	const auto nameLength = name.size() + 1;
+    PackWrap(this->packetCreateStream, SV::ControlPacketType::createGStream, sizeof(SV::CreateGStreamPacket) + nameLength);
 
-	if (PackWrap(this->packetCreateStream, SV::ControlPacketType::createGStream, sizeof(SV::CreateGStreamPacket) + nameLength)) {
-
-		PackGetStruct(&*this->packetCreateStream, SV::CreateGStreamPacket)->stream = (uint32_t)(static_cast<Stream*>(this));
-		memcpy(PackGetStruct(&*this->packetCreateStream, SV::CreateGStreamPacket)->name, nameString, nameLength);
-		PackGetStruct(&*this->packetCreateStream, SV::CreateGStreamPacket)->color = color;
-
-	}
-
+    PackGetStruct(&*this->packetCreateStream, SV::CreateGStreamPacket)->stream = reinterpret_cast<uint32_t>(static_cast<Stream*>(this));
+    std::memcpy(PackGetStruct(&*this->packetCreateStream, SV::CreateGStreamPacket)->name, nameString, nameLength);
+    PackGetStruct(&*this->packetCreateStream, SV::CreateGStreamPacket)->color = color;
 }

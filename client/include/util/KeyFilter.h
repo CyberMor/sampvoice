@@ -1,64 +1,74 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
 
-#include <atomic>
-
 #include <Windows.h>
+
 #include <SPSCQueue.h>
+
+struct KeyEvent {
+
+    KeyEvent() noexcept = default;
+    KeyEvent(const KeyEvent&) noexcept = default;
+    KeyEvent(KeyEvent&&) noexcept = default;
+    KeyEvent& operator=(const KeyEvent&) noexcept = default;
+    KeyEvent& operator=(KeyEvent&&) noexcept = default;
+
+public:
+
+    KeyEvent(
+        const BYTE keyId,
+        const bool isPressed,
+        const int actKeys
+    ) noexcept
+        : keyId(keyId)
+        , isPressed(isPressed)
+        , actKeys(actKeys)
+    {}
+
+    ~KeyEvent() noexcept = default;
+
+public:
+
+    BYTE keyId { NULL };
+    bool isPressed { false };
+    int actKeys { 0 };
+
+};
 
 class KeyFilter {
 public:
 
-	struct KeyEvent {
+    static bool AddKey(BYTE keyId) noexcept;
+    static bool RemoveKey(BYTE keyId) noexcept;
 
-		BYTE keyId;
-		bool isPressed;
-		int actKeys;
+    static void RemoveAllKeys() noexcept;
+    static void ReleaseAllKeys() noexcept;
 
-		KeyEvent() {}
+    static bool PopKey(KeyEvent& event) noexcept;
 
-		KeyEvent(
-			const BYTE keyId,
-			const bool isPressed,
-			const int actKeys
-		) :
-			keyId(keyId),
-			isPressed(isPressed),
-			actKeys(actKeys)
-		{}
-
-	};
+    static void OnWndMessage(HWND hWnd, UINT uMsg,
+                             WPARAM wParam, LPARAM lParam) noexcept;
 
 private:
 
-	static SPSCQueue<KeyEvent> keyQueue;
+    static bool PressKey(BYTE keyId) noexcept;
+    static bool ReleaseKey(BYTE keyId) noexcept;
 
-	static std::atomic_int activeKeys;
+private:
 
-	static std::atomic_bool pressedKeys[256];
-	static std::atomic_bool statusKeys[256];
+    static SPSCQueue<KeyEvent> keyQueue;
 
-public:
+    static int activeKeys;
 
-	static void AddKey(const BYTE keyId);
-	static void RemoveKey(const BYTE keyId);
-
-	static void RemoveAllKeys();
-	static void ReleaseAllKeys();
-
-	static bool PopKey(KeyEvent& event);
-
-	static VOID OnWndMessage(
-		HWND hWnd, UINT uMsg,
-		WPARAM wParam, LPARAM lParam
-	);
+    static bool pressedKeys[256];
+    static bool statusKeys[256];
 
 };

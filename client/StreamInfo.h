@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -14,34 +14,36 @@
 
 #include <d3d9.h>
 
-enum class StreamType {
+enum class StreamType
+{
+    None,
 
-	None,
+    GlobalStream,
 
-	GlobalStream,
-
-	LocalStreamAtPoint,
-	LocalStreamAtVehicle,
-	LocalStreamAtPlayer,
-	LocalStreamAtObject
-
+    LocalStreamAtPoint,
+    LocalStreamAtVehicle,
+    LocalStreamAtPlayer,
+    LocalStreamAtObject
 };
 
-struct StreamInfo {
+class StreamInfo {
 
-	const StreamType type;
-	const std::string name;
-	const D3DCOLOR color;
+    StreamInfo() = delete;
+    StreamInfo(const StreamInfo&) = delete;
+    StreamInfo(StreamInfo&&) = delete;
+    StreamInfo& operator=(const StreamInfo&) = delete;
+    StreamInfo& operator=(StreamInfo&&) = delete;
 
-	StreamInfo(
-		const StreamType type,
-		const std::string& name,
-		const D3DCOLOR color
-	) :
-		type(type),
-		name(name),
-		color(color)
-	{}
+public:
+
+    StreamInfo(const StreamType type, const std::string& name, const D3DCOLOR color)
+        : type(type), name(name), color(color) {}
+
+public:
+
+    const StreamType type;
+    const std::string name;
+    const D3DCOLOR color;
 
 };
 

@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -21,66 +21,48 @@
 #include "Channel.h"
 
 class LocalStream : public Stream {
-protected:
 
-	float distance = 0.f;
-
-	virtual void ChannelCreationHandler(const Channel& channel) override {
-
-		this->Stream::ChannelCreationHandler(channel);
-
-		BASS_ChannelSet3DAttributes(
-			channel.handle, BASS_3DMODE_NORMAL,
-			this->distance * 0.1f, this->distance,
-			-1, -1, -1
-		);
-
-	}
+    LocalStream() = delete;
+    LocalStream(const LocalStream&) = delete;
+    LocalStream(LocalStream&&) = delete;
+    LocalStream& operator=(const LocalStream&) = delete;
+    LocalStream& operator=(LocalStream&&) = delete;
 
 public:
 
-	LocalStream() = delete;
-	LocalStream(const LocalStream& object) = delete;
-	LocalStream(LocalStream&& object) = delete;
+    explicit LocalStream(const DWORD streamFlags, PlayHandlerType&& playHandler, StopHandlerType&& stopHandler,
+                         const StreamType type, const std::string& name, const D3DCOLOR color, const float distance)
+        : Stream(streamFlags, std::move(playHandler), std::move(stopHandler), type, name, color)
+        , distance(distance) {}
 
-	LocalStream& operator=(const LocalStream& object) = delete;
-	LocalStream& operator=(LocalStream&& object) = delete;
+    virtual ~LocalStream() noexcept = default;
 
-	LocalStream(
-		const DWORD streamFlags,
-		const PlayHandlerType& playHandler,
-		const StopHandlerType& stopHandler,
-		const StreamType type,
-		const std::string& name,
-		const D3DCOLOR color,
-		const float distance
-	) :
+public:
 
-		Stream(
-			streamFlags,
-			playHandler,
-			stopHandler,
-			type, name, color
-		),
+    void UpdateDistance(const float distance) noexcept
+    {
+        this->distance = distance;
 
-		distance(distance)
+        for (const auto& iChan : this->channels)
+        {
+            BASS_ChannelSet3DAttributes(iChan->handle, BASS_3DMODE_NORMAL,
+                this->distance * 0.1f, this->distance, -1, -1, -1);
+        }
+    }
 
-	{}
+protected:
 
-	void UpdateDistance(const float distance) {
+    virtual void ChannelCreationHandler(const Channel& channel) noexcept override
+    {
+        this->Stream::ChannelCreationHandler(channel);
 
-		this->distance = distance;
+        BASS_ChannelSet3DAttributes(channel.handle, BASS_3DMODE_NORMAL,
+            this->distance * 0.1f, this->distance, -1, -1, -1);
+    }
 
-		for (const auto& iChan : this->channels)
-			BASS_ChannelSet3DAttributes(
-				iChan->handle, BASS_3DMODE_NORMAL,
-				this->distance * 0.1f, this->distance,
-				-1, -1, -1
-			);
+protected:
 
-	}
-
-	virtual ~LocalStream() {}
+    float distance { 0.f };
 
 };
 

@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #include <pawn/amx/amx.h>
@@ -33,11 +33,11 @@
 #include "DynamicLocalStreamAtPlayer.h"
 #include "DynamicLocalStreamAtObject.h"
 
-#include <set>
-#include <vector>
 #include <atomic>
 #include <ctime>
+#include <vector>
 #include <map>
+#include <set>
 
 #include <util/logger.h>
 
@@ -45,747 +45,668 @@
 #define __forceinline __attribute__((always_inline))
 #endif
 
-namespace SV {
+namespace SV
+{
+    uint32_t bitrate { SV::DefaultBitrate };
+    std::map<uint32_t, Stream*> streamTable;
+    std::set<DynamicStream*> dlstreamList;
+    std::vector<WorkerPtr> workers;
 
-	uint32_t bitrate = SV::DefaultBitrate;
-	std::map<uint32_t, Stream*> streamTable;
-	std::set<DynamicStream*> dlstreamList;
-	std::vector<WorkerPtr> workers;
+    class PawnHandler : public PawnInterface {
+    public:
 
-	namespace PawnHandlers {
+        void SvInit(const uint32_t bitrate) override
+        {
+            SV::bitrate = bitrate;
+        }
 
-		static void InitHandler(const uint32_t bitrate) {
+        uint8_t SvGetVersion(const uint16_t playerId) override
+        {
+            uint8_t playerPluginVersion { NULL };
 
-			SV::bitrate = bitrate;
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
+            if (pPlayerInfo) playerPluginVersion = pPlayerInfo->pluginVersion;
+            PlayerStore::ReleasePlayerWithSharedAccess(playerId);
 
-		}
+            return playerPluginVersion;
+        }
 
-		uint8_t GetVersionHandler(const uint16_t playerId) {
+        // -------------------------------------------------------------------------------------
 
-			uint8_t playerPluginVersion = NULL;
+        bool SvHasMicro(const uint16_t playerId) override
+        {
+            bool playerHasMicroStatus { false };
 
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
-			if (pPlayerInfo) playerPluginVersion = pPlayerInfo->pluginVersion;
-			PlayerStore::ReleasePlayerWithSharedAccess(playerId);
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
+            if (pPlayerInfo) playerHasMicroStatus = pPlayerInfo->microStatus;
+            PlayerStore::ReleasePlayerWithSharedAccess(playerId);
 
-			return playerPluginVersion;
+            return playerHasMicroStatus;
+        }
 
-		}
+        bool SvStartRecord(const uint16_t playerId) override
+        {
+            bool prevRecordStatus { true };
 
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
+            if (pPlayerInfo) prevRecordStatus = pPlayerInfo->recordStatus.exchange(true);
+            PlayerStore::ReleasePlayerWithSharedAccess(playerId);
 
+            if (prevRecordStatus) return false;
 
-		bool HasMicroHandler(const uint16_t playerId) {
+            ControlPacket* controlPacket { nullptr };
 
-			bool playerHasMicroStatus = false;
+            PackAlloca(controlPacket, SV::ControlPacketType::startRecord, NULL);
 
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
-			if (pPlayerInfo) playerHasMicroStatus = pPlayerInfo->microStatus;
-			PlayerStore::ReleasePlayerWithSharedAccess(playerId);
+            return Network::SendControlPacket(playerId, *controlPacket);
+        }
 
-			return playerHasMicroStatus;
+        bool SvStopRecord(const uint16_t playerId) override
+        {
+            bool prevRecordStatus { false };
 
-		}
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
+            if (pPlayerInfo) prevRecordStatus = pPlayerInfo->recordStatus.exchange(false);
+            PlayerStore::ReleasePlayerWithSharedAccess(playerId);
 
-		bool StartRecordHandler(const uint16_t playerId) {
+            if (!prevRecordStatus) return false;
 
-			bool prevRecordStatus = true;
+            ControlPacket* controlPacket { nullptr };
 
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
-			if (pPlayerInfo) prevRecordStatus = pPlayerInfo->recordStatus.exchange(true);
-			PlayerStore::ReleasePlayerWithSharedAccess(playerId);
+            PackAlloca(controlPacket, SV::ControlPacketType::stopRecord, NULL);
 
-			if (prevRecordStatus) return false;
+            return Network::SendControlPacket(playerId, *controlPacket);
+        }
 
-			ControlPacket* controlPacket = nullptr;
+        // -------------------------------------------------------------------------------------
 
-			PackAlloca(controlPacket, SV::ControlPacketType::startRecord, NULL);
+        bool SvAddKey(const uint16_t playerId, const uint8_t keyId) override
+        {
+            bool addKeyStatus { false };
 
-			return Network::SendControlPacket(playerId, *controlPacket);
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
+            if (pPlayerInfo) addKeyStatus = pPlayerInfo->keys.insert(keyId).second;
+            PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
 
-		}
+            if (!addKeyStatus) return false;
 
-		bool StopRecordHandler(const uint16_t playerId) {
+            ControlPacket* controlPacket { nullptr };
 
-			bool prevRecordStatus = false;
+            PackAlloca(controlPacket, SV::ControlPacketType::addKey, sizeof(SV::AddKeyPacket));
+            PackGetStruct(controlPacket, SV::AddKeyPacket)->keyId = keyId;
 
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
-			if (pPlayerInfo) prevRecordStatus = pPlayerInfo->recordStatus.exchange(false);
-			PlayerStore::ReleasePlayerWithSharedAccess(playerId);
+            return Network::SendControlPacket(playerId, *controlPacket);
+        }
 
-			if (!prevRecordStatus) return false;
+        bool SvHasKey(const uint16_t playerId, const uint8_t keyId) override
+        {
+            bool hasKeyStatus { false };
 
-			ControlPacket* controlPacket = nullptr;
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
+            if (pPlayerInfo) hasKeyStatus = pPlayerInfo->keys.find(keyId) != pPlayerInfo->keys.end();
+            PlayerStore::ReleasePlayerWithSharedAccess(playerId);
 
-			PackAlloca(controlPacket, SV::ControlPacketType::stopRecord, NULL);
+            return hasKeyStatus;
+        }
 
-			return Network::SendControlPacket(playerId, *controlPacket);
+        bool SvRemoveKey(const uint16_t playerId, const uint8_t keyId) override
+        {
+            bool removeKeyStatus { false };
 
-		}
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
+            if (pPlayerInfo) removeKeyStatus = pPlayerInfo->keys.erase(keyId);
+            PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
 
+            if (!removeKeyStatus) return false;
 
+            ControlPacket* controlPacket { nullptr };
 
-		bool AddKeyHandler(const uint16_t playerId, const uint8_t keyId) {
+            PackAlloca(controlPacket, SV::ControlPacketType::removeKey, sizeof(SV::RemoveKeyPacket));
+            PackGetStruct(controlPacket, SV::RemoveKeyPacket)->keyId = keyId;
 
-			bool addKeyStatus = false;
+            return Network::SendControlPacket(playerId, *controlPacket);
+        }
 
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
-			if (pPlayerInfo) addKeyStatus = pPlayerInfo->keys.insert(keyId).second;
-			PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
+        void SvRemoveAllKeys(const uint16_t playerId) override
+        {
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
+            if (pPlayerInfo) pPlayerInfo->keys.clear();
+            PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
 
-			if (!addKeyStatus) return false;
+            if (!pPlayerInfo) return;
 
-			ControlPacket* controlPacket = nullptr;
+            ControlPacket* controlPacket { nullptr };
 
-			PackAlloca(controlPacket, SV::ControlPacketType::addKey, sizeof(SV::AddKeyPacket));
-			PackGetStruct(controlPacket, SV::AddKeyPacket)->keyId = keyId;
+            PackAlloca(controlPacket, SV::ControlPacketType::removeAllKeys, NULL);
 
-			return Network::SendControlPacket(playerId, *controlPacket);
+            Network::SendControlPacket(playerId, *controlPacket);
+        }
 
-		}
+        // -------------------------------------------------------------------------------------
 
-		bool HasKeyHandler(const uint16_t playerId, const uint8_t keyId) {
+        bool SvMutePlayerStatus(const uint16_t playerId) override
+        {
+            bool mutePlayerStatus { false };
 
-			bool hasKeyStatus = false;
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
+            if (pPlayerInfo) mutePlayerStatus = pPlayerInfo->muteStatus.load();
+            PlayerStore::ReleasePlayerWithSharedAccess(playerId);
 
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
-			if (pPlayerInfo) hasKeyStatus = pPlayerInfo->keys.find(keyId) != pPlayerInfo->keys.end();
-			PlayerStore::ReleasePlayerWithSharedAccess(playerId);
+            return mutePlayerStatus;
+        }
 
-			return hasKeyStatus;
+        void SvMutePlayerEnable(const uint16_t playerId) override
+        {
+            bool prevMutePlayerStatus { true };
 
-		}
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
+            if (pPlayerInfo) prevMutePlayerStatus = pPlayerInfo->muteStatus.exchange(true);
+            PlayerStore::ReleasePlayerWithSharedAccess(playerId);
 
-		bool RemoveKeyHandler(const uint16_t playerId, const uint8_t keyId) {
+            if (prevMutePlayerStatus) return;
 
-			bool removeKeyStatus = false;
+            ControlPacket* controlPacket { nullptr };
 
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
-			if (pPlayerInfo) removeKeyStatus = pPlayerInfo->keys.erase(keyId);
-			PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
+            PackAlloca(controlPacket, SV::ControlPacketType::muteEnable, NULL);
 
-			if (!removeKeyStatus) return false;
+            Network::SendControlPacket(playerId, *controlPacket);
+        }
 
-			ControlPacket* controlPacket = nullptr;
+        void SvMutePlayerDisable(const uint16_t playerId) override
+        {
+            bool prevMutePlayerStatus { false };
 
-			PackAlloca(controlPacket, SV::ControlPacketType::removeKey, sizeof(SV::RemoveKeyPacket));
-			PackGetStruct(controlPacket, SV::RemoveKeyPacket)->keyId = keyId;
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
+            if (pPlayerInfo) prevMutePlayerStatus = pPlayerInfo->muteStatus.exchange(false);
+            PlayerStore::ReleasePlayerWithSharedAccess(playerId);
 
-			return Network::SendControlPacket(playerId, *controlPacket);
+            if (!prevMutePlayerStatus) return;
 
-		}
+            ControlPacket* controlPacket { nullptr };
 
-		void RemoveAllKeysHandler(const uint16_t playerId) {
+            PackAlloca(controlPacket, SV::ControlPacketType::muteDisable, NULL);
 
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
-			if (pPlayerInfo) pPlayerInfo->keys.clear();
-			PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
+            Network::SendControlPacket(playerId, *controlPacket);
+        }
 
-			if (!pPlayerInfo) return;
+        // -------------------------------------------------------------------------------------
 
-			ControlPacket* controlPacket = nullptr;
+        Stream* SvCreateGStream(const uint32_t color, const std::string& name) override
+        {
+            auto stream = new GlobalStream(color, name);
+            if (!stream) return nullptr;
 
-			PackAlloca(controlPacket, SV::ControlPacketType::removeAllKeys, NULL);
+            auto baseStream = static_cast<Stream*>(stream);
 
-			Network::SendControlPacket(playerId, *controlPacket);
+            SV::streamTable.emplace(reinterpret_cast<uint32_t>(baseStream), baseStream);
 
-		}
+            return baseStream;
+        }
 
+        // -------------------------------------------------------------------------------------
 
+        Stream* SvCreateSLStreamAtPoint(
+            const float distance,
+            const float posx,
+            const float posy,
+            const float posz,
+            const uint32_t color,
+            const std::string& name
+        ) override
+        {
+            auto stream = new StaticLocalStreamAtPoint(distance, CVector(posx, posy, posz), color, name);
+            if (!stream) return nullptr;
 
-		bool MutePlayerStatusHandler(const uint16_t playerId) {
+            auto baseStream = static_cast<Stream*>(stream);
 
-			bool mutePlayerStatus = false;
+            SV::streamTable.emplace(reinterpret_cast<uint32_t>(baseStream), baseStream);
 
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
-			if (pPlayerInfo) mutePlayerStatus = pPlayerInfo->muteStatus.load();
-			PlayerStore::ReleasePlayerWithSharedAccess(playerId);
+            return baseStream;
+        }
 
-			return mutePlayerStatus;
+        Stream* SvCreateSLStreamAtVehicle(
+            const float distance,
+            const uint16_t vehicleId,
+            const uint32_t color,
+            const std::string& name
+        ) override
+        {
+            if (!pNetGame->pVehiclePool->pVehicle[vehicleId])
+                return nullptr;
 
-		}
+            auto stream = new StaticLocalStreamAtVehicle(distance, vehicleId, color, name);
+            if (!stream) return nullptr;
 
-		void MutePlayerEnableHandler(const uint16_t playerId) {
+            auto baseStream = static_cast<Stream*>(stream);
 
-			bool prevMutePlayerStatus = true;
+            SV::streamTable.emplace(reinterpret_cast<uint32_t>(baseStream), baseStream);
 
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
-			if (pPlayerInfo) prevMutePlayerStatus = pPlayerInfo->muteStatus.exchange(true);
-			PlayerStore::ReleasePlayerWithSharedAccess(playerId);
+            return baseStream;
+        }
 
-			if (prevMutePlayerStatus) return;
+        Stream* SvCreateSLStreamAtPlayer(
+            const float distance,
+            const uint16_t playerId,
+            const uint32_t color,
+            const std::string& name
+        ) override
+        {
+            if (!pNetGame->pPlayerPool->pPlayer[playerId])
+                return nullptr;
 
-			ControlPacket* controlPacket = nullptr;
+            auto stream = new StaticLocalStreamAtPlayer(distance, playerId, color, name);
+            if (!stream) return nullptr;
 
-			PackAlloca(controlPacket, SV::ControlPacketType::muteEnable, NULL);
+            auto baseStream = static_cast<Stream*>(stream);
 
-			Network::SendControlPacket(playerId, *controlPacket);
+            SV::streamTable.emplace(reinterpret_cast<uint32_t>(baseStream), baseStream);
 
-		}
+            return baseStream;
+        }
 
-		void MutePlayerDisableHandler(const uint16_t playerId) {
+        Stream* SvCreateSLStreamAtObject(
+            const float distance,
+            const uint16_t objectId,
+            const uint32_t color,
+            const std::string& name
+        ) override
+        {
+            if (!pNetGame->pObjectPool->pObjects[objectId])
+                return nullptr;
 
-			bool prevMutePlayerStatus = false;
+            auto stream = new StaticLocalStreamAtObject(distance, objectId, color, name);
+            if (!stream) return nullptr;
 
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
-			if (pPlayerInfo) prevMutePlayerStatus = pPlayerInfo->muteStatus.exchange(false);
-			PlayerStore::ReleasePlayerWithSharedAccess(playerId);
+            auto baseStream = static_cast<Stream*>(stream);
 
-			if (!prevMutePlayerStatus) return;
+            SV::streamTable.emplace(reinterpret_cast<uint32_t>(baseStream), baseStream);
 
-			ControlPacket* controlPacket = nullptr;
+            return baseStream;
+        }
 
-			PackAlloca(controlPacket, SV::ControlPacketType::muteDisable, NULL);
+        // -------------------------------------------------------------------------------------
 
-			Network::SendControlPacket(playerId, *controlPacket);
+        Stream* SvCreateDLStreamAtPoint(
+            const float distance,
+            const uint32_t maxPlayers,
+            const float posx,
+            const float posy,
+            const float posz,
+            const uint32_t color,
+            const std::string& name
+        ) override
+        {
+            auto stream = new DynamicLocalStreamAtPoint(distance, maxPlayers, CVector(posx, posy, posz), color, name);
+            if (!stream) return nullptr;
 
-		}
+            auto baseStream = static_cast<Stream*>(stream);
 
+            SV::dlstreamList.insert(static_cast<DynamicStream*>(stream));
+            SV::streamTable.emplace(reinterpret_cast<uint32_t>(baseStream), baseStream);
 
+            return baseStream;
+        }
 
-		Stream* CreateGStreamHandler(const uint32_t color, const std::string& name) {
+        Stream* SvCreateDLStreamAtVehicle(
+            const float distance,
+            const uint32_t maxPlayers,
+            const uint16_t vehicleId,
+            const uint32_t color,
+            const std::string& name
+        ) override
+        {
+            if (!pNetGame->pVehiclePool->pVehicle[vehicleId])
+                return nullptr;
 
-			auto stream = new GlobalStream(color, name);
-			if (!stream) return nullptr;
+            auto stream = new DynamicLocalStreamAtVehicle(distance, maxPlayers, vehicleId, color, name);
+            if (!stream) return nullptr;
 
-			auto baseStream = static_cast<Stream*>(stream);
+            auto baseStream = static_cast<Stream*>(stream);
 
-			SV::streamTable.emplace((uint32_t)(baseStream), baseStream);
+            SV::dlstreamList.insert(static_cast<DynamicStream*>(stream));
+            SV::streamTable.emplace(reinterpret_cast<uint32_t>(baseStream), baseStream);
 
-			return baseStream;
+            return baseStream;
+        }
 
-		}
+        Stream* SvCreateDLStreamAtPlayer(
+            const float distance,
+            const uint32_t maxPlayers,
+            const uint16_t playerId,
+            const uint32_t color,
+            const std::string& name
+        ) override
+        {
+            if (!pNetGame->pPlayerPool->pPlayer[playerId])
+                return nullptr;
 
+            auto stream = new DynamicLocalStreamAtPlayer(distance, maxPlayers, playerId, color, name);
+            if (!stream) return nullptr;
 
+            auto baseStream = static_cast<Stream*>(stream);
 
-		Stream* CreateSLStreamAtPointHandler(
-			const float distance,
-			const float posx,
-			const float posy,
-			const float posz,
-			const uint32_t color,
-			const std::string& name
-		) {
+            SV::dlstreamList.insert(static_cast<DynamicStream*>(stream));
+            SV::streamTable.emplace(reinterpret_cast<uint32_t>(baseStream), baseStream);
 
-			auto stream = new StaticLocalStreamAtPoint(distance, CVector(posx, posy, posz), color, name);
-			if (!stream) return nullptr;
+            return baseStream;
+        }
 
-			auto baseStream = static_cast<Stream*>(stream);
+        Stream* SvCreateDLStreamAtObject(
+            const float distance,
+            const uint32_t maxPlayers,
+            const uint16_t objectId,
+            const uint32_t color,
+            const std::string& name
+        ) override
+        {
+            if (!pNetGame->pObjectPool->pObjects[objectId])
+                return nullptr;
 
-			SV::streamTable.emplace((uint32_t)(baseStream), baseStream);
+            auto stream = new DynamicLocalStreamAtObject(distance, maxPlayers, objectId, color, name);
+            if (!stream) return nullptr;
 
-			return baseStream;
+            auto baseStream = static_cast<Stream*>(stream);
 
-		}
+            SV::dlstreamList.insert(static_cast<DynamicStream*>(stream));
+            SV::streamTable.emplace(reinterpret_cast<uint32_t>(baseStream), baseStream);
 
-		Stream* CreateSLStreamAtVehicleHandler(
-			const float distance,
-			const uint16_t vehicleId,
-			const uint32_t color,
-			const std::string& name
-		) {
+            return baseStream;
+        }
 
-			if (!pNetGame->pVehiclePool->pVehicle[vehicleId]) return nullptr;
+        // -------------------------------------------------------------------------------------
 
-			auto stream = new StaticLocalStreamAtVehicle(distance, vehicleId, color, name);
-			if (!stream) return nullptr;
+        void SvUpdatePositionForLPStream(PointStream* const lpStream, const float posx, const float posy, const float posz) override
+        {
+            lpStream->UpdatePosition(CVector(posx, posy, posz));
+        }
 
-			auto baseStream = static_cast<Stream*>(stream);
+        void SvUpdateDistanceForLStream(LocalStream* const lStream, const float distance) override
+        {
+            lStream->UpdateDistance(distance);
+        }
 
-			SV::streamTable.emplace((uint32_t)(baseStream), baseStream);
+        // -------------------------------------------------------------------------------------
 
-			return baseStream;
+        bool SvAttachListenerToStream(Stream* const stream, const uint16_t playerId) override
+        {
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
+            if (pPlayerInfo) pPlayerInfo->listenerStreams.insert(stream);
+            PlayerStore::ReleasePlayerWithSharedAccess(playerId);
 
-		}
+            return stream->AttachListener(playerId);
+        }
 
-		Stream* CreateSLStreamAtPlayerHandler(
-			const float distance,
-			const uint16_t playerId,
-			const uint32_t color,
-			const std::string& name
-		) {
+        bool SvHasListenerInStream(Stream* const stream, const uint16_t playerId) override
+        {
+            return stream->HasListener(playerId);
+        }
 
-			if (!pNetGame->pPlayerPool->pPlayer[playerId]) return nullptr;
+        bool SvDetachListenerFromStream(Stream* const stream, const uint16_t playerId) override
+        {
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
+            if (pPlayerInfo) pPlayerInfo->listenerStreams.erase(stream);
+            PlayerStore::ReleasePlayerWithSharedAccess(playerId);
 
-			auto stream = new StaticLocalStreamAtPlayer(distance, playerId, color, name);
-			if (!stream) return nullptr;
+            return stream->DetachListener(playerId);
+        }
 
-			auto baseStream = static_cast<Stream*>(stream);
+        void SvDetachAllListenersFromStream(Stream* const stream) override
+        {
+            const auto detachedListeners = stream->DetachAllListeners();
 
-			SV::streamTable.emplace((uint32_t)(baseStream), baseStream);
+            for (const auto playerId : detachedListeners)
+            {
+                const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
+                if (pPlayerInfo) pPlayerInfo->listenerStreams.erase(stream);
+                PlayerStore::ReleasePlayerWithSharedAccess(playerId);
+            }
+        }
 
-			return baseStream;
+        // -------------------------------------------------------------------------------------
 
-		}
+        bool SvAttachSpeakerToStream(Stream* const stream, const uint16_t playerId) override
+        {
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
+            if (pPlayerInfo) pPlayerInfo->speakerStreams.insert(stream);
+            PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
 
-		Stream* CreateSLStreamAtObjectHandler(
-			const float distance,
-			const uint16_t objectId,
-			const uint32_t color,
-			const std::string& name
-		) {
+            return stream->AttachSpeaker(playerId);
+        }
 
-			if (!pNetGame->pObjectPool->pObjects[objectId]) return nullptr;
+        bool SvHasSpeakerInStream(Stream* const stream, const uint16_t playerId) override
+        {
+            return stream->HasSpeaker(playerId);
+        }
 
-			auto stream = new StaticLocalStreamAtObject(distance, objectId, color, name);
-			if (!stream) return nullptr;
+        bool SvDetachSpeakerFromStream(Stream* const stream, const uint16_t playerId) override
+        {
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
+            if (pPlayerInfo) pPlayerInfo->speakerStreams.erase(stream);
+            PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
 
-			auto baseStream = static_cast<Stream*>(stream);
+            return stream->DetachSpeaker(playerId);
+        }
 
-			SV::streamTable.emplace((uint32_t)(baseStream), baseStream);
+        void SvDetachAllSpeakersFromStream(Stream* const stream) override
+        {
+            const auto detachedSpeakers = stream->DetachAllSpeakers();
 
-			return baseStream;
+            for (const auto playerId : detachedSpeakers)
+            {
+                const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
+                if (pPlayerInfo) pPlayerInfo->speakerStreams.erase(stream);
+                PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
+            }
+        }
 
-		}
+        // -------------------------------------------------------------------------------------
 
+        void SvDeleteStream(Stream* const stream) override
+        {
+            const auto detachedSpeakers = stream->DetachAllSpeakers();
 
+            for (const auto playerId : detachedSpeakers)
+            {
+                const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
+                if (pPlayerInfo) pPlayerInfo->speakerStreams.erase(stream);
+                PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
+            }
 
-		Stream* CreateDLStreamAtPointHandler(
-			const float distance,
-			const uint32_t maxPlayers,
-			const float posx,
-			const float posy,
-			const float posz,
-			const uint32_t color,
-			const std::string& name
-		) {
+            const auto detachedListeners = stream->DetachAllListeners();
 
-			auto stream = new DynamicLocalStreamAtPoint(distance, maxPlayers, CVector(posx, posy, posz), color, name);
-			if (!stream) return nullptr;
+            for (const auto playerId : detachedListeners)
+            {
+                const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
+                if (pPlayerInfo) pPlayerInfo->listenerStreams.erase(stream);
+                PlayerStore::ReleasePlayerWithSharedAccess(playerId);
+            }
 
-			auto baseStream = static_cast<Stream*>(stream);
+            SV::streamTable.erase((uint32_t)(stream));
+            if (const auto dlStream = dynamic_cast<DynamicStream*>(stream))
+                SV::dlstreamList.erase(dlStream);
 
-			SV::dlstreamList.insert(static_cast<DynamicStream*>(stream));
-			SV::streamTable.emplace((uint32_t)(baseStream), baseStream);
+            delete stream;
+        }
 
-			return baseStream;
+    };
 
-		}
+    void ConnectHandler(const uint16_t playerId, const SV::ConnectPacket& connectStruct)
+    {
+        PlayerStore::AddPlayerToStore(playerId, connectStruct.version, connectStruct.micro);
+    }
 
-		Stream* CreateDLStreamAtVehicleHandler(
-			const float distance,
-			const uint32_t maxPlayers,
-			const uint16_t vehicleId,
-			const uint32_t color,
-			const std::string& name
-		) {
+    void PlayerInitHandler(const uint16_t playerId, SV::PluginInitPacket& initStruct)
+    {
+        initStruct.mute = false;
+        initStruct.bitrate = SV::bitrate;
 
-			if (!pNetGame->pVehiclePool->pVehicle[vehicleId]) return nullptr;
+        const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
+        if (pPlayerInfo) initStruct.mute = pPlayerInfo->muteStatus.load();
+        PlayerStore::ReleasePlayerWithSharedAccess(playerId);
+    }
 
-			auto stream = new DynamicLocalStreamAtVehicle(distance, maxPlayers, vehicleId, color, name);
-			if (!stream) return nullptr;
+    void DisconnectHandler(const uint16_t playerId)
+    {
+        PlayerStore::RemovePlayerFromStore(playerId);
+    }
 
-			auto baseStream = static_cast<Stream*>(stream);
+    static __forceinline void Tick(const int64_t curTime)
+    {
+        for (const auto dlStream : SV::dlstreamList)
+            dlStream->Tick();
 
-			SV::dlstreamList.insert(static_cast<DynamicStream*>(stream));
-			SV::streamTable.emplace((uint32_t)(baseStream), baseStream);
+        uint16_t senderId { SV::NonePlayer };
 
-			return baseStream;
+        while (const auto controlPacket = Network::ReceiveControlPacket(senderId))
+        {
+            const auto& controlPacketRef = *controlPacket;
 
-		}
+            switch (controlPacketRef->packet)
+            {
+                case SV::ControlPacketType::pressKey:
+                {
+                    const auto stData = PackGetStruct(&controlPacketRef, SV::PressKeyPacket);
+                    if (controlPacketRef->length != sizeof(*stData)) break;
 
-		Stream* CreateDLStreamAtPlayerHandler(
-			const float distance,
-			const uint32_t maxPlayers,
-			const uint16_t playerId,
-			const uint32_t color,
-			const std::string& name
-		) {
+                    const auto keyId = stData->keyId;
+                    bool pressKeyAllowStatus { false };
 
-			if (!pNetGame->pPlayerPool->pPlayer[playerId]) return nullptr;
+                    const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(senderId);
+                    if (pPlayerInfo) pressKeyAllowStatus = pPlayerInfo->keys.find(keyId) != pPlayerInfo->keys.end();
+                    PlayerStore::ReleasePlayerWithSharedAccess(senderId);
 
-			auto stream = new DynamicLocalStreamAtPlayer(distance, maxPlayers, playerId, color, name);
-			if (!stream) return nullptr;
+                    if (!pressKeyAllowStatus) break;
 
-			auto baseStream = static_cast<Stream*>(stream);
+                    Pawn::OnPlayerActivationKeyPressForAll(senderId, keyId);
+                } break;
+                case SV::ControlPacketType::releaseKey:
+                {
+                    const auto stData = PackGetStruct(&controlPacketRef, SV::ReleaseKeyPacket);
+                    if (controlPacketRef->length != sizeof(*stData)) break;
 
-			SV::dlstreamList.insert(static_cast<DynamicStream*>(stream));
-			SV::streamTable.emplace((uint32_t)(baseStream), baseStream);
+                    const auto keyId = stData->keyId;
+                    bool releaseKeyAllowStatus { false };
 
-			return baseStream;
+                    const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(senderId);
+                    if (pPlayerInfo) releaseKeyAllowStatus = pPlayerInfo->keys.find(keyId) != pPlayerInfo->keys.end();
+                    PlayerStore::ReleasePlayerWithSharedAccess(senderId);
 
-		}
+                    if (!releaseKeyAllowStatus) break;
 
-		Stream* CreateDLStreamAtObjectHandler(
-			const float distance,
-			const uint32_t maxPlayers,
-			const uint16_t objectId,
-			const uint32_t color,
-			const std::string& name
-		) {
+                    Pawn::OnPlayerActivationKeyReleaseForAll(senderId, keyId);
+                } break;
+            }
+        }
 
-			if (!pNetGame->pObjectPool->pObjects[objectId]) return nullptr;
-
-			auto stream = new DynamicLocalStreamAtObject(distance, maxPlayers, objectId, color, name);
-			if (!stream) return nullptr;
-
-			auto baseStream = static_cast<Stream*>(stream);
-
-			SV::dlstreamList.insert(static_cast<DynamicStream*>(stream));
-			SV::streamTable.emplace((uint32_t)(baseStream), baseStream);
-
-			return baseStream;
-
-		}
-
-
-
-		void UpdatePositionForLPStreamHandler(PointStream* const lpStream, const float posx, const float posy, const float posz) {
-
-			lpStream->UpdatePosition(CVector(posx, posy, posz));
-
-		}
-
-		void UpdateDistanceForLStreamHandler(LocalStream* const lStream, const float distance) {
-
-			lStream->UpdateDistance(distance);
-
-		}
-
-
-
-		bool AttachListenerToStreamHandler(Stream* const stream, const uint16_t playerId) {
-
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
-			if (pPlayerInfo) pPlayerInfo->listenerStreams.insert(stream);
-			PlayerStore::ReleasePlayerWithSharedAccess(playerId);
-
-			return stream->AttachListener(playerId);
-
-		}
-
-		bool HasListenerInStreamHandler(Stream* const stream, const uint16_t playerId) {
-
-			return stream->HasListener(playerId);
-
-		}
-
-		bool DetachListenerFromStreamHandler(Stream* const stream, const uint16_t playerId) {
-
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
-			if (pPlayerInfo) pPlayerInfo->listenerStreams.erase(stream);
-			PlayerStore::ReleasePlayerWithSharedAccess(playerId);
-
-			return stream->DetachListener(playerId);
-
-		}
-
-		void DetachAllListenersFromStreamHandler(Stream* const stream) {
-
-			std::vector<uint16_t> detachedListeners;
-			stream->DetachAllListeners(detachedListeners);
-
-			for (const auto playerId : detachedListeners) {
-
-				const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
-				if (pPlayerInfo) pPlayerInfo->listenerStreams.erase(stream);
-				PlayerStore::ReleasePlayerWithSharedAccess(playerId);
-
-			}
-
-		}
-
-
-
-		bool AttachSpeakerToStreamHandler(Stream* const stream, const uint16_t playerId) {
-
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
-			if (pPlayerInfo) pPlayerInfo->speakerStreams.insert(stream);
-			PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
-
-			return stream->AttachSpeaker(playerId);
-
-		}
-
-		bool HasSpeakerInStreamHandler(Stream* const stream, const uint16_t playerId) {
-
-			return stream->HasSpeaker(playerId);
-
-		}
-
-		bool DetachSpeakerFromStreamHandler(Stream* const stream, const uint16_t playerId) {
-
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
-			if (pPlayerInfo) pPlayerInfo->speakerStreams.erase(stream);
-			PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
-
-			return stream->DetachSpeaker(playerId);
-
-		}
-
-		void DetachAllSpeakersFromStreamHandler(Stream* const stream) {
-
-			std::vector<uint16_t> detachedSpeakers;
-			stream->DetachAllSpeakers(detachedSpeakers);
-
-			for (const auto playerId : detachedSpeakers) {
-
-				const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
-				if (pPlayerInfo) pPlayerInfo->speakerStreams.erase(stream);
-				PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
-
-			}
-
-		}
-
-
-
-		void DeleteStreamHandler(Stream* const stream) {
-
-			std::vector<uint16_t> detachedSpeakers;
-			stream->DetachAllSpeakers(detachedSpeakers);
-
-			for (const auto playerId : detachedSpeakers) {
-
-				const auto pPlayerInfo = PlayerStore::RequestPlayerWithUniqueAccess(playerId);
-				if (pPlayerInfo) pPlayerInfo->speakerStreams.erase(stream);
-				PlayerStore::ReleasePlayerWithUniqueAccess(playerId);
-
-			}
-
-			std::vector<uint16_t> detachedListeners;
-			stream->DetachAllListeners(detachedListeners);
-
-			for (const auto playerId : detachedListeners) {
-
-				const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
-				if (pPlayerInfo) pPlayerInfo->listenerStreams.erase(stream);
-				PlayerStore::ReleasePlayerWithSharedAccess(playerId);
-
-			}
-
-			SV::streamTable.erase((uint32_t)(stream));
-			if (const auto dlStream = dynamic_cast<DynamicStream*>(stream))
-				SV::dlstreamList.erase(dlStream);
-
-			delete stream;
-
-		}
-
-	}
-
-	void ConnectHandler(const uint16_t playerId, const SV::ConnectPacket& connectStruct) {
-
-		PlayerStore::AddPlayerToStore(playerId, connectStruct.version, connectStruct.micro);
-
-	}
-
-	void PlayerInitHandler(const uint16_t playerId, SV::PluginInitPacket& initStruct) {
-
-		initStruct.mute = false;
-		initStruct.bitrate = SV::bitrate;
-
-		const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(playerId);
-		if (pPlayerInfo) initStruct.mute = pPlayerInfo->muteStatus.load();
-		PlayerStore::ReleasePlayerWithSharedAccess(playerId);
-
-	}
-
-	void DisconnectHandler(const uint16_t playerId) {
-
-		PlayerStore::RemovePlayerFromStore(playerId);
-
-	}
-
-	static __forceinline void Tick(const int64_t curTime) {
-		
-		for (const auto dlStream : SV::dlstreamList)
-			dlStream->Tick();
-
-		uint16_t senderId = SV::NonePlayer;
-
-		while (const auto controlPacket = Network::ReceiveControlPacket(senderId)) {
-
-			const ControlPacketContainer& controlPacketRef = *controlPacket;
-
-			switch (controlPacketRef->packet) {
-			case SV::ControlPacketType::pressKey: {
-
-				const auto stData = PackGetStruct(&controlPacketRef, SV::PressKeyPacket);
-				if (controlPacketRef->length != sizeof(*stData)) break;
-
-				const auto keyId = stData->keyId;
-				bool pressKeyAllowStatus = false;
-
-				const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(senderId);
-				if (pPlayerInfo) pressKeyAllowStatus = pPlayerInfo->keys.find(keyId) != pPlayerInfo->keys.end();
-				PlayerStore::ReleasePlayerWithSharedAccess(senderId);
-
-				if (!pressKeyAllowStatus) break;
-
-				Pawn::OnPlayerActivationKeyPressForAll(senderId, keyId);
-
-			} break;
-			case SV::ControlPacketType::releaseKey: {
-
-				const auto stData = PackGetStruct(&controlPacketRef, SV::ReleaseKeyPacket);
-				if (controlPacketRef->length != sizeof(*stData)) break;
-
-				const auto keyId = stData->keyId;
-				bool releaseKeyAllowStatus = false;
-
-				const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(senderId);
-				if (pPlayerInfo) releaseKeyAllowStatus = pPlayerInfo->keys.find(keyId) != pPlayerInfo->keys.end();
-				PlayerStore::ReleasePlayerWithSharedAccess(senderId);
-
-				if (!releaseKeyAllowStatus) break;
-
-				Pawn::OnPlayerActivationKeyReleaseForAll(senderId, keyId);
-
-			} break;
-			}
-
-		}
-
-		Network::Process(curTime);
-
-	}
-
+        Network::Process(curTime);
+    }
 }
 
 // --------------------------------------------------------------------
 
-PLUGIN_EXPORT void PLUGIN_CALL ProcessTick() {
-	
-	SV::Tick(GetTimestamp());
-
+PLUGIN_EXPORT void PLUGIN_CALL ProcessTick()
+{
+    SV::Tick(GetTimestamp());
 }
 
-PLUGIN_EXPORT void PLUGIN_CALL Unload() {
+PLUGIN_EXPORT void PLUGIN_CALL Unload()
+{
+    static bool unloadStatus { false };
+    if (unloadStatus) return;
+    unloadStatus = true;
 
-	static std::atomic_bool unloadStatus(false);
-	if (unloadStatus.exchange(true)) return;
+    Logger::Log(" -------------------------------------------");
+    Logger::Log("           SampVoice unloading...           ");
+    Logger::Log(" -------------------------------------------");
 
-	Logger::Log(" -------------------------------------------");
-	Logger::Log("           SampVoice unloading...           ");
-	Logger::Log(" -------------------------------------------");
+    SV::workers.clear();
 
-	SV::workers.clear();
+    PlayerStore::ClearStore();
 
-	Pawn::Free();
-	RakNet::Free();
-	Network::Free();
-	Logger::Free();
-
+    Pawn::Free();
+    RakNet::Free();
+    Network::Free();
+    Logger::Free();
 }
 
 #ifdef _WIN32
 BOOL WINAPI WinExitHandler(DWORD CtrlType) { Unload(); return FALSE; }
 #endif
 
-PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData) {
-
+PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
+{
 #ifdef _WIN32
-	SetConsoleCtrlHandler(&WinExitHandler, TRUE);
+    SetConsoleCtrlHandler(&WinExitHandler, TRUE);
 #endif
 
-	ppPluginData = ppData;
-	pAMXFunctions = ppData[PLUGIN_DATA_AMX_EXPORTS];
-	logprintf = (logprintf_t)(ppData[PLUGIN_DATA_LOGPRINTF]);
+    ppPluginData = ppData;
+    pAMXFunctions = ppData[PLUGIN_DATA_AMX_EXPORTS];
+    logprintf = (logprintf_t)(ppData[PLUGIN_DATA_LOGPRINTF]);
 
-	if (!Logger::Init(SV::LogFileName, logprintf)) {
+    if (!Logger::Init(SV::LogFileName, logprintf))
+    {
+        logprintf("[sv:err:main:Load] : failed to init logger");
+        return false;
+    }
 
-		logprintf("[sv:err:main:Load] : failed to init logger");
-		return false;
+    if (!Network::Init(logprintf, SV::ConnectHandler, SV::PlayerInitHandler, SV::DisconnectHandler))
+    {
+        Logger::Log("[sv:err:main:Load] : failed to init network");
+        Logger::Free();
+        return false;
+    }
 
-	}
+    if (!Pawn::Init(std::make_unique<SV::PawnHandler>()))
+    {
+        Logger::Log("[sv:err:main:Load] : failed to init pawn");
+        Network::Free();
+        Logger::Free();
+        return false;
+    }
 
-	if (!Network::Init(logprintf, SV::ConnectHandler, SV::PlayerInitHandler, SV::DisconnectHandler)) {
+    {
+        auto nprocs = std::thread::hardware_concurrency();
 
-		Logger::Log("[sv:err:main:Load] : failed to init network");
-		Logger::Free();
-		return false;
+        if (!nprocs || nprocs > SV::VoiceThreadsCount)
+            nprocs = SV::VoiceThreadsCount;
 
-	}
+        Logger::Log("[sv:dbg:main:Load] : creating %u work threads...", nprocs);
 
-	if (!Pawn::Init(
-		SV::PawnHandlers::InitHandler,
-		SV::PawnHandlers::GetVersionHandler,
-		SV::PawnHandlers::HasMicroHandler,
-		SV::PawnHandlers::StartRecordHandler,
-		SV::PawnHandlers::StopRecordHandler,
-		SV::PawnHandlers::AddKeyHandler,
-		SV::PawnHandlers::HasKeyHandler,
-		SV::PawnHandlers::RemoveKeyHandler,
-		SV::PawnHandlers::RemoveAllKeysHandler,
-		SV::PawnHandlers::MutePlayerStatusHandler,
-		SV::PawnHandlers::MutePlayerEnableHandler,
-		SV::PawnHandlers::MutePlayerDisableHandler,
-		SV::PawnHandlers::CreateGStreamHandler,
-		SV::PawnHandlers::CreateSLStreamAtPointHandler,
-		SV::PawnHandlers::CreateSLStreamAtVehicleHandler,
-		SV::PawnHandlers::CreateSLStreamAtPlayerHandler,
-		SV::PawnHandlers::CreateSLStreamAtObjectHandler,
-		SV::PawnHandlers::CreateDLStreamAtPointHandler,
-		SV::PawnHandlers::CreateDLStreamAtVehicleHandler,
-		SV::PawnHandlers::CreateDLStreamAtPlayerHandler,
-		SV::PawnHandlers::CreateDLStreamAtObjectHandler,
-		SV::PawnHandlers::UpdatePositionForLPStreamHandler,
-		SV::PawnHandlers::UpdateDistanceForLStreamHandler,
-		SV::PawnHandlers::AttachListenerToStreamHandler,
-		SV::PawnHandlers::HasListenerInStreamHandler,
-		SV::PawnHandlers::DetachListenerFromStreamHandler,
-		SV::PawnHandlers::DetachAllListenersFromStreamHandler,
-		SV::PawnHandlers::AttachSpeakerToStreamHandler,
-		SV::PawnHandlers::HasSpeakerInStreamHandler,
-		SV::PawnHandlers::DetachSpeakerFromStreamHandler,
-		SV::PawnHandlers::DetachAllSpeakersFromStreamHandler,
-		SV::PawnHandlers::DeleteStreamHandler
-	)) {
+        SV::workers.reserve(nprocs); for (auto i = nprocs; i > 0; --i)
+            SV::workers.emplace_back(MakeWorker());
+    }
 
-		Logger::Log("[sv:err:main:Load] : failed to init pawn");
-		Network::Free();
-		Logger::Free();
-		return false;
+    Logger::Log(" -------------------------------------------    ");
+    Logger::Log("   ___                __   __    _              ");
+    Logger::Log("  / __| __ _ _ __  _ _\\ \\ / /__ (_) __ ___    ");
+    Logger::Log("  \\__ \\/ _` | '  \\| '_ \\   / _ \\| |/ _/ -_)");
+    Logger::Log("  |___/\\__,_|_|_|_| .__/\\_/\\___/|_|\\__\\___|");
+    Logger::Log("                  |_|                           ");
+    Logger::Log(" -------------------------------------------    ");
+    Logger::Log("           SampVoice by MOR loaded              ");
+    Logger::Log(" -------------------------------------------    ");
 
-	}
-
-	{
-		auto nprocs = std::thread::hardware_concurrency();
-
-		if (!nprocs || nprocs > SV::VoiceThreadsCount)
-			nprocs = SV::VoiceThreadsCount;
-
-		Logger::Log("[sv:dbg:main:Load] : creating %u work threads...", nprocs);
-
-		SV::workers.reserve(nprocs); for (auto i = nprocs; i > 0; --i)
-			SV::workers.emplace_back(Worker::Create());
-	}
-
-	Logger::Log(" -------------------------------------------    ");
-	Logger::Log("   ___                __   __    _              ");
-	Logger::Log("  / __| __ _ _ __  _ _\\ \\ / /__ (_) __ ___    ");
-	Logger::Log("  \\__ \\/ _` | '  \\| '_ \\   / _ \\| |/ _/ -_)");
-	Logger::Log("  |___/\\__,_|_|_|_| .__/\\_/\\___/|_|\\__\\___|");
-	Logger::Log("                  |_|                           ");
-	Logger::Log(" -------------------------------------------    ");
-	Logger::Log("           SampVoice by MOR loaded              ");
-	Logger::Log(" -------------------------------------------    ");
-
-	return true;
-
+    return true;
 }
 
-PLUGIN_EXPORT int PLUGIN_CALL AmxLoad(AMX* amx) {
+PLUGIN_EXPORT int PLUGIN_CALL AmxLoad(AMX* amx)
+{
+    if (!pNetGame && (pNetGame = static_cast<CNetGame*(*)()>(ppPluginData[PLUGIN_DATA_NETGAME])()))
+        Logger::Log("[sv:dbg:main:AmxLoad] : net game pointer (value:%p) received", pNetGame);
 
-	if (!pNetGame && (pNetGame = ((CNetGame*(*)())(ppPluginData[PLUGIN_DATA_NETGAME]))()))
-		Logger::Log("[sv:dbg:main:AmxLoad] : net game pointer (value:%p) received", pNetGame);
+    if (!Network::Bind()) Logger::Log("[sv:dbg:main:AmxLoad] : failed to bind voice server");
 
-	if (!Network::Bind()) Logger::Log("[sv:dbg:main:AmxLoad] : failed to bind voice server");
+    Pawn::RegisterScript(amx);
 
-	Pawn::RegisterScript(amx);
-
-	return AMX_ERR_NONE;
-
+    return AMX_ERR_NONE;
 }
 
-PLUGIN_EXPORT int PLUGIN_CALL AmxUnload(AMX* amx) {
-
-	return AMX_ERR_NONE;
-
+PLUGIN_EXPORT int PLUGIN_CALL AmxUnload(AMX* amx)
+{
+    return AMX_ERR_NONE;
 }
 
-PLUGIN_EXPORT unsigned int PLUGIN_CALL Supports() {
-
-	return SUPPORTS_VERSION | SUPPORTS_AMX_NATIVES | SUPPORTS_PROCESS_TICK;
-
+PLUGIN_EXPORT unsigned int PLUGIN_CALL Supports()
+{
+    return SUPPORTS_VERSION | SUPPORTS_AMX_NATIVES | SUPPORTS_PROCESS_TICK;
 }

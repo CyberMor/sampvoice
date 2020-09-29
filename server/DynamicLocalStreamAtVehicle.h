@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -15,23 +15,23 @@
 #include "DynamicStream.h"
 
 class DynamicLocalStreamAtVehicle : public DynamicStream {
+
+    DynamicLocalStreamAtVehicle() = delete;
+    DynamicLocalStreamAtVehicle(const DynamicLocalStreamAtVehicle&) = delete;
+    DynamicLocalStreamAtVehicle(DynamicLocalStreamAtVehicle&&) = delete;
+    DynamicLocalStreamAtVehicle& operator=(const DynamicLocalStreamAtVehicle&) = delete;
+    DynamicLocalStreamAtVehicle& operator=(DynamicLocalStreamAtVehicle&&) = delete;
+
 public:
 
-	DynamicLocalStreamAtVehicle() = delete;
-	DynamicLocalStreamAtVehicle(const DynamicLocalStreamAtVehicle& object) = delete;
-	DynamicLocalStreamAtVehicle(DynamicLocalStreamAtVehicle&& object) = delete;
+    explicit DynamicLocalStreamAtVehicle(float distance, uint32_t maxPlayers,
+                                         uint16_t vehicleId, uint32_t color,
+                                         const std::string& name);
 
-	DynamicLocalStreamAtVehicle& operator=(const DynamicLocalStreamAtVehicle& object) = delete;
-	DynamicLocalStreamAtVehicle& operator=(DynamicLocalStreamAtVehicle&& object) = delete;
+    ~DynamicLocalStreamAtVehicle() noexcept = default;
 
-	DynamicLocalStreamAtVehicle(
-		const float distance,
-		const uint32_t maxPlayers,
-		const uint16_t vehicleId,
-		const uint32_t color,
-		const std::string& name
-	);
+public:
 
-	void Tick() override;
+    void Tick() override;
 
 };

@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -18,18 +18,13 @@
 class GameUtil {
 public:
 
-	static bool IsKeyDown(const BYTE keyId);
-
-	static bool IsMenuActive();
-	static bool IsWindowActive();
-	static bool IsGameActive();
-
-	static bool HasPlayerPed();
-
-	static bool IsPlayerVisible(const WORD playerId);
-
-	static bool GetRadarRect(CRect& radarRect);
-
-	static void DisableAntiCheat(const AddressesBase& addrBase);
+    static bool IsKeyDown(BYTE keyId) noexcept;
+    static bool IsMenuActive() noexcept;
+    static bool IsWindowActive() noexcept;
+    static bool IsGameActive() noexcept;
+    static bool HasPlayerPed() noexcept;
+    static bool IsPlayerVisible(WORD playerId) noexcept;
+    static bool GetRadarRect(CRect& radarRect) noexcept;
+    static void DisableAntiCheat(const AddressesBase& addrBase) noexcept;
 
 };

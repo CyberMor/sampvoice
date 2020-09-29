@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -15,20 +15,18 @@
 #include "LocalStream.h"
 
 class StaticLocalStreamAtVehicle : public LocalStream {
+
+    StaticLocalStreamAtVehicle() = delete;
+    StaticLocalStreamAtVehicle(const StaticLocalStreamAtVehicle&) = delete;
+    StaticLocalStreamAtVehicle(StaticLocalStreamAtVehicle&&) = delete;
+    StaticLocalStreamAtVehicle& operator=(const StaticLocalStreamAtVehicle&) = delete;
+    StaticLocalStreamAtVehicle& operator=(StaticLocalStreamAtVehicle&&) = delete;
+
 public:
 
-	StaticLocalStreamAtVehicle() = delete;
-	StaticLocalStreamAtVehicle(const StaticLocalStreamAtVehicle& object) = delete;
-	StaticLocalStreamAtVehicle(StaticLocalStreamAtVehicle&& object) = delete;
+    explicit StaticLocalStreamAtVehicle(float distance, uint16_t vehicleId,
+                                        uint32_t color, const std::string& name);
 
-	StaticLocalStreamAtVehicle& operator=(const StaticLocalStreamAtVehicle& object) = delete;
-	StaticLocalStreamAtVehicle& operator=(StaticLocalStreamAtVehicle&& object) = delete;
-
-	StaticLocalStreamAtVehicle(
-		const float distance,
-		const uint16_t vehicleId,
-		const uint32_t color,
-		const std::string& name
-	);
+    ~StaticLocalStreamAtVehicle() noexcept = default;
 
 };

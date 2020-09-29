@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -17,20 +17,18 @@
 #include "PointStream.h"
 
 class StaticLocalStreamAtPoint : public PointStream {
+
+    StaticLocalStreamAtPoint() = delete;
+    StaticLocalStreamAtPoint(const StaticLocalStreamAtPoint&) = delete;
+    StaticLocalStreamAtPoint(StaticLocalStreamAtPoint&&) = delete;
+    StaticLocalStreamAtPoint& operator=(const StaticLocalStreamAtPoint&) = delete;
+    StaticLocalStreamAtPoint& operator=(StaticLocalStreamAtPoint&&) = delete;
+
 public:
 
-	StaticLocalStreamAtPoint() = delete;
-	StaticLocalStreamAtPoint(const StaticLocalStreamAtPoint& object) = delete;
-	StaticLocalStreamAtPoint(StaticLocalStreamAtPoint&& object) = delete;
+    explicit StaticLocalStreamAtPoint(float distance, const CVector& position,
+                                      uint32_t color, const std::string& name);
 
-	StaticLocalStreamAtPoint& operator=(const StaticLocalStreamAtPoint& object) = delete;
-	StaticLocalStreamAtPoint& operator=(StaticLocalStreamAtPoint&& object) = delete;
-
-	StaticLocalStreamAtPoint(
-		const float distance,
-		const CVector& position,
-		const uint32_t color,
-		const std::string& name
-	);
+    ~StaticLocalStreamAtPoint() noexcept = default;
 
 };

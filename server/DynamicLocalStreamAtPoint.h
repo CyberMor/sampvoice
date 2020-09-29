@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -18,23 +18,23 @@
 #include "DynamicStream.h"
 
 class DynamicLocalStreamAtPoint : public PointStream, public DynamicStream {
+
+    DynamicLocalStreamAtPoint() = delete;
+    DynamicLocalStreamAtPoint(const DynamicLocalStreamAtPoint&) = delete;
+    DynamicLocalStreamAtPoint(DynamicLocalStreamAtPoint&&) = delete;
+    DynamicLocalStreamAtPoint& operator=(const DynamicLocalStreamAtPoint&) = delete;
+    DynamicLocalStreamAtPoint& operator=(DynamicLocalStreamAtPoint&&) = delete;
+
 public:
 
-	DynamicLocalStreamAtPoint() = delete;
-	DynamicLocalStreamAtPoint(const DynamicLocalStreamAtPoint& object) = delete;
-	DynamicLocalStreamAtPoint(DynamicLocalStreamAtPoint&& object) = delete;
+    explicit DynamicLocalStreamAtPoint(float distance, uint32_t maxPlayers,
+                                       const CVector& position, uint32_t color,
+                                       const std::string& name);
 
-	DynamicLocalStreamAtPoint& operator=(const DynamicLocalStreamAtPoint& object) = delete;
-	DynamicLocalStreamAtPoint& operator=(DynamicLocalStreamAtPoint&& object) = delete;
+    ~DynamicLocalStreamAtPoint() noexcept = default;
 
-	DynamicLocalStreamAtPoint(
-		const float distance,
-		const uint32_t maxPlayers,
-		const CVector& position,
-		const uint32_t color,
-		const std::string& name
-	);
+public:
 
-	void Tick() override;
+    void Tick() override;
 
 };

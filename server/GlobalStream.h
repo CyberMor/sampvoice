@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -15,15 +15,17 @@
 #include "Stream.h"
 
 class GlobalStream : public Stream {
+
+    GlobalStream() = delete;
+    GlobalStream(const GlobalStream&) = delete;
+    GlobalStream(GlobalStream&&) = delete;
+    GlobalStream& operator=(const GlobalStream&) = delete;
+    GlobalStream& operator=(GlobalStream&&) = delete;
+
 public:
 
-	GlobalStream() = delete;
-	GlobalStream(const GlobalStream& object) = delete;
-	GlobalStream(GlobalStream&& object) = delete;
+    explicit GlobalStream(uint32_t color, const std::string& name);
 
-	GlobalStream& operator=(const GlobalStream& object) = delete;
-	GlobalStream& operator=(GlobalStream&& object) = delete;
-
-	GlobalStream(const uint32_t color, const std::string& name);
+    ~GlobalStream() noexcept = default;
 
 };

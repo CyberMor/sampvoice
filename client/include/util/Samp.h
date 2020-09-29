@@ -1,10 +1,10 @@
 ﻿/*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -19,48 +19,37 @@
 #include "AddressesBase.h"
 
 class Samp {
+
+    using InitHandlerType = std::function<void()>;
+    using ExitHandlerType = std::function<void()>;
+
 public:
 
-	using InitHandlerType = std::function<void()>;
-	using ExitHandlerType = std::function<void()>;
+    static bool Init(const AddressesBase& addrBase,
+                     InitHandlerType&& initHandler,
+                     ExitHandlerType&& exitHandler) noexcept;
+    static bool IsInited() noexcept;
+    static bool IsLoaded() noexcept;
+    static void Free() noexcept;
+
+    static void AddClientCommand(const char* cmdName, SAMP::CMDPROC cmdHandler) noexcept;
+    static void AddMessageToChat(D3DCOLOR color, const char* message) noexcept;
+    static void ToggleSampCursor(int mode) noexcept;
 
 private:
 
-	static bool initStatus;
-	static bool loadStatus;
+    static void HookFuncSampInit() noexcept;
+    static void HookFuncSampFree() noexcept;
 
-	static InitHandlerType initHandler;
-	static ExitHandlerType exitHandler;
+private:
 
-	static Memory::JumpHookPtr hookSampInit;
-	static Memory::JumpHookPtr hookSampFree;
+    static bool initStatus;
+    static bool loadStatus;
 
-	static void HookFuncSampInit();
-	static void HookFuncSampFree();
+    static InitHandlerType initHandler;
+    static ExitHandlerType exitHandler;
 
-public:
-
-	static bool Init(
-		const AddressesBase& addrBase,
-		const InitHandlerType& initHandler,
-		const ExitHandlerType& exitHandler
-	);
-
-	static bool IsInited();
-	static bool IsLoaded();
-
-	static void AddClientCommand(
-		const char* cmdName,
-		SAMP::CMDPROC cmdHandler
-	);
-
-	static void AddMessageToChat(
-		const D3DCOLOR color,
-		const char* message
-	);
-
-	static void ToggleSampCursor(const int mode);
-
-	static void Free();
+    static Memory::JumpHookPtr hookSampInit;
+    static Memory::JumpHookPtr hookSampFree;
 
 };

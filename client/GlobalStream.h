@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -18,29 +18,19 @@
 #include "StreamInfo.h"
 
 class GlobalStream : public Stream {
+
+    GlobalStream() = delete;
+    GlobalStream(const GlobalStream&) = delete;
+    GlobalStream(GlobalStream&&) = delete;
+    GlobalStream& operator=(const GlobalStream&) = delete;
+    GlobalStream& operator=(GlobalStream&&) = delete;
+
 public:
 
-	GlobalStream() = delete;
-	GlobalStream(const GlobalStream& object) = delete;
-	GlobalStream(GlobalStream&& object) = delete;
-
-	GlobalStream& operator=(const GlobalStream& object) = delete;
-	GlobalStream& operator=(GlobalStream&& object) = delete;
-
-	GlobalStream(
-		const PlayHandlerType& playHandler,
-		const StopHandlerType& stopHandler,
-		const std::string& name,
-		const D3DCOLOR color
-	) :
-
-		Stream(
-			NULL, playHandler, stopHandler,
-			StreamType::GlobalStream,
-			name, color
-		)
-
-	{}
+    explicit GlobalStream(PlayHandlerType&& playHandler, StopHandlerType&& stopHandler,
+                          const std::string& name, const D3DCOLOR color)
+        : Stream(NULL, std::move(playHandler), std::move(stopHandler),
+                 StreamType::GlobalStream, name, color) {}
 
 };
 

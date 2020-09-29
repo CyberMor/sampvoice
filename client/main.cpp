@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #include "Plugin.h"
@@ -12,35 +12,41 @@
 #include <string>
 #include <sstream>
 
-static std::string libraryName = "samp.dll";
+static std::string libraryName { "samp.dll" };
 
-static DWORD WINAPI LibraryWaitingThread(HMODULE sampBaseAddress) {
+static DWORD WINAPI LibraryWaitingThread(LPVOID)
+{
+    HMODULE sampBaseAddress { nullptr };
 
-	while (!(sampBaseAddress = GetModuleHandle(libraryName.c_str()))) Sleep(50);
+    while (!(sampBaseAddress = GetModuleHandle(libraryName.c_str())))
+    {
+        SleepForMilliseconds(50);
+    }
 
-	Plugin::OnSampLoad(sampBaseAddress);
+    Plugin::OnSampLoad(sampBaseAddress);
 
-	return NULL;
-
+    return NULL;
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReasonForCall, LPVOID lpReserved) {
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReasonForCall, LPVOID)
+{
+    if (dwReasonForCall != DLL_PROCESS_ATTACH)
+        return TRUE;
 
-	if (dwReasonForCall != DLL_PROCESS_ATTACH) return TRUE;
+    if (!Plugin::OnPluginLoad(hModule))
+        return FALSE;
 
-	if (!Plugin::OnPluginLoad(hModule)) return FALSE;
+    if (const auto cmdLine = GetCommandLine())
+    {
+        std::string iString;
+        std::istringstream cmdStream { cmdLine };
 
-	if (auto cmdLine = GetCommandLine()) {
+        while ((cmdStream >> iString) && (iString != "-svlib"));
+        if (cmdStream >> iString) libraryName = std::move(iString);
+    }
 
-		std::string iString;
-		std::istringstream cmdStream(cmdLine);
+    const auto waitingThread = CreateThread(NULL, 0, LibraryWaitingThread,
+                                            NULL, NULL, NULL);
 
-		while ((cmdStream >> iString) && (iString != "-svlib"));
-		if (cmdStream >> iString) libraryName = iString;
-
-	}
-
-	return (BOOL)(CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
-		(&LibraryWaitingThread), NULL, NULL, NULL));
-
+    return waitingThread != nullptr ? TRUE : FALSE;
 }

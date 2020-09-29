@@ -1,33 +1,32 @@
 #if defined _sampvoice_included
-	#endinput
+    #endinput
 #endif
 #define _sampvoice_included
 
-#define SV_VERSION			10
+#define SV_VERSION      10
 
-#define SV_NULL				0
-#define SV_INFINITY			-1
-#define SV_FALSE			false
-#define SV_TRUE				true
+#define SV_NULL         0
+#define SV_INFINITY     -1
+#define SV_FALSE        false
+#define SV_TRUE         true
 
 #define SV_PTR:
 #define SV_STR:
 #define SV_INT:
 #define SV_UINT:
-#define SV_FLOAT:			Float:
-#define SV_BOOL:			bool:
-#define SV_VOID:			void:
+#define SV_FLOAT:       Float:
+#define SV_BOOL:        bool:
+#define SV_VOID:        void:
 
-#define SV_STREAM:			SV_PTR:
-#define SV_GSTREAM:			SV_PTR:
-#define SV_LSTREAM:			SV_PTR:
-#define SV_LPSTREAM:		SV_PTR:
-#define SV_SLSTREAM:		SV_PTR:
-#define SV_DLSTREAM:		SV_PTR:
-
-native SV_VOID:SvDebug(SV_BOOL:mode);
+#define SV_STREAM:      SV_PTR:
+#define SV_GSTREAM:     SV_PTR:
+#define SV_LSTREAM:     SV_PTR:
+#define SV_LPSTREAM:    SV_PTR:
+#define SV_SLSTREAM:    SV_PTR:
+#define SV_DLSTREAM:    SV_PTR:
 
 native SV_VOID:SvInit(SV_UINT:bitrate);
+native SV_VOID:SvDebug(SV_BOOL:mode);
 native SV_UINT:SvGetVersion(SV_UINT:playerid);
 
 native SV_BOOL:SvHasMicro(SV_UINT:playerid);

@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -13,25 +13,27 @@
 #include "Stream.h"
 
 class LocalStream : public Stream {
+
+    LocalStream() = delete;
+    LocalStream(const LocalStream&) = delete;
+    LocalStream(LocalStream&&) = delete;
+    LocalStream& operator=(const LocalStream&) = delete;
+    LocalStream& operator=(LocalStream&&) = delete;
+
 protected:
 
-	ControlPacketContainerPtr packetStreamUpdateDistance = nullptr;
-
-protected:
-
-	LocalStream(const float distance);
+    explicit LocalStream(float distance);
 
 public:
 
-	LocalStream() = delete;
-	LocalStream(const LocalStream& object) = delete;
-	LocalStream(LocalStream&& object) = delete;
+    virtual ~LocalStream() noexcept = default;
 
-	LocalStream& operator=(const LocalStream& object) = delete;
-	LocalStream& operator=(LocalStream&& object) = delete;
+public:
 
-	void UpdateDistance(const float distance);
+    void UpdateDistance(float distance);
 
-	virtual ~LocalStream();
+protected:
+
+    ControlPacketContainerPtr packetStreamUpdateDistance { nullptr };
 
 };

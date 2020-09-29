@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -18,164 +18,149 @@
 #define GetTimestamp() (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())
 #define SleepForMilliseconds(mscount) (std::this_thread::sleep_for(std::chrono::milliseconds(mscount)))
 
-namespace SV {
+namespace SV
+{
+    // Constants
+    // --------------------------------------------
 
-	// Strings
-	// --------------------------------------------
+    constexpr const char*   LogFileName         = "svlog.txt";
 
-	constexpr const char*		LogFileName			= "svlog.txt";
+    constexpr uint16_t      NonePlayer          = 0xffff;
 
-	// Constants
-	// --------------------------------------------
+    constexpr uint32_t      VoiceThreadsCount   = 8;
+    constexpr uint32_t      DefaultBitrate      = 24000;
 
-	constexpr uint16_t			NonePlayer			= 0xffff;
+    constexpr uint8_t       Version             = 10;
 
-	static constexpr uint32_t	VoiceThreadsCount	= 8;
-	static constexpr uint32_t	DefaultBitrate		= 24000;
+    constexpr uint32_t      Signature           = 0xDeadBeef;
+    constexpr const char*   SignaturePattern    = "\xef\xbe\xad\xde";
+    constexpr const char*   SignatureMask       = "xxxx";
 
-	constexpr uint8_t			Version				= 10;
+    // Types
+    // --------------------------------------------
 
-	constexpr uint32_t			Signature			= 0xDeadBeef;
-	constexpr const char*		SignaturePattern	= "\xef\xbe\xad\xde";
-	constexpr const char*		SignatureMask		= "xxxx";
+    struct ControlPacketType
+    {
+        enum : uint8_t
+        {
+            serverInfo,
+            pluginInit,
 
-	struct ControlPacketType {
-		enum : uint8_t {
+            muteEnable,
+            muteDisable,
+            startRecord,
+            stopRecord,
+            addKey,
+            removeKey,
+            removeAllKeys,
+            createGStream,
+            createLPStream,
+            createLStreamAtVehicle,
+            createLStreamAtPlayer,
+            createLStreamAtObject,
+            updateLPStreamDistance,
+            updateLPStreamPosition,
+            deleteStream,
 
-			serverInfo,
-			pluginInit,
+            pressKey,
+            releaseKey
+        };
+    };
 
-			muteEnable,
-			muteDisable,
-			startRecord,
-			stopRecord,
-			addKey,
-			removeKey,
-			removeAllKeys,
-			createGStream,
-			createLPStream,
-			createLStreamAtVehicle,
-			createLStreamAtPlayer,
-			createLStreamAtObject,
-			updateLPStreamDistance,
-			updateLPStreamPosition,
-			deleteStream,
+    struct VoicePacketType
+    {
+        enum : uint8_t
+        {
+            keepAlive,
+            voicePacket
+        };
+    };
 
-			pressKey,
-			releaseKey
-
-		};
-	};
-
-	struct VoicePacketType {
-		enum : uint8_t {
-			
-			keepAlive,
-
-			voicePacket
-
-		};
-	};
-
-	// Packets
-	// --------------------------------------------
+    // Packets
+    // --------------------------------------------
 
 #pragma pack(push, 1)
 
-	struct ConnectPacket {
+    struct ConnectPacket
+    {
+        uint32_t signature;
+        uint8_t version;
+        uint8_t micro;
+    };
 
-		uint32_t	signature;
-		uint8_t		version;
-		uint8_t		micro;
+    struct ServerInfoPacket
+    {
+        uint32_t serverKey;
+        uint16_t serverPort;
+    };
 
-	};
+    struct PluginInitPacket
+    {
+        uint32_t bitrate;
+        uint8_t mute;
+    };
 
-	struct ServerInfoPacket {
+    struct AddKeyPacket
+    {
+        uint8_t keyId;
+    };
 
-		uint32_t	serverKey;
-		uint16_t	serverPort;
+    struct RemoveKeyPacket
+    {
+        uint8_t keyId;
+    };
 
-	};
+    struct CreateGStreamPacket
+    {
+        uint32_t stream;
+        uint32_t color;
+        char name[];
+    };
 
-	struct PluginInitPacket {
+    struct CreateLPStreamPacket
+    {
+        uint32_t stream;
+        float distance;
+        CVector position;
+        uint32_t color;
+        char name[];
+    };
 
-		uint32_t	bitrate;
-		uint8_t		mute;
+    struct CreateLStreamAtPacket
+    {
+        uint32_t stream;
+        float distance;
+        uint16_t target;
+        uint32_t color;
+        char name[];
+    };
 
-	};
+    struct UpdateLPStreamDistancePacket
+    {
+        uint32_t stream;
+        float distance;
+    };
 
-	struct AddKeyPacket {
+    struct UpdateLPStreamPositionPacket
+    {
+        uint32_t stream;
+        CVector position;
+    };
 
-		uint8_t		keyId;
+    struct DeleteStreamPacket
+    {
+        uint32_t stream;
+    };
 
-	};
+    struct PressKeyPacket
+    {
+        uint8_t keyId;
+    };
 
-	struct RemoveKeyPacket {
-
-		uint8_t		keyId;
-
-	};
-
-	struct CreateGStreamPacket {
-
-		uint32_t	stream;
-		uint32_t	color;
-		char		name[];
-
-	};
-
-	struct CreateLPStreamPacket {
-
-		uint32_t	stream;
-		float		distance;
-		CVector		position;
-		uint32_t	color;
-		char		name[];
-
-	};
-
-	struct CreateLStreamAtPacket {
-
-		uint32_t	stream;
-		float		distance;
-		uint16_t	target;
-		uint32_t	color;
-		char		name[];
-
-	};
-
-	struct UpdateLPStreamDistancePacket {
-
-		uint32_t	stream;
-		float		distance;
-
-	};
-
-	struct UpdateLPStreamPositionPacket {
-
-		uint32_t	stream;
-		CVector		position;
-
-	};
-
-	struct DeleteStreamPacket {
-
-		uint32_t	stream;
-
-	};
-
-	struct PressKeyPacket {
-
-		uint8_t		keyId;
-
-	};
-
-	struct ReleaseKeyPacket {
-
-		uint8_t		keyId;
-
-	};
+    struct ReleaseKeyPacket
+    {
+        uint8_t keyId;
+    };
 
 #pragma pack(pop)
-
 }

@@ -1,10 +1,10 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #pragma once
@@ -19,98 +19,57 @@
 #include "Header.h"
 
 class Worker {
-private:
 
-	const std::shared_ptr<std::atomic_bool> status;
-	const std::shared_ptr<std::thread> thread;
-
-	static void ThreadFunc(
-		std::shared_ptr<std::atomic_bool> status
-	) {
-
-		while (status->load()) {
-
-			const auto voicePacket = Network::ReceiveVoicePacket();
-
-			if (!voicePacket) continue;
-
-			const auto voicePacketRef = *voicePacket;
-
-			const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(voicePacketRef->sender);
-
-			if (pPlayerInfo && !pPlayerInfo->muteStatus.load() && (pPlayerInfo->recordStatus.load() || !pPlayerInfo->keys.empty()))
-				for (const auto pStream : pPlayerInfo->speakerStreams) pStream->PushVoicePacket(*&voicePacketRef);
-
-			PlayerStore::ReleasePlayerWithSharedAccess(voicePacketRef->sender);
-
-		}
-
-	}
-
-private:
-
-	Worker(
-		const std::shared_ptr<std::atomic_bool>& status,
-		const std::shared_ptr<std::thread>& thread
-	) :
-		status(status),
-		thread(thread)
-	{}
+    Worker(const Worker&) = delete;
+    Worker(Worker&&) = delete;
+    Worker& operator=(const Worker&) = delete;
+    Worker& operator=(Worker&&) = delete;
 
 public:
 
-	Worker() = delete;
-	Worker(const Worker& object) = delete;
-	Worker(Worker&& object) = delete;
+    explicit Worker()
+        : status(std::make_shared<std::atomic_bool>(true))
+        , thread(std::make_shared<std::thread>(Worker::ThreadFunc, status))
+    {}
 
-	Worker& operator=(const Worker& object) = delete;
-	Worker& operator=(Worker&& object) = delete;
+    ~Worker()
+    {
+        if (this->thread->joinable())
+            this->thread->detach();
 
-	static std::shared_ptr<Worker> Create() {
+        this->status->store(false);
+    }
 
-		const auto status = std::make_shared<std::atomic_bool>(true);
+private:
 
-		if (!status) return nullptr;
+    static void ThreadFunc(const std::shared_ptr<std::atomic_bool> status)
+    {
+        while (status->load(std::memory_order_relaxed))
+        {
+            const auto voicePacket = Network::ReceiveVoicePacket();
+            if (!voicePacket) continue;
 
-		const auto thread = std::make_shared<std::thread>(ThreadFunc, status);
+            auto& voicePacketRef = *voicePacket;
 
-		if (!thread) return nullptr;
+            const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(voicePacketRef->sender);
 
-		struct WorkerHack : Worker {
+            if (pPlayerInfo && !pPlayerInfo->muteStatus.load(std::memory_order_relaxed) &&
+                (pPlayerInfo->recordStatus.load(std::memory_order_relaxed) || !pPlayerInfo->keys.empty()))
+            {
+                for (const auto pStream : pPlayerInfo->speakerStreams)
+                    pStream->PushVoicePacket(*&voicePacketRef);
+            }
 
-			WorkerHack(
-				const std::shared_ptr<std::atomic_bool>& status,
-				const std::shared_ptr<std::thread>& thread
-			) : Worker(status, thread) {}
+            PlayerStore::ReleasePlayerWithSharedAccess(voicePacketRef->sender);
+        }
+    }
 
-		};
+private:
 
-		return std::make_shared<WorkerHack>(status, thread);
-
-	}
-
-	void Stop() const {
-
-		this->status->store(false);
-
-	}
-
-	void Wait() const {
-
-		if (this->thread->joinable())
-			this->thread->join();
-
-	}
-
-	~Worker() {
-
-		if (this->thread->joinable())
-			this->thread->detach();
-
-		this->status->store(false);
-
-	}
+    const std::shared_ptr<std::atomic_bool> status;
+    const std::shared_ptr<std::thread> thread;
 
 };
 
 using WorkerPtr = std::shared_ptr<Worker>;
+#define MakeWorker std::make_shared<Worker>

@@ -1,100 +1,104 @@
 /*
-	This is a SampVoice project file
-	Developer: CyberMor <cyber.mor.2020@gmail.ru>
+    This is a SampVoice project file
+    Developer: CyberMor <cyber.mor.2020@gmail.ru>
 
-	See more here https://github.com/CyberMor/sampvoice
+    See more here https://github.com/CyberMor/sampvoice
 
-	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
+    Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
 #include "KeyFilter.h"
 
 #include "Logger.h"
 
-SPSCQueue<KeyFilter::KeyEvent> KeyFilter::keyQueue(64);
+bool KeyFilter::AddKey(const BYTE keyId) noexcept
+{
+    if (statusKeys[keyId]) return false;
 
-std::atomic_int KeyFilter::activeKeys(0);
+    Logger::LogToFile("[dbg:keyfilter] : adding key (id:0x%hhx)...", keyId);
 
-std::atomic_bool KeyFilter::pressedKeys[256] = {};
-std::atomic_bool KeyFilter::statusKeys[256] = {};
+    statusKeys[keyId] = true;
 
-void KeyFilter::AddKey(const BYTE keyId) {
-
-	Logger::LogToFile("[dbg:keyfilter] : adding key (id:0x%hhx)...", keyId);
-
-	KeyFilter::statusKeys[keyId].store(true);
-
+    return true;
 }
 
-void KeyFilter::RemoveKey(const BYTE keyId) {
+bool KeyFilter::RemoveKey(const BYTE keyId) noexcept
+{
+    ReleaseKey(keyId);
 
-	Logger::LogToFile("[dbg:keyfilter] : removing key (id:0x%hhx)...", keyId);
+    if (!statusKeys[keyId]) return false;
 
-	if (KeyFilter::statusKeys[keyId].exchange(false) && KeyFilter::pressedKeys[keyId].exchange(false))
-		KeyFilter::keyQueue.push(KeyEvent(keyId, false, --KeyFilter::activeKeys));
+    Logger::LogToFile("[dbg:keyfilter] : removing key (id:0x%hhx)...", keyId);
 
+    statusKeys[keyId] = false;
+
+    return true;
 }
 
-void KeyFilter::RemoveAllKeys() {
+void KeyFilter::RemoveAllKeys() noexcept
+{
+    Logger::LogToFile("[dbg:keyfilter] : removing all keys...");
 
-	Logger::LogToFile("[dbg:keyfilter] : removing all keys...");
+    for (DWORD keyId = 0; keyId < sizeof(statusKeys); ++keyId)
+        RemoveKey(keyId);
 
-	for (DWORD keyId = 0; keyId < sizeof(KeyFilter::statusKeys); ++keyId)
-		if (KeyFilter::statusKeys[keyId].exchange(false) && KeyFilter::pressedKeys[keyId].exchange(false))
-			KeyFilter::keyQueue.push(KeyEvent(keyId, false, --KeyFilter::activeKeys));
-
-	KeyFilter::activeKeys.store(0);
-
+    activeKeys = 0;
 }
 
-void KeyFilter::ReleaseAllKeys() {
+void KeyFilter::ReleaseAllKeys() noexcept
+{
+    Logger::LogToFile("[dbg:keyfilter] : releasing all keys...");
 
-	Logger::LogToFile("[dbg:keyfilter] : releasing all keys...");
+    for (DWORD keyId = 0; keyId < sizeof(statusKeys); ++keyId)
+        ReleaseKey(keyId);
 
-	for (DWORD keyId = 0; keyId < sizeof(KeyFilter::statusKeys); ++keyId)
-		if (KeyFilter::statusKeys[keyId].load() && KeyFilter::pressedKeys[keyId].exchange(false))
-			KeyFilter::keyQueue.push(KeyEvent(keyId, false, --KeyFilter::activeKeys));
-
-	KeyFilter::activeKeys.store(0);
-
+    activeKeys = 0;
 }
 
-bool KeyFilter::PopKey(KeyEvent& event) {
+bool KeyFilter::PopKey(KeyEvent& event) noexcept
+{
+    if (keyQueue.empty()) return false;
 
-	if (KeyFilter::keyQueue.empty())
-		return false;
+    event = *keyQueue.front();
+    keyQueue.pop();
 
-	event = *KeyFilter::keyQueue.front();
-	KeyFilter::keyQueue.pop();
-
-	return true;
-
+    return true;
 }
 
-VOID KeyFilter::OnWndMessage(
-	HWND hWnd, UINT uMsg,
-	WPARAM wParam, LPARAM lParam
-) {
-
-	switch (uMsg) {
-		case WM_KEYDOWN:
-		{
-
-			if (KeyFilter::statusKeys[(BYTE)(wParam)].load() &&
-				!KeyFilter::pressedKeys[(BYTE)(wParam)].exchange(true))
-				KeyFilter::keyQueue.push(KeyEvent((BYTE)(wParam),
-					true, ++KeyFilter::activeKeys));
-
-		} break;
-		case WM_KEYUP:
-		{
-
-			if (KeyFilter::statusKeys[(BYTE)(wParam)].load() &&
-				KeyFilter::pressedKeys[(BYTE)(wParam)].exchange(false))
-				KeyFilter::keyQueue.push(KeyEvent((BYTE)(wParam),
-					false, --KeyFilter::activeKeys));
-
-		} break;
-	}
-
+void KeyFilter::OnWndMessage(HWND hWnd, UINT uMsg,
+                             WPARAM wParam, LPARAM lParam) noexcept
+{
+    switch (uMsg)
+    {
+        case WM_KEYDOWN: PressKey(wParam); break;
+        case WM_KEYUP: ReleaseKey(wParam); break;
+    }
 }
+
+bool KeyFilter::PressKey(const BYTE keyId) noexcept
+{
+    if (!statusKeys[keyId]) return false;
+    if (pressedKeys[keyId]) return false;
+
+    pressedKeys[keyId] = keyQueue.try_emplace(keyId, true, activeKeys + 1);
+    if (pressedKeys[keyId]) ++activeKeys;
+
+    return pressedKeys[keyId];
+}
+
+bool KeyFilter::ReleaseKey(const BYTE keyId) noexcept
+{
+    if (!pressedKeys[keyId]) return false;
+
+    pressedKeys[keyId] = !keyQueue.try_emplace(keyId, false, activeKeys - 1);
+    if (!pressedKeys[keyId]) --activeKeys;
+
+    return !pressedKeys[keyId];
+}
+
+SPSCQueue<KeyEvent> KeyFilter::keyQueue { 256 };
+
+int KeyFilter::activeKeys { 0 };
+
+bool KeyFilter::pressedKeys[256] {};
+bool KeyFilter::statusKeys[256] {};
