@@ -23,15 +23,8 @@ struct KeyEvent {
 
 public:
 
-    KeyEvent(
-        const BYTE keyId,
-        const bool isPressed,
-        const int actKeys
-    ) noexcept
-        : keyId(keyId)
-        , isPressed(isPressed)
-        , actKeys(actKeys)
-    {}
+    KeyEvent(BYTE keyId, bool isPressed, int actKeys) noexcept
+        : keyId(keyId), isPressed(isPressed), actKeys(actKeys) {}
 
     ~KeyEvent() noexcept = default;
 
@@ -44,6 +37,14 @@ public:
 };
 
 class KeyFilter {
+
+    KeyFilter() = delete;
+    ~KeyFilter() = delete;
+    KeyFilter(const KeyFilter&) = delete;
+    KeyFilter(KeyFilter&&) = delete;
+    KeyFilter& operator=(const KeyFilter&) = delete;
+    KeyFilter& operator=(KeyFilter&&) = delete;
+
 public:
 
     static bool AddKey(BYTE keyId) noexcept;

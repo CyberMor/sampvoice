@@ -16,37 +16,27 @@
 
 class MicroIcon {
 
-    static constexpr float kBaseIconSize = 35.f;
-    static constexpr float kBaseIconPadding = 15.f;
-
-    static constexpr int kAlphaLevelIncrementDeviation = 12;
-    static constexpr int kAlphaLevelDecrementDeviation = -12;
+    MicroIcon() = delete;
+    ~MicroIcon() = delete;
+    MicroIcon(const MicroIcon&) = delete;
+    MicroIcon(MicroIcon&&) = delete;
+    MicroIcon& operator=(const MicroIcon&) = delete;
+    MicroIcon& operator=(MicroIcon&&) = delete;
 
 private:
 
-    static bool initStatus;
-    static bool showStatus;
-
-    static int alphaLevelPassiveIcon;
-    static int alphaLevelDeviationPassiveIcon;
-    static TexturePtr tPassiveIcon;
-
-    static int alphaLevelActiveIcon;
-    static int alphaLevelDeviationActiveIcon;
-    static TexturePtr tActiveIcon;
-
-    static int alphaLevelMutedIcon;
-    static int alphaLevelDeviationMutedIcon;
-    static TexturePtr tMutedIcon;
+    static constexpr float kBaseIconSize = 35.f;
+    static constexpr float kBaseIconPadding = 15.f;
+    static constexpr int kAlphaLevelIncrementDeviation = 12;
+    static constexpr int kAlphaLevelDecrementDeviation = -12;
 
 public:
 
-    static bool Init(
-        IDirect3DDevice9* pDevice,
-        const Resource& rPassiveIcon,
-        const Resource& rActiveIcon,
-        const Resource& rMutedIcon
-    ) noexcept;
+    static bool Init(IDirect3DDevice9* pDevice,
+                     const Resource& rPassiveIcon,
+                     const Resource& rActiveIcon,
+                     const Resource& rMutedIcon) noexcept;
+    static void Free() noexcept;
 
     static int GetMicroIconPositionX() noexcept;
     static int GetMicroIconPositionY() noexcept;
@@ -79,6 +69,22 @@ public:
     static bool IsShowed() noexcept;
     static void Hide() noexcept;
 
-    static void Free() noexcept;
+private:
+
+    static bool initStatus;
+
+    static bool showStatus;
+
+    static int alphaLevelPassiveIcon;
+    static int alphaLevelDeviationPassiveIcon;
+    static TexturePtr tPassiveIcon;
+
+    static int alphaLevelActiveIcon;
+    static int alphaLevelDeviationActiveIcon;
+    static TexturePtr tActiveIcon;
+
+    static int alphaLevelMutedIcon;
+    static int alphaLevelDeviationMutedIcon;
+    static TexturePtr tMutedIcon;
 
 };

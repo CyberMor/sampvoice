@@ -19,7 +19,7 @@
 #pragma comment(lib, "bass.lib")
 #pragma comment(lib, "bass_fx.lib")
 
-bool Playback::Init(const AddressesBase& addrBase)
+bool Playback::Init(const AddressesBase& const addrBase) noexcept
 {
     if (Playback::initStatus) return false;
 
@@ -27,9 +27,14 @@ bool Playback::Init(const AddressesBase& addrBase)
 
     Memory::FillWithNops(addrBase.GetBassSetConfigAddr(), 8);
 
-    if (!(Playback::bassInitHook = MakeCallHook(addrBase.GetBassInitCallAddr(), Playback::BassInitHookFunc)))
+    try
     {
-        Logger::LogToFile("[sv:err:playback:init] : failed to create 'BASS_Init' function hook");
+        Playback::bassInitHook = MakeCallHook(addrBase.GetBassInitCallAddr(), Playback::BassInitHookFunc);
+    }
+    catch (const std::exception& exception)
+    {
+        Logger::LogToFile("[sv:err:playback:init] : failed to create function hooks");
+        Playback::bassInitHook.reset();
         return false;
     }
 
@@ -41,10 +46,12 @@ bool Playback::Init(const AddressesBase& addrBase)
 
     Logger::LogToFile("[sv:dbg:playback:init] : module initialized");
 
-    return Playback::initStatus = true;
+    Playback::initStatus = true;
+
+    return true;
 }
 
-void Playback::Free()
+void Playback::Free() noexcept
 {
     if (!Playback::initStatus) return;
 
@@ -58,27 +65,27 @@ void Playback::Free()
     Playback::initStatus = false;
 }
 
-bool Playback::GetSoundEnable()
+bool Playback::GetSoundEnable() noexcept
 {
     return PluginConfig::GetSoundEnable();
 }
 
-int Playback::GetSoundVolume()
+int Playback::GetSoundVolume() noexcept
 {
     return PluginConfig::GetSoundVolume();
 }
 
-bool Playback::GetSoundBalancer()
+bool Playback::GetSoundBalancer() noexcept
 {
     return PluginConfig::GetSoundBalancer();
 }
 
-bool Playback::GetSoundFilter()
+bool Playback::GetSoundFilter() noexcept
 {
     return PluginConfig::GetSoundFilter();
 }
 
-void Playback::SetSoundEnable(bool soundEnable)
+void Playback::SetSoundEnable(const bool soundEnable) noexcept
 {
     if (!Playback::loadStatus) return;
 
@@ -88,7 +95,7 @@ void Playback::SetSoundEnable(bool soundEnable)
     else BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, 100 * PluginConfig::GetSoundVolume());
 }
 
-void Playback::SetSoundVolume(int soundVolume)
+void Playback::SetSoundVolume(int soundVolume) noexcept
 {
     if (!Playback::loadStatus) return;
 
@@ -97,13 +104,15 @@ void Playback::SetSoundVolume(int soundVolume)
 
     PluginConfig::SetSoundVolume(soundVolume);
 
-    if (PluginConfig::GetSoundEnable()) BASS_SetConfig(BASS_CONFIG_GVOL_STREAM,
-        100 * PluginConfig::GetSoundVolume());
+    if (PluginConfig::GetSoundEnable())
+    {
+        BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, 100 * PluginConfig::GetSoundVolume());
+    }
 }
 
-void Playback::SetSoundBalancer(bool soundBalancer)
+void Playback::SetSoundBalancer(const bool soundBalancer) noexcept
 {
-    static HFX balancerFxHandle = NULL;
+    static HFX balancerFxHandle { NULL };
 
     if (!Playback::loadStatus) return;
 
@@ -111,10 +120,9 @@ void Playback::SetSoundBalancer(bool soundBalancer)
 
     if (PluginConfig::GetSoundBalancer() && !balancerFxHandle)
     {
-        BASS_BFX_COMPRESSOR2 balancerParameters = {};
+        BASS_BFX_COMPRESSOR2 balancerParameters {};
 
         balancerParameters.lChannel = BASS_BFX_CHANALL;
-
         balancerParameters.fGain = 10;
         balancerParameters.fAttack = 0.01f;
         balancerParameters.fRelease = 0.01f;
@@ -136,9 +144,9 @@ void Playback::SetSoundBalancer(bool soundBalancer)
     }
 }
 
-void Playback::SetSoundFilter(bool soundFilter)
+void Playback::SetSoundFilter(const bool soundFilter) noexcept
 {
-    static HFX filterFxHandle = NULL;
+    static HFX filterFxHandle { NULL };
 
     if (!Playback::loadStatus) return;
 
@@ -146,11 +154,10 @@ void Playback::SetSoundFilter(bool soundFilter)
 
     if (PluginConfig::GetSoundFilter() && !filterFxHandle)
     {
-        BASS_BFX_BQF parameqParameters = {};
+        BASS_BFX_BQF parameqParameters {};
 
         parameqParameters.lFilter = BASS_BFX_BQF_HIGHSHELF;
         parameqParameters.lChannel = BASS_BFX_CHANALL;
-
         parameqParameters.fCenter = 100;
         parameqParameters.fQ = 0.7f;
 
@@ -169,7 +176,7 @@ void Playback::SetSoundFilter(bool soundFilter)
     }
 }
 
-void Playback::SyncConfigs()
+void Playback::SyncConfigs() noexcept
 {
     Playback::SetSoundEnable(PluginConfig::GetSoundEnable());
     Playback::SetSoundVolume(PluginConfig::GetSoundVolume());
@@ -177,72 +184,71 @@ void Playback::SyncConfigs()
     Playback::SetSoundFilter(PluginConfig::GetSoundFilter());
 }
 
-void Playback::ResetConfigs()
+void Playback::ResetConfigs() noexcept
 {
-    PluginConfig::SetSoundEnable(PluginConfig::DefVal_SoundEnable);
-    PluginConfig::SetSoundVolume(PluginConfig::DefVal_SoundVolume);
-    PluginConfig::SetSoundBalancer(PluginConfig::DefVal_SoundBalancer);
-    PluginConfig::SetSoundFilter(PluginConfig::DefVal_SoundFilter);
+    PluginConfig::SetSoundEnable(PluginConfig::kDefValSoundEnable);
+    PluginConfig::SetSoundVolume(PluginConfig::kDefValSoundVolume);
+    PluginConfig::SetSoundBalancer(PluginConfig::kDefValSoundBalancer);
+    PluginConfig::SetSoundFilter(PluginConfig::kDefValSoundFilter);
 }
 
-void Playback::Update()
+void Playback::Update() noexcept
 {
     if (!Playback::loadStatus) return;
 
     BASS_Set3DPosition(
-        (BASS_3DVECTOR*)(&TheCamera.GetPosition()), nullptr,
-        (BASS_3DVECTOR*)(&TheCamera.GetMatrix()->at),
-        (BASS_3DVECTOR*)(&TheCamera.GetMatrix()->up)
+        reinterpret_cast<const BASS_3DVECTOR*>(&TheCamera.GetPosition()), nullptr,
+        reinterpret_cast<const BASS_3DVECTOR*>(&TheCamera.GetMatrix()->at),
+        reinterpret_cast<const BASS_3DVECTOR*>(&TheCamera.GetMatrix()->up)
     );
 
     BASS_Apply3D();
 }
 
-BOOL WINAPI Playback::BassInitHookFunc(int device, DWORD freq, DWORD flags, HWND win, const GUID* dsguid)
+BOOL WINAPI Playback::BassInitHookFunc(const int device, const DWORD freq, const DWORD flags,
+                                       const HWND win, const GUID* const dsguid) noexcept
 {
+    static const BASS_3DVECTOR kZeroVector { 0, 0, 0 };
+
     Logger::LogToFile("[sv:dbg:playback:bassinithook] : module loading...");
 
     BASS_SetConfig(BASS_CONFIG_UNICODE, TRUE);
-    BASS_SetConfig(BASS_CONFIG_BUFFER, SV::ChannelBufferSizeInMs);
-    BASS_SetConfig(BASS_CONFIG_UPDATEPERIOD, SV::AudioUpdatePeriod);
-    BASS_SetConfig(BASS_CONFIG_UPDATETHREADS, SV::AudioUpdateThreads);
+    BASS_SetConfig(BASS_CONFIG_BUFFER, SV::kChannelBufferSizeInMs);
+    BASS_SetConfig(BASS_CONFIG_UPDATEPERIOD, SV::kAudioUpdatePeriod);
+    BASS_SetConfig(BASS_CONFIG_UPDATETHREADS, SV::kAudioUpdateThreads);
     BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_LIGHT);
 
-    Logger::LogToFile(
-        "[sv:dbg:playback:bassinithook] : hooked function BASS_Init(device:%d, freq:%u, flags:0x%x, win:0x%x, dsguid:0x%x)...",
-        device, freq, flags, win, dsguid
-    );
+    Logger::LogToFile("[sv:dbg:playback:bassinithook] : hooked function BASS_Init(device:%d, "
+        "freq:%u, flags:0x%x, win:0x%x, dsguid:0x%x)...", device, freq, flags, win, dsguid);
 
-    Logger::LogToFile(
-        "[sv:dbg:playback:bassinithook] : calling function BASS_Init(device:%d, freq:%u, flags:0x%x, win:0x%x, dsguid:0x%x)...",
-        device, SV::Frequency, BASS_DEVICE_MONO | BASS_DEVICE_3D | flags, win, dsguid
-    );
+    Logger::LogToFile("[sv:dbg:playback:bassinithook] : calling function BASS_Init(device:%d, "
+        "freq:%u, flags:0x%x, win:0x%x, dsguid:0x%x)...", device, SV::kFrequency, BASS_DEVICE_MONO |
+                                                          BASS_DEVICE_3D | flags, win, dsguid);
 
-    if (!BASS_Init(device, SV::Frequency, BASS_DEVICE_MONO | BASS_DEVICE_3D | flags, win, dsguid))
+    if (!BASS_Init(device, SV::kFrequency, BASS_DEVICE_MONO | BASS_DEVICE_3D | flags, win, dsguid))
     {
-        Logger::LogToFile("[sv:err:playback:bassinithook] : failed to init bass library (code:%d)", BASS_ErrorGetCode());
+        Logger::LogToFile("[sv:err:playback:bassinithook] : failed to init "
+            "bass library (code:%d)", BASS_ErrorGetCode());
         return FALSE;
     }
 
     if (HIWORD(BASS_FX_GetVersion()) != BASSVERSION)
     {
-        Logger::LogToFile("[sv:err:playback:init] : failed to check version bassfx library (code:%d)", BASS_ErrorGetCode());
+        Logger::LogToFile("[sv:err:playback:init] : failed to check version "
+            "bassfx library (code:%d)", BASS_ErrorGetCode());
         return FALSE;
     }
 
     if (!(Playback::deviceOutputChannel = BASS_StreamCreate(0, 0, NULL, STREAMPROC_DEVICE, nullptr)))
     {
-        Logger::LogToFile("[sv:err:playback:init] : failed to create device output channel (code:%d)", BASS_ErrorGetCode());
+        Logger::LogToFile("[sv:err:playback:init] : failed to create device "
+            "output channel (code:%d)", BASS_ErrorGetCode());
         return FALSE;
     }
 
     BASS_Set3DFactors(1, 1, 0);
-    BASS_Set3DPosition(
-        &BASS_3DVECTOR(0, 0, 0),
-        &BASS_3DVECTOR(0, 0, 0),
-        &BASS_3DVECTOR(0, 0, 0),
-        &BASS_3DVECTOR(0, 0, 0)
-    ); BASS_Apply3D();
+    BASS_Set3DPosition(&kZeroVector, &kZeroVector, &kZeroVector, &kZeroVector);
+    BASS_Apply3D();
 
     Logger::LogToFile("[sv:dbg:playback:bassinithook] : module loaded");
 

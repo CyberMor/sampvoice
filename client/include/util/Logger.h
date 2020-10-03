@@ -28,13 +28,21 @@ constexpr DWORD kSuccessColor = 0xff6bbf17;
 constexpr DWORD kDebugColor = 0xff6bbaed;
 
 class Logger {
+
+    Logger() = delete;
+    ~Logger() = delete;
+    Logger(const Logger&) = delete;
+    Logger(Logger&&) = delete;
+    Logger& operator=(const Logger&) = delete;
+    Logger& operator=(Logger&&) = delete;
+
 public:
 
     static bool Init(const char* fileName) noexcept;
     static void Free() noexcept;
 
     template<class... ARGS>
-    static bool LogToFile(const char* message, const ARGS... args) noexcept
+    static bool LogToFile(const char* const message, const ARGS... args) noexcept
     {
         const std::scoped_lock lock { Logger::logFileMutex };
 
@@ -45,22 +53,21 @@ public:
 
         if (!timeOfDay) return false;
 
-        fprintf(Logger::logFile, "[%.2d:%.2d:%.2d] : ", timeOfDay->tm_hour,
-                                                        timeOfDay->tm_min,
-                                                        timeOfDay->tm_sec);
-        fprintf(Logger::logFile, message, args...);
-        fputc('\n', Logger::logFile);
-        fflush(Logger::logFile);
+        std::fprintf(Logger::logFile, "[%.2d:%.2d:%.2d] : ",
+            timeOfDay->tm_hour, timeOfDay->tm_min, timeOfDay->tm_sec);
+        std::fprintf(Logger::logFile, message, args...);
+        std::fputc('\n', Logger::logFile);
+        std::fflush(Logger::logFile);
 
         return true;
     }
 
     template<class... ARGS>
-    static bool LogToChat(const D3DCOLOR color, const char* message, const ARGS... args) noexcept
+    static bool LogToChat(const D3DCOLOR color, const char* const message, const ARGS... args) noexcept
     {
         constexpr auto MaxLengthMessageToChat = 144;
 
-        char messageBuffer[MaxLengthMessageToChat] {};
+        char messageBuffer[MaxLengthMessageToChat];
 
         if (_snprintf(messageBuffer, sizeof(messageBuffer), message, args...) == -1)
         {
@@ -77,7 +84,7 @@ public:
     }
 
     template<class... ARGS>
-    static inline void Log(const D3DCOLOR color, const char* message, const ARGS... args) noexcept
+    static inline void Log(const D3DCOLOR color, const char* const message, const ARGS... args) noexcept
     {
         Logger::LogToFile(message, args...);
         Logger::LogToChat(color, message, args...);

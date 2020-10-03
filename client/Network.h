@@ -9,23 +9,16 @@
 
 #pragma once
 
-#include <atomic>
 #include <thread>
-#include <cstdint>
 #include <functional>
 #include <string>
 
 #include <WinSock2.h>
-#include <SPSCQueue.h>
 
+#include <SPSCQueue.h>
 #include <raknet/bitstream.h>
 #include <raknet/rakclient.h>
-
-#include <util/Logger.h>
-#include <util/Memory.hpp>
-#include <util/GameUtil.h>
 #include <util/AddressesBase.h>
-#include <util/RakNet.h>
 
 #include "ControlPacket.h"
 #include "VoicePacket.h"
@@ -33,18 +26,12 @@
 
 class Network {
 
-    using ConnectHandlerType = std::function<void(const std::string&, const WORD)>;
-    using PluginConnectHandlerType = std::function<void(SV::ConnectPacket&)>;
-    using PluginInitHandlerType = std::function<bool(const SV::PluginInitPacket&)>;
-    using DisconnectHandlerType = std::function<void()>;
-
-    enum ConnectionStatusType
-    {
-        Disconnected,
-        RNConnecting,
-        SVConnecting,
-        Connected
-    };
+    Network() = delete;
+    ~Network() = delete;
+    Network(const Network&) = delete;
+    Network(Network&&) = delete;
+    Network& operator=(const Network&) = delete;
+    Network& operator=(Network&&) = delete;
 
 public:
 
@@ -56,18 +43,37 @@ public:
     static constexpr DWORD SendBufferSize = 64 * 1024;
     static constexpr int64_t KeepAliveInterval = 2000;
 
+private:
+
+    using ConnectHandlerType = std::function<void(const std::string&, WORD)>;
+    using PluginConnectHandlerType = std::function<void(SV::ConnectPacket&)>;
+    using PluginInitHandlerType = std::function<bool(const SV::PluginInitPacket&)>;
+    using DisconnectHandlerType = std::function<void()>;
+
+    struct ConnectionStatusType
+    {
+        enum
+        {
+            Disconnected,
+            RNConnecting,
+            SVConnecting,
+            Connected
+        };
+    };
+
 public:
 
     static bool Init(const AddressesBase& addrBase,
-                     ConnectHandlerType&& connectHandler,
-                     PluginConnectHandlerType&& pluginConnectHandler,
-                     PluginInitHandlerType&& pluginInitHandler,
-                     DisconnectHandlerType&& disconnectHandler);
+                     ConnectHandlerType connectHandler,
+                     PluginConnectHandlerType pluginConnectHandler,
+                     PluginInitHandlerType pluginInitHandler,
+                     DisconnectHandlerType disconnectHandler);
     static void Free();
 
-    static bool SendControlPacket(WORD packet, LPCVOID dataAddr = nullptr, WORD dataSize = NULL);
-    static bool SendVoicePacket(LPCVOID dataAddr, WORD dataSize);
+    static bool SendControlPacket(WORD packet, LPCVOID dataAddr = nullptr,
+                                  WORD dataSize = NULL);
 
+    static bool SendVoicePacket(LPCVOID dataAddr, WORD dataSize);
     static void EndSequence();
 
     static ControlPacketContainerPtr ReceiveControlPacket();
@@ -79,23 +85,22 @@ private:
 
 private:
 
-    static void OnRaknetConnect(const char* serverIp, WORD serverPort);
-    static bool OnRaknetSendRpc(const int rpcId, BitStream* rpcParameters);
+    static void OnRaknetConnect(PCCH serverIp, WORD serverPort);
+    static bool OnRaknetSendRpc(int rpcId, BitStream* rpcParameters);
     static bool OnRaknetReceivePacket(Packet* packet);
-    static void OnRaknetDisconnect();
+    static void OnRaknetDisconnect() noexcept;
 
 private:
 
     static bool initStatus;
 
-    static std::atomic_int connectionStatus;
+    static SOCKET socketHandle;
+    static int connectionStatus;
 
     static ConnectHandlerType connectHandler;
     static PluginConnectHandlerType pluginConnectHandler;
     static PluginInitHandlerType pluginInitHandler;
     static DisconnectHandlerType disconnectHandler;
-
-    static SOCKET socketHandle;
 
     static SPSCQueue<ControlPacketContainerPtr> controlQueue;
     static SPSCQueue<VoicePacketContainerPtr> voiceQueue;

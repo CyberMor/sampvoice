@@ -83,17 +83,18 @@ bool GameUtil::IsPlayerVisible(const WORD playerId) noexcept
     );
 }
 
-bool GameUtil::GetRadarRect(CRect& radarRect) noexcept
+bool GameUtil::GetRadarRect(CRect& const radarRect) noexcept
 {
-    float screenWidth, screenHeight;
+    float screenWidth { 0 };
+    float screenHeight { 0 };
 
     if (!Render::GetScreenSize(screenWidth, screenHeight))
         return false;
 
-    float multWidth = *(float*)(0x859520);   // 1.f / 640.f
-    float multHeight = *(float*)(0x859524);  // 1.f / 448.f
-    float radarWidth = *(float*)(0x866B74);  // 76.f
-    float radarHeight = *(float*)(0x866B78); // 94.f
+    float multWidth = *reinterpret_cast<float*>(0x859520);   // 1.f / 640.f
+    float multHeight = *reinterpret_cast<float*>(0x859524);  // 1.f / 448.f
+    float radarWidth = *reinterpret_cast<float*>(0x866B74);  // 76.f
+    float radarHeight = *reinterpret_cast<float*>(0x866B78); // 94.f
 
 #if defined(SAMP_R3)
 
@@ -117,7 +118,7 @@ bool GameUtil::GetRadarRect(CRect& radarRect) noexcept
     return true;
 }
 
-void GameUtil::DisableAntiCheat(const AddressesBase& addrBase) noexcept
+void GameUtil::DisableAntiCheat(const AddressesBase& const addrBase)
 {
     struct patch_t
     {
@@ -146,7 +147,7 @@ void GameUtil::DisableAntiCheat(const AddressesBase& addrBase) noexcept
 
         {
             const Memory::UnprotectScope scope { address, patch.length };
-            memcpy(reinterpret_cast<void*>(address), patch.bytes, patch.length);
+            std::memcpy(reinterpret_cast<void*>(address), patch.bytes, patch.length);
         }
     }
 }

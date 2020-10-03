@@ -161,7 +161,7 @@ using PawnInterfacePtr = std::unique_ptr<PawnInterface>;
 class Pawn {
 public:
 
-    static bool Init(PawnInterfacePtr&& pInterface) noexcept;
+    static bool Init(PawnInterfacePtr pInterface) noexcept;
     static void Free() noexcept;
 
     static void RegisterScript(AMX* amx);

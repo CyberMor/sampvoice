@@ -12,7 +12,7 @@
 #include <util/logger.h>
 #include <util/memory.hpp>
 
-bool Pawn::Init(PawnInterfacePtr&& pInterface) noexcept
+bool Pawn::Init(PawnInterfacePtr pInterface) noexcept
 {
     return !!(Pawn::pInterface = std::move(pInterface));
 }

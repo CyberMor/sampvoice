@@ -63,7 +63,7 @@ public:
     {
         for (const auto& iChan : this->channels)
         {
-            if (iChan->speaker != SV::NonePlayer && !iChan->IsActive())
+            if (iChan->speaker != SV::kNonePlayer && !iChan->IsActive())
             {
                 iChan->Reset();
             }
@@ -85,7 +85,7 @@ public:
 
         if (!channel) for (const auto& iChan : this->channels)
         {
-            if (iChan->speaker == SV::NonePlayer)
+            if (iChan->speaker == SV::kNonePlayer)
             {
                 Logger::LogToFile(
                     "[sv:dbg:stream_%p:push] : channel %p was occupied by player %hu",
@@ -144,13 +144,13 @@ private:
 
     void OnPlayChannel(const Channel& channel) noexcept
     {
-        if (channel.speaker != SV::NonePlayer && this->playHandler)
+        if (channel.speaker != SV::kNonePlayer && this->playHandler)
             this->playHandler(*this, channel.speaker);
     }
 
     void OnStopChannel(const Channel& channel) noexcept
     {
-        if (channel.speaker != SV::NonePlayer && this->stopHandler)
+        if (channel.speaker != SV::kNonePlayer && this->stopHandler)
             this->stopHandler(*this, channel.speaker);
     }
 

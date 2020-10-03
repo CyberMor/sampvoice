@@ -15,7 +15,8 @@
 
 #include <ysf/utils/cvector.h>
 
-#define GetTimestamp() (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())
+#define GetTimestamp() (std::chrono::duration_cast<std::chrono::milliseconds> \
+                       (std::chrono::system_clock::now().time_since_epoch()).count())
 #define SleepForMilliseconds(mscount) (std::this_thread::sleep_for(std::chrono::milliseconds(mscount)))
 
 namespace SV
@@ -24,14 +25,10 @@ namespace SV
     // --------------------------------------------
 
     constexpr const char*   LogFileName         = "svlog.txt";
-
     constexpr uint16_t      NonePlayer          = 0xffff;
-
     constexpr uint32_t      VoiceThreadsCount   = 8;
     constexpr uint32_t      DefaultBitrate      = 24000;
-
     constexpr uint8_t       Version             = 10;
-
     constexpr uint32_t      Signature           = 0xDeadBeef;
     constexpr const char*   SignaturePattern    = "\xef\xbe\xad\xde";
     constexpr const char*   SignatureMask       = "xxxx";

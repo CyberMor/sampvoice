@@ -45,6 +45,6 @@ namespace SAMP {
 	typedef unsigned char NUMBER;
 
 	extern DWORD baseSampAddress;
-	extern void InitSamp(const DWORD baseAddress);
+	extern void InitSamp(const DWORD baseAddress) noexcept;
 
 }

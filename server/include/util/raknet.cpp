@@ -85,9 +85,9 @@ namespace
 }
 
 bool RakNet::Init(const void* const serverBaseAddr,
-                  ConnectHandlerType&& connectHandler,
-                  DisconnectHandlerType&& disconnectHandler,
-                  PacketHandlerType&& packetHandler)
+                  ConnectHandlerType connectHandler,
+                  DisconnectHandlerType disconnectHandler,
+                  PacketHandlerType packetHandler)
 {
     assert(serverBaseAddr);
 

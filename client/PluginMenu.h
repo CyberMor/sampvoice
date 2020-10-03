@@ -21,84 +21,96 @@
 #include <util/Render.h>
 
 class PluginMenu {
+
+    PluginMenu() = delete;
+    ~PluginMenu() = delete;
+    PluginMenu(const PluginMenu&) = delete;
+    PluginMenu(PluginMenu&&) = delete;
+    PluginMenu& operator=(const PluginMenu&) = delete;
+    PluginMenu& operator=(PluginMenu&&) = delete;
+
+private:
+
+    static constexpr auto kTitleText                       = "Настройки голосового чата";
+    static constexpr auto kTab1TitleText                   = "Общие";
+    static constexpr auto kTab1Desc1TitleText              = "Звук";
+    static constexpr auto kTab1Desc1EnableSoundText        = "Включить звук";
+    static constexpr auto kTab1Desc1VolumeSoundText        = "Громкость звука";
+    static constexpr auto kTab1Desc2TitleText              = "Эффекты";
+    static constexpr auto kTab1Desc2BalancerText           = "Сглаживание громкости";
+    static constexpr auto kTab1Desc2FilterText             = "Фильтр высоких частот";
+    static constexpr auto kTab1Desc3TitleText              = "Иконка над игроками";
+    static constexpr auto kTab1Desc3SpeakerIconScaleText   = "Масштаб";
+    static constexpr auto kTab1Desc3SpeakerIconOffsetXText = "Смещение по X";
+    static constexpr auto kTab1Desc3SpeakerIconOffsetYText = "Смещение по Y";
+    static constexpr auto kTab1Desc4TitleText              = "Сброс";
+    static constexpr auto kTab1Desc4ConfigResetText        = "Сбросить все настройки";
+    static constexpr auto kTab2TitleText                   = "Микрофон";
+    static constexpr auto kTab2Desc1TitleText              = "Устройство";
+    static constexpr auto kTab2Desc1EnableMicroText        = "Включить микрофон";
+    static constexpr auto kTab2Desc1MicroVolumeText        = "Громкость микрофона";
+    static constexpr auto kTab2Desc1DeviceNameText         = "Устройство ввода";
+    static constexpr auto kTab2Desc1CheckDeviceText        = "Проверить устройство";
+    static constexpr auto kTab2Desc2TitleText              = "Иконка микрофона";
+    static constexpr auto kTab2Desc2MicroIconScaleText     = "Масштаб";
+    static constexpr auto kTab2Desc2MicroIconPositionXText = "Позиция по X";
+    static constexpr auto kTab2Desc2MicroIconPositionYText = "Позиция по Y";
+    static constexpr auto kTab2Desc2MicroIconMoveText      = "Переместить";
+    static constexpr auto kTab2Desc3MicroNotFoundText      = "Нет доступных микрофонов";
+    static constexpr auto kTab3TitleText                   = "Чёрный список";
+    static constexpr auto kTab3Desc1TitleText              = "Фильтр";
+    static constexpr auto kTab3Desc1InputPlaceholderText   = "Введите ID или Nickname игрока...";
+    static constexpr auto kTab3Desc2PlayerListText         = "Игроки на сервере";
+    static constexpr auto kTab3Desc3BlackListText          = "Заблокированные игроки";
+
+    static constexpr float kBaseMenuWidth             = 0.6f * Render::BaseWidth;
+    static constexpr float kBaseMenuHeight            = 0.7f * Render::BaseHeight;
+    static constexpr float kBaseMenuPaddingX          = 20.f;
+    static constexpr float kBaseMenuPaddingY          = 10.f;
+    static constexpr float kBaseMenuFramePaddingX     = 10.f;
+    static constexpr float kBaseMenuFramePaddingY     = 0.5f;
+    static constexpr float kBaseMenuItemSpacingX      = 20.f;
+    static constexpr float kBaseMenuItemSpacingY      = 2.f;
+    static constexpr float kBaseMenuItemInnerSpacingX = 10.f;
+    static constexpr float kBaseMenuItemInnerSpacingY = 10.f;
+    static constexpr float kBaseMenuRounding          = 10.f;
+    static constexpr float kBaseFontTitleSize         = 20.f;
+    static constexpr float kBaseFontTabSize           = 14.f;
+    static constexpr float kBaseFontDescSize          = 12.f;
+    static constexpr float kBaseFontSize              = 10.f;
+    static constexpr int   kTabsCount                 = 3;
+    static constexpr float kBaseTabPadding            = 4.f;
+    static constexpr float kBaseTabWidth              = (kBaseMenuWidth - (2 * kBaseMenuPaddingX +
+                                                        (kTabsCount - 1) * kBaseTabPadding)) / kTabsCount;
+    static constexpr float kBaseTabHeight             = kBaseTabWidth / 6.f;
+    static constexpr float kBlurLevelIncrement        = 5.f;
+    static constexpr float kBlurLevelDecrement        = -5.f;
+
 public:
 
-    static constexpr const char* TitleText = "Настройки голосового чата";
+    static bool Init(IDirect3DDevice9* pDevice, D3DPRESENT_PARAMETERS* pParameters,
+                     const AddressesBase& addrBase, const Resource& rShader,
+                     const Resource& rLogo, const Resource& rFont) noexcept;
+    static void Free() noexcept;
 
-    static constexpr const char* Tab1_TitleText = "Общие";
+    static void Render() noexcept;
+    static void Update() noexcept;
 
-    static constexpr const char* Tab1_Desc1_TitleText = "Звук";
-    static constexpr const char* Tab1_Desc1_EnableSoundText = "Включить звук";
-    static constexpr const char* Tab1_Desc1_VolumeSoundText = "Громкость звука";
+    static bool Show() noexcept;
+    static bool IsShowed() noexcept;
+    static void Hide() noexcept;
 
-    static constexpr const char* Tab1_Desc2_TitleText = "Эффекты";
-    static constexpr const char* Tab1_Desc2_BalancerText = "Сглаживание громкости";
-    static constexpr const char* Tab1_Desc2_FilterText = "Фильтр высоких частот";
+    static LRESULT OnWndMessage(HWND hWnd, UINT uMsg,
+                                WPARAM wParam, LPARAM lParam) noexcept;
 
-    static constexpr const char* Tab1_Desc3_TitleText = "Иконка над игроками";
-    static constexpr const char* Tab1_Desc3_SpeakerIconScaleText = "Масштаб";
-    static constexpr const char* Tab1_Desc3_SpeakerIconOffsetXText = "Смещение по X";
-    static constexpr const char* Tab1_Desc3_SpeakerIconOffsetYText = "Смещение по Y";
+private:
 
-    static constexpr const char* Tab1_Desc4_TitleText = "Сброс";
-    static constexpr const char* Tab1_Desc4_ConfigResetText = "Сбросить все настройки";
-
-    static constexpr const char* Tab2_TitleText = "Микрофон";
-
-    static constexpr const char* Tab2_Desc1_TitleText = "Устройство";
-    static constexpr const char* Tab2_Desc1_EnableMicroText = "Включить микрофон";
-    static constexpr const char* Tab2_Desc1_MicroVolumeText = "Громкость микрофона";
-    static constexpr const char* Tab2_Desc1_DeviceNameText = "Устройство ввода";
-    static constexpr const char* Tab2_Desc1_CheckDeviceText = "Проверить устройство";
-
-    static constexpr const char* Tab2_Desc2_TitleText = "Иконка микрофона";
-    static constexpr const char* Tab2_Desc2_MicroIconScaleText = "Масштаб";
-    static constexpr const char* Tab2_Desc2_MicroIconPositionXText = "Позиция по X";
-    static constexpr const char* Tab2_Desc2_MicroIconPositionYText = "Позиция по Y";
-    static constexpr const char* Tab2_Desc2_MicroIconMoveText = "Переместить";
-
-    static constexpr const char* Tab2_Desc3_MicroNotFoundText = "Нет доступных микрофонов";
-
-    static constexpr const char* Tab3_TitleText = "Чёрный список";
-
-    static constexpr const char* Tab3_Desc1_TitleText = "Фильтр";
-    static constexpr const char* Tab3_Desc1_InputPlaceholderText = "Введите ID или Nickname игрока...";
-
-    static constexpr const char* Tab3_Desc2_PlayerListText = "Игроки на сервере";
-
-    static constexpr const char* Tab3_Desc3_BlackListText = "Заблокированные игроки";
-
-    static constexpr float  BaseMenuWidth = 0.6f * Render::BaseWidth;
-    static constexpr float  BaseMenuHeight = 0.7f * Render::BaseHeight;
-
-    static constexpr float  BaseMenuPaddingX = 20.f;
-    static constexpr float  BaseMenuPaddingY = 10.f;
-    static constexpr float  BaseMenuFramePaddingX = 10.f;
-    static constexpr float  BaseMenuFramePaddingY = 0.5f;
-
-    static constexpr float  BaseMenuItemSpacingX = 20.f;
-    static constexpr float  BaseMenuItemSpacingY = 2.f;
-    static constexpr float  BaseMenuItemInnerSpacingX = 10.f;
-    static constexpr float  BaseMenuItemInnerSpacingY = 10.f;
-
-    static constexpr float  BaseMenuRounding = 10.f;
-
-    static constexpr float  BaseFontTitleSize = 20.f;
-    static constexpr float  BaseFontTabSize = 14.f;
-    static constexpr float  BaseFontDescSize = 12.f;
-    static constexpr float  BaseFontSize = 10.f;
-
-    static constexpr int    TabsCount = 3;
-    static constexpr float  BaseTabPadding = 4.f;
-    static constexpr float  BaseTabWidth = (BaseMenuWidth - (2 * BaseMenuPaddingX + (TabsCount - 1) * BaseTabPadding)) / TabsCount;
-    static constexpr float  BaseTabHeight = BaseTabWidth / 6.f;
-
-    static constexpr float  BlurLevelIncrement = 5.f;
-    static constexpr float  BlurLevelDecrement = -5.f;
+    static void SyncOptions() noexcept;
 
 private:
 
     static bool initStatus;
+
     static bool showStatus;
 
     static float blurLevel;
@@ -147,34 +159,5 @@ private:
     static bool bCheckDevice;
     static bool bMicroMovement;
     static char nBuffer[64];
-
-    // ------------------------------------------------------------------------------------------
-
-    static void SyncOptions();
-
-public:
-
-    static bool Init(
-        IDirect3DDevice9* pDevice,
-        D3DPRESENT_PARAMETERS* pParameters,
-        const AddressesBase& addrBase,
-        const Resource& rShader,
-        const Resource& rLogo,
-        const Resource& rFont
-    );
-
-    static void Render();
-    static void Update();
-
-    static bool Show();
-    static bool IsShowed();
-    static void Hide();
-
-    static LRESULT OnWndMessage(
-        HWND hWnd, UINT uMsg,
-        WPARAM wParam, LPARAM lParam
-    );
-
-    static void Free();
 
 };

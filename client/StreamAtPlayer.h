@@ -69,7 +69,7 @@ public:
 
         for (const auto& iChan : this->channels)
         {
-            if (iChan->speaker != SV::NonePlayer)
+            if (iChan->speaker != SV::kNonePlayer)
             {
                 BASS_ChannelSet3DPosition(iChan->handle,
                     reinterpret_cast<BASS_3DVECTOR*>(&pPlayerMatrix->pos),

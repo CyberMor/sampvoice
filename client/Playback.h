@@ -14,32 +14,38 @@
 #include <util/AddressesBase.h>
 
 class Playback {
+
+    Playback() = delete;
+    ~Playback() = delete;
+    Playback(const Playback&) = delete;
+    Playback(Playback&&) = delete;
+    Playback& operator=(const Playback&) = delete;
+    Playback& operator=(Playback&&) = delete;
+
 public:
 
-    static bool Init(const AddressesBase& addrBase);
-    static void Free();
+    static bool Init(const AddressesBase& addrBase) noexcept;
+    static void Free() noexcept;
 
-    static bool GetSoundEnable();
-    static int GetSoundVolume();
-    static bool GetSoundBalancer();
-    static bool GetSoundFilter();
+    static bool GetSoundEnable() noexcept;
+    static int GetSoundVolume() noexcept;
+    static bool GetSoundBalancer() noexcept;
+    static bool GetSoundFilter() noexcept;
 
-    static void SetSoundEnable(bool soundEnable);
-    static void SetSoundVolume(int soundVolume);
-    static void SetSoundBalancer(bool soundBalancer);
-    static void SetSoundFilter(bool soundFilter);
+    static void SetSoundEnable(bool soundEnable) noexcept;
+    static void SetSoundVolume(int soundVolume) noexcept;
+    static void SetSoundBalancer(bool soundBalancer) noexcept;
+    static void SetSoundFilter(bool soundFilter) noexcept;
 
-    static void SyncConfigs();
-    static void ResetConfigs();
+    static void SyncConfigs() noexcept;
+    static void ResetConfigs() noexcept;
 
-    static void Update();
+    static void Update() noexcept;
 
 private:
 
-    static BOOL WINAPI BassInitHookFunc(
-        int device, DWORD freq, DWORD flags,
-        HWND win, const GUID* dsguid
-    );
+    static BOOL WINAPI BassInitHookFunc(int device, DWORD freq, DWORD flags,
+                                        HWND win, const GUID* dsguid) noexcept;
 
 private:
 

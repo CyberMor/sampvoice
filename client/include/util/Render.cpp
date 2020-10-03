@@ -12,23 +12,27 @@
 #pragma comment(lib, "d3d9.lib")
 #pragma comment(lib, "d3dx9.lib")
 
-bool Render::Init(
-    DeviceInitHandlerType&& deviceInitHandler,
-    BeforeResetHandlerType&& beforeResetHandler,
-    BeginSceneHandlerType&& beginSceneHandler,
-    RenderHandlerType&& renderHandler,
-    EndSceneHandlerType&& endSceneHandler,
-    AfterResetHandlerType&& afterResetHandler,
-    DeviceFreeHandlerType&& deviceFreeHandler
-) noexcept
+bool Render::Init(DeviceInitHandlerType deviceInitHandler,
+                  BeforeResetHandlerType beforeResetHandler,
+                  BeginSceneHandlerType beginSceneHandler,
+                  RenderHandlerType renderHandler,
+                  EndSceneHandlerType endSceneHandler,
+                  AfterResetHandlerType afterResetHandler,
+                  DeviceFreeHandlerType deviceFreeHandler) noexcept
 {
     if (Render::initStatus) return false;
 
     Logger::LogToFile("[dbg:render:init] : module initializing...");
 
-    if (!(Render::hookDirect3DCreate9 = MakeJumpHook(GtaDirect3DCreate9, Render::HookFuncDirect3DCreate9)))
+    try
     {
-        Logger::LogToFile("[err:render:init] : failed to create 'Direct3DCreate9' function hook");
+        Render::hookDirect3DCreate9 = MakeJumpHook(GtaDirect3DCreate9,
+            Render::HookFuncDirect3DCreate9);
+    }
+    catch (const std::exception& exception)
+    {
+        Logger::LogToFile("[err:render:init] : failed to create function hooks");
+        Render::hookDirect3DCreate9.reset();
         return false;
     }
 
@@ -79,7 +83,7 @@ void Render::Free() noexcept
     Render::initStatus = false;
 }
 
-bool Render::GetWindowHandle(HWND& windowHandle) noexcept
+bool Render::GetWindowHandle(HWND& const windowHandle) noexcept
 {
     const std::scoped_lock lock { Render::deviceMutex };
 
@@ -90,7 +94,8 @@ bool Render::GetWindowHandle(HWND& windowHandle) noexcept
     return true;
 }
 
-bool Render::GetScreenSize(float& screenWidth, float& screenHeight) noexcept
+bool Render::GetScreenSize(float& const screenWidth,
+                           float& const screenHeight) noexcept
 {
     const std::scoped_lock lock { Render::deviceMutex };
 
@@ -102,59 +107,59 @@ bool Render::GetScreenSize(float& screenWidth, float& screenHeight) noexcept
     return true;
 }
 
-bool Render::ConvertBaseXValueToScreenXValue(const float baseValue, float& screenValue) noexcept
+bool Render::ConvertBaseXValueToScreenXValue(const float baseValue,
+                                             float& const screenValue) noexcept
 {
     const std::scoped_lock lock { Render::deviceMutex };
 
     if (!Render::pDeviceInterface) return false;
 
     const float screenWidth = Render::deviceParameters.BackBufferWidth;
-
     screenValue = (screenWidth / Render::BaseWidth) * baseValue;
 
     return true;
 }
 
-bool Render::ConvertBaseYValueToScreenYValue(const float baseValue, float& screenValue) noexcept
+bool Render::ConvertBaseYValueToScreenYValue(const float baseValue,
+                                             float& const screenValue) noexcept
 {
     const std::scoped_lock lock { Render::deviceMutex };
 
     if (!Render::pDeviceInterface) return false;
 
     const float screenHeight = Render::deviceParameters.BackBufferHeight;
-
     screenValue = (screenHeight / Render::BaseHeight) * baseValue;
 
     return true;
 }
 
-bool Render::ConvertScreenXValueToBaseXValue(const float screenValue, float& baseValue) noexcept
+bool Render::ConvertScreenXValueToBaseXValue(const float screenValue,
+                                             float& const baseValue) noexcept
 {
     const std::scoped_lock lock { Render::deviceMutex };
 
     if (!Render::pDeviceInterface) return false;
 
     const float screenWidth = Render::deviceParameters.BackBufferWidth;
-
     baseValue = (Render::BaseWidth / screenWidth) * screenValue;
 
     return true;
 }
 
-bool Render::ConvertScreenYValueToBaseYValue(const float screenValue, float& baseValue) noexcept
+bool Render::ConvertScreenYValueToBaseYValue(const float screenValue,
+                                             float& const baseValue) noexcept
 {
     const std::scoped_lock lock { Render::deviceMutex };
 
     if (!Render::pDeviceInterface) return false;
 
     const float screenHeight = Render::deviceParameters.BackBufferHeight;
-
     baseValue = (Render::BaseHeight / screenHeight) * screenValue;
 
     return true;
 }
 
-IDirect3D9* CALLBACK Render::HookFuncDirect3DCreate9(UINT SDKVersion) noexcept
+IDirect3D9* CALLBACK Render::HookFuncDirect3DCreate9(const UINT SDKVersion) noexcept
 {
     Render::hookDirect3DCreate9->Disable();
     auto pOrigDirect = GtaDirect3DCreate9(SDKVersion);
@@ -162,14 +167,13 @@ IDirect3D9* CALLBACK Render::HookFuncDirect3DCreate9(UINT SDKVersion) noexcept
 
     if (pOrigDirect)
     {
-        Logger::LogToFile("[dbg:render:hookdirect3dcreate9] : intercepted instance (ptr:%p) of IDirect3D9", pOrigDirect);
+        Logger::LogToFile("[dbg:render:hookdirect3dcreate9] : intercepted "
+            "instance (ptr:%p) of IDirect3D9", pOrigDirect);
 
-        if (const auto pHookDirect = new IDirect3D9Hook(pOrigDirect))
+        if (const auto pHookDirect = new (std::nothrow) IDirect3D9Hook(pOrigDirect))
         {
-            Logger::LogToFile(
-                "[dbg:render:hookdirect3dcreate9] : pointer successfully replaced from orig (ptr:%p) to hook (ptr:%p)",
-                pOrigDirect, pHookDirect
-            );
+            Logger::LogToFile("[dbg:render:hookdirect3dcreate9] : pointer successfully "
+                "replaced from orig (ptr:%p) to hook (ptr:%p)", pOrigDirect, pHookDirect);
 
             pOrigDirect = pHookDirect;
         }

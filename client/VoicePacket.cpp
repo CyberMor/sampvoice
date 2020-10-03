@@ -9,7 +9,7 @@
 
 #include "VoicePacket.h"
 
-static DWORD CalcCrc32cHash(BYTE* buffer, DWORD length, DWORD crc = 0) noexcept
+static DWORD CalcCrc32cHash(LPCBYTE buffer, DWORD length, DWORD crc = 0) noexcept
 {
     crc = ~crc;
 
@@ -34,7 +34,7 @@ DWORD VoicePacket::GetFullSize() const noexcept
 bool VoicePacket::CheckHeader() const noexcept
 {
     return this->hash == CalcCrc32cHash(
-        (BYTE*)(this) + sizeof(this->hash),
+        (PBYTE)(this) + sizeof(this->hash),
         sizeof(*this) - sizeof(this->hash)
     );
 }
@@ -42,7 +42,7 @@ bool VoicePacket::CheckHeader() const noexcept
 void VoicePacket::CalcHash() noexcept
 {
     this->hash = CalcCrc32cHash(
-        (BYTE*)(this) + sizeof(this->hash),
+        (PBYTE)(this) + sizeof(this->hash),
         sizeof(*this) - sizeof(this->hash)
     );
 }

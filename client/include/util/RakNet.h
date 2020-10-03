@@ -21,22 +21,29 @@
 
 class RakNet {
 
-    using ConnectHandlerType = std::function<void(const char* ip, uint16_t host)>;
-    using PacketIncomingHandlerType = std::function<bool(Packet* packet)>;
-    using PacketOutcomingHandlerType = std::function<bool(BitStream* data)>;
-    using RpcOutcomingHandlerType = std::function<bool(int rpc, BitStream* data)>;
+    RakNet() = delete;
+    ~RakNet() = delete;
+    RakNet(const RakNet&) = delete;
+    RakNet(RakNet&&) = delete;
+    RakNet& operator=(const RakNet&) = delete;
+    RakNet& operator=(RakNet&&) = delete;
+
+private:
+
+    using ConnectHandlerType = std::function<void(const char*, uint16_t)>;
+    using PacketIncomingHandlerType = std::function<bool(Packet*)>;
+    using PacketOutcomingHandlerType = std::function<bool(BitStream*)>;
+    using RpcOutcomingHandlerType = std::function<bool(int, BitStream*)>;
     using DisconnectHandlerType = std::function<void()>;
 
 public:
 
-    static bool Init(
-        const AddressesBase& addrBase,
-        ConnectHandlerType&& connectHandler,
-        PacketIncomingHandlerType&& packetIncomingHandler,
-        PacketOutcomingHandlerType&& packetOutcomingHandler,
-        RpcOutcomingHandlerType&& rpcOutcomingHandler,
-        DisconnectHandlerType&& disconnectHandler
-    ) noexcept;
+    static bool Init(const AddressesBase& addrBase,
+                     ConnectHandlerType connectHandler,
+                     PacketIncomingHandlerType packetIncomingHandler,
+                     PacketOutcomingHandlerType packetOutcomingHandler,
+                     RpcOutcomingHandlerType rpcOutcomingHandler,
+                     DisconnectHandlerType disconnectHandler) noexcept;
 
     static bool IsInited() noexcept;
     static bool IsLoaded() noexcept;

@@ -13,6 +13,14 @@
 #include <d3d9.h>
 
 class ImGuiUtil {
+
+    ImGuiUtil() = delete;
+    ~ImGuiUtil() = delete;
+    ImGuiUtil(const ImGuiUtil&) = delete;
+    ImGuiUtil(ImGuiUtil&&) = delete;
+    ImGuiUtil& operator=(const ImGuiUtil&) = delete;
+    ImGuiUtil& operator=(ImGuiUtil&&) = delete;
+
 public:
 
     static bool Init(IDirect3DDevice9* pDevice,

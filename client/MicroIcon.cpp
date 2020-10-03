@@ -17,46 +17,27 @@
 
 #include "PluginConfig.h"
 
-bool MicroIcon::initStatus { false };
-bool MicroIcon::showStatus { false };
-
-int MicroIcon::alphaLevelPassiveIcon { 0 };
-int MicroIcon::alphaLevelDeviationPassiveIcon { 0 };
-TexturePtr MicroIcon::tPassiveIcon { nullptr };
-
-int MicroIcon::alphaLevelActiveIcon { 0 };
-int MicroIcon::alphaLevelDeviationActiveIcon { 0 };
-TexturePtr MicroIcon::tActiveIcon { nullptr };
-
-int MicroIcon::alphaLevelMutedIcon { 0 };
-int MicroIcon::alphaLevelDeviationMutedIcon { 0 };
-TexturePtr MicroIcon::tMutedIcon { nullptr };
-
-bool MicroIcon::Init(IDirect3DDevice9* pDevice, const Resource& rPassiveIcon,
-                     const Resource& rActiveIcon, const Resource& rMutedIcon) noexcept
+bool MicroIcon::Init(IDirect3DDevice9* const pDevice,
+                     const Resource& const rPassiveIcon,
+                     const Resource& const rActiveIcon,
+                     const Resource& const rMutedIcon) noexcept
 {
     assert(pDevice);
 
     if (MicroIcon::initStatus) return false;
 
-    if (!(MicroIcon::tPassiveIcon = MakeTexture(pDevice, rPassiveIcon)))
+    try
     {
-        Logger::LogToFile("[sv:err:microicon:init] : failed to create passive icon");
-        return false;
+        MicroIcon::tPassiveIcon = MakeTexture(pDevice, rPassiveIcon);
+        MicroIcon::tActiveIcon = MakeTexture(pDevice, rActiveIcon);
+        MicroIcon::tMutedIcon = MakeTexture(pDevice, rMutedIcon);
     }
-
-    if (!(MicroIcon::tActiveIcon = MakeTexture(pDevice, rActiveIcon)))
+    catch (const std::exception& exception)
     {
-        Logger::LogToFile("[sv:err:microicon:init] : failed to create active icon");
-        MicroIcon::tPassiveIcon.reset();
-        return false;
-    }
-
-    if (!(MicroIcon::tMutedIcon = MakeTexture(pDevice, rMutedIcon)))
-    {
-        Logger::LogToFile("[sv:err:microicon:init] : failed to create muted icon");
-        MicroIcon::tPassiveIcon.reset();
+        Logger::LogToFile("[sv:err:microicon:init] : failed to create icons");
+        MicroIcon::tMutedIcon.reset();
         MicroIcon::tActiveIcon.reset();
+        MicroIcon::tPassiveIcon.reset();
         return false;
     }
 
@@ -72,6 +53,17 @@ bool MicroIcon::Init(IDirect3DDevice9* pDevice, const Resource& rPassiveIcon,
     MicroIcon::SyncConfigs();
 
     return true;
+}
+
+void MicroIcon::Free() noexcept
+{
+    if (!MicroIcon::initStatus) return;
+
+    MicroIcon::tPassiveIcon.reset();
+    MicroIcon::tActiveIcon.reset();
+    MicroIcon::tMutedIcon.reset();
+
+    MicroIcon::initStatus = false;
 }
 
 int MicroIcon::GetMicroIconPositionX() noexcept
@@ -99,28 +91,28 @@ float MicroIcon::GetMicroIconScale() noexcept
     return PluginConfig::GetMicroIconScale();
 }
 
-void MicroIcon::SetMicroIconPositionX(int x) noexcept
+void MicroIcon::SetMicroIconPositionX(const int x) noexcept
 {
     PluginConfig::SetMicroIconPositionX(x);
 }
 
-void MicroIcon::SetMicroIconPositionY(int y) noexcept
+void MicroIcon::SetMicroIconPositionY(const int y) noexcept
 {
     PluginConfig::SetMicroIconPositionY(y);
 }
 
-void MicroIcon::SetMicroIconPosition(int x, int y) noexcept
+void MicroIcon::SetMicroIconPosition(const int x, const int y) noexcept
 {
     PluginConfig::SetMicroIconPositionX(x);
     PluginConfig::SetMicroIconPositionY(y);
 }
 
-void MicroIcon::SetMicroIconColor(D3DCOLOR color) noexcept
+void MicroIcon::SetMicroIconColor(const D3DCOLOR color) noexcept
 {
     PluginConfig::SetMicroIconColor(color);
 }
 
-void MicroIcon::SetMicroIconAngle(float angle) noexcept
+void MicroIcon::SetMicroIconAngle(const float angle) noexcept
 {
     PluginConfig::SetMicroIconAngle(angle);
 }
@@ -135,11 +127,11 @@ void MicroIcon::SetMicroIconScale(float scale) noexcept
 
 void MicroIcon::ResetConfigs() noexcept
 {
-    PluginConfig::SetMicroIconScale(PluginConfig::DefVal_MicroIconScale);
-    PluginConfig::SetMicroIconPositionX(PluginConfig::DefVal_MicroIconPositionX);
-    PluginConfig::SetMicroIconPositionY(PluginConfig::DefVal_MicroIconPositionY);
-    PluginConfig::SetMicroIconColor(PluginConfig::DefVal_MicroIconColor);
-    PluginConfig::SetMicroIconAngle(PluginConfig::DefVal_MicroIconAngle);
+    PluginConfig::SetMicroIconScale(PluginConfig::kDefValMicroIconScale);
+    PluginConfig::SetMicroIconPositionX(PluginConfig::kDefValMicroIconPositionX);
+    PluginConfig::SetMicroIconPositionY(PluginConfig::kDefValMicroIconPositionY);
+    PluginConfig::SetMicroIconColor(PluginConfig::kDefValMicroIconColor);
+    PluginConfig::SetMicroIconAngle(PluginConfig::kDefValMicroIconAngle);
 }
 
 void MicroIcon::SyncConfigs() noexcept
@@ -215,7 +207,8 @@ void MicroIcon::Render() noexcept
 
     float vIconSize;
 
-    if (!Render::ConvertBaseYValueToScreenYValue(kBaseIconSize, vIconSize)) return;
+    if (!Render::ConvertBaseYValueToScreenYValue(kBaseIconSize, vIconSize))
+        return;
 
     vIconSize *= PluginConfig::GetMicroIconScale();
 
@@ -226,11 +219,13 @@ void MicroIcon::Render() noexcept
     {
         CRect radarRect;
 
-        if (!GameUtil::GetRadarRect(radarRect)) return;
+        if (!GameUtil::GetRadarRect(radarRect))
+            return;
 
         float vIconPadding;
 
-        if (!Render::ConvertBaseYValueToScreenYValue(kBaseIconPadding, vIconPadding)) return;
+        if (!Render::ConvertBaseYValueToScreenYValue(kBaseIconPadding, vIconPadding))
+            return;
 
         vIconX = radarRect.left + (radarRect.right - radarRect.left) / 2.f;
         vIconY = radarRect.top - (vIconPadding + vIconSize / 2.f);
@@ -239,26 +234,35 @@ void MicroIcon::Render() noexcept
     vIconX -= vIconSize / 2.f;
     vIconY -= vIconSize / 2.f;
 
-    if (MicroIcon::alphaLevelPassiveIcon) MicroIcon::tPassiveIcon->Draw(
-        vIconX, vIconY, vIconSize, vIconSize,
-        (PluginConfig::GetMicroIconColor() & 0x00ffffff) |
-        (MicroIcon::alphaLevelPassiveIcon << 24),
-        PluginConfig::GetMicroIconAngle()
-    );
+    if (MicroIcon::alphaLevelPassiveIcon > 0)
+    {
+        MicroIcon::tPassiveIcon->Draw(
+            vIconX, vIconY, vIconSize, vIconSize,
+            (PluginConfig::GetMicroIconColor() & 0x00ffffff) |
+            (MicroIcon::alphaLevelPassiveIcon << 24),
+            PluginConfig::GetMicroIconAngle()
+        );
+    }
 
-    if (MicroIcon::alphaLevelActiveIcon) MicroIcon::tActiveIcon->Draw(
-        vIconX, vIconY, vIconSize, vIconSize,
-        (PluginConfig::GetMicroIconColor() & 0x00ffffff) |
-        (MicroIcon::alphaLevelActiveIcon << 24),
-        PluginConfig::GetMicroIconAngle()
-    );
+    if (MicroIcon::alphaLevelActiveIcon > 0)
+    {
+        MicroIcon::tActiveIcon->Draw(
+            vIconX, vIconY, vIconSize, vIconSize,
+            (PluginConfig::GetMicroIconColor() & 0x00ffffff) |
+            (MicroIcon::alphaLevelActiveIcon << 24),
+            PluginConfig::GetMicroIconAngle()
+        );
+    }
 
-    if (MicroIcon::alphaLevelMutedIcon) MicroIcon::tMutedIcon->Draw(
-        vIconX, vIconY, vIconSize, vIconSize,
-        (PluginConfig::GetMicroIconColor() & 0x00ffffff) |
-        (MicroIcon::alphaLevelMutedIcon << 24),
-        PluginConfig::GetMicroIconAngle()
-    );
+    if (MicroIcon::alphaLevelMutedIcon > 0)
+    {
+        MicroIcon::tMutedIcon->Draw(
+            vIconX, vIconY, vIconSize, vIconSize,
+            (PluginConfig::GetMicroIconColor() & 0x00ffffff) |
+            (MicroIcon::alphaLevelMutedIcon << 24),
+            PluginConfig::GetMicroIconAngle()
+        );
+    }
 }
 
 void MicroIcon::Update() noexcept
@@ -327,13 +331,17 @@ void MicroIcon::Hide() noexcept
     MicroIcon::showStatus = false;
 }
 
-void MicroIcon::Free() noexcept
-{
-    if (!MicroIcon::initStatus) return;
+bool MicroIcon::initStatus { false };
+bool MicroIcon::showStatus { false };
 
-    MicroIcon::tPassiveIcon.reset();
-    MicroIcon::tActiveIcon.reset();
-    MicroIcon::tMutedIcon.reset();
+int MicroIcon::alphaLevelPassiveIcon { 0 };
+int MicroIcon::alphaLevelDeviationPassiveIcon { 0 };
+TexturePtr MicroIcon::tPassiveIcon { nullptr };
 
-    MicroIcon::initStatus = false;
-}
+int MicroIcon::alphaLevelActiveIcon { 0 };
+int MicroIcon::alphaLevelDeviationActiveIcon { 0 };
+TexturePtr MicroIcon::tActiveIcon { nullptr };
+
+int MicroIcon::alphaLevelMutedIcon { 0 };
+int MicroIcon::alphaLevelDeviationMutedIcon { 0 };
+TexturePtr MicroIcon::tMutedIcon { nullptr };

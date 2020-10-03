@@ -42,8 +42,8 @@ BlurEffect::BlurEffect(IDirect3DDevice9* pDevice,
 
     const float iResolution[] = { this->dParameters.BackBufferWidth, this->dParameters.BackBufferHeight };
 
-    this->pEffect->SetFloatArray((D3DXHANDLE)("iResolution"), iResolution, SizeOfArray(iResolution));
-    this->pEffect->SetFloat((D3DXHANDLE)("iLevel"), 0.f);
+    this->pEffect->SetFloatArray(static_cast<D3DXHANDLE>("iResolution"), iResolution, SizeOfArray(iResolution));
+    this->pEffect->SetFloat(static_cast<D3DXHANDLE>("iLevel"), 0.f);
 
     const D3DVERTEXELEMENT9 vertexElements[] =
     {
@@ -154,13 +154,13 @@ void BlurEffect::Render(float level) const noexcept
     if (level > 100.f) level = 100.f;
     if (level < 0.f) level = 0.f;
 
-    this->pEffect->SetFloat((D3DXHANDLE)("iLevel"), level);
+    this->pEffect->SetFloat(static_cast<D3DXHANDLE>("iLevel"), level);
 
     UINT passCount { NULL };
 
     if (SUCCEEDED(this->pEffect->Begin(&passCount, NULL)))
     {
-        this->pEffect->SetTexture((D3DXHANDLE)("iFrameTexture"), this->pBackBufferTexture);
+        this->pEffect->SetTexture(static_cast<D3DXHANDLE>("iFrameTexture"), this->pBackBufferTexture);
         this->pDevice->SetRenderTarget(0, this->pTempBufferSurface);
 
         if (SUCCEEDED(this->pEffect->BeginPass(0)))
@@ -169,7 +169,7 @@ void BlurEffect::Render(float level) const noexcept
             this->pEffect->EndPass();
         }
 
-        this->pEffect->SetTexture((D3DXHANDLE)("iFrameTexture"), this->pTempBufferTexture);
+        this->pEffect->SetTexture(static_cast<D3DXHANDLE>("iFrameTexture"), this->pTempBufferTexture);
         this->pDevice->SetRenderTarget(0, this->pFrontBufferSurface);
 
         if (SUCCEEDED(this->pEffect->BeginPass(1)))
@@ -184,8 +184,8 @@ void BlurEffect::Render(float level) const noexcept
     if (SUCCEEDED(this->pEffect->Begin(&passCount, NULL)))
     {
         this->pDevice->SetRenderTarget(0, pDeviceBackBuffer);
-        this->pEffect->SetTexture((D3DXHANDLE)("iBackBuffer"), this->pBackBufferTexture);
-        this->pEffect->SetTexture((D3DXHANDLE)("iFrameTexture"), this->pFrontBufferTexture);
+        this->pEffect->SetTexture(static_cast<D3DXHANDLE>("iBackBuffer"), this->pBackBufferTexture);
+        this->pEffect->SetTexture(static_cast<D3DXHANDLE>("iFrameTexture"), this->pFrontBufferTexture);
 
         if (SUCCEEDED(this->pEffect->BeginPass(2)))
         {

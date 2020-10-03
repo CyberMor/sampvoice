@@ -11,7 +11,7 @@
 
 #include "Logger.h"
 
-Resource::Resource(const HMODULE hModule, const DWORD rId, const char* rType)
+Resource::Resource(const HMODULE hModule, const DWORD rId, const char* const rType)
 {
     const auto hRsrc = FindResource(hModule, MAKEINTRESOURCE(rId), rType);
 

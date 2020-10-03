@@ -20,14 +20,23 @@
 
 class Samp {
 
+    Samp() = delete;
+    ~Samp() = delete;
+    Samp(const Samp&) = delete;
+    Samp(Samp&&) = delete;
+    Samp& operator=(const Samp&) = delete;
+    Samp& operator=(Samp&&) = delete;
+
+private:
+
     using InitHandlerType = std::function<void()>;
     using ExitHandlerType = std::function<void()>;
 
 public:
 
     static bool Init(const AddressesBase& addrBase,
-                     InitHandlerType&& initHandler,
-                     ExitHandlerType&& exitHandler) noexcept;
+                     InitHandlerType initHandler,
+                     ExitHandlerType exitHandler) noexcept;
     static bool IsInited() noexcept;
     static bool IsLoaded() noexcept;
     static void Free() noexcept;

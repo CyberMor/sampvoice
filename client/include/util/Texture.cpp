@@ -13,7 +13,7 @@
 
 #include "Logger.h"
 
-Texture::Texture(IDirect3DDevice9* pDevice, const Resource& rTexture)
+Texture::Texture(IDirect3DDevice9* const pDevice, const Resource& const rTexture)
 {
     assert(pDevice);
 

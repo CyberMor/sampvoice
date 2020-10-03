@@ -16,6 +16,14 @@
 #include "AddressesBase.h"
 
 class GameUtil {
+
+    GameUtil() = delete;
+    ~GameUtil() = delete;
+    GameUtil(const GameUtil&) = delete;
+    GameUtil(GameUtil&&) = delete;
+    GameUtil& operator=(const GameUtil&) = delete;
+    GameUtil& operator=(GameUtil&&) = delete;
+
 public:
 
     static bool IsKeyDown(BYTE keyId) noexcept;
@@ -25,6 +33,6 @@ public:
     static bool HasPlayerPed() noexcept;
     static bool IsPlayerVisible(WORD playerId) noexcept;
     static bool GetRadarRect(CRect& radarRect) noexcept;
-    static void DisableAntiCheat(const AddressesBase& addrBase) noexcept;
+    static void DisableAntiCheat(const AddressesBase& addrBase);
 
 };

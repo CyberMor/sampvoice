@@ -14,7 +14,8 @@
 
 #include <game/CVector.h>
 
-#define GetTimestamp() std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()
+#define GetTimestamp() std::chrono::duration_cast<std::chrono::milliseconds> \
+                      (std::chrono::system_clock::now().time_since_epoch()).count()
 #define SleepForMilliseconds(mscount) std::this_thread::sleep_for(std::chrono::milliseconds(mscount))
 
 namespace SV
@@ -22,28 +23,28 @@ namespace SV
     // Strings
     // --------------------------------------------
 
-    constexpr const char* LogFileName = "svlog.txt";
-    constexpr const char* ConfigFileName = "svconfig.bin";
+    constexpr auto kLogFileName = "svlog.txt";
+    constexpr auto kConfigFileName = "svconfig.bin";
 
     // Constants
     // --------------------------------------------
 
-    constexpr WORD NonePlayer = 0xffff;
+    constexpr WORD  kNonePlayer = 0xffff;
 
-    constexpr BYTE Version = 10;
-    constexpr DWORD Signature = 0xDeadBeef;
+    constexpr BYTE  kVersion = 10;
+    constexpr DWORD kSignature = 0xDeadBeef;
 
-    constexpr DWORD AudioUpdateThreads = 4;
-    constexpr DWORD AudioUpdatePeriod = 10;
+    constexpr DWORD kAudioUpdateThreads = 4;
+    constexpr DWORD kAudioUpdatePeriod = 10;
 
-    constexpr DWORD VoiceRate = 100;
-    constexpr DWORD Frequency = 48000;
-    constexpr DWORD FrameSizeInSamples = (Frequency / 1000) * VoiceRate;
-    constexpr DWORD FrameSizeInBytes = FrameSizeInSamples * sizeof(WORD);
+    constexpr DWORD kVoiceRate = 100;
+    constexpr DWORD kFrequency = 48000;
+    constexpr DWORD kFrameSizeInSamples = (kFrequency / 1000) * kVoiceRate;
+    constexpr DWORD kFrameSizeInBytes = kFrameSizeInSamples * sizeof(WORD);
 
-    constexpr DWORD ChannelPreBufferFramesCount = 3;
-    constexpr DWORD ChannelPreBufferSizeInMs = ChannelPreBufferFramesCount * VoiceRate;
-    constexpr DWORD ChannelBufferSizeInMs = 3 * ChannelPreBufferSizeInMs;
+    constexpr DWORD kChannelPreBufferFramesCount = 3;
+    constexpr DWORD kChannelPreBufferSizeInMs = kChannelPreBufferFramesCount * kVoiceRate;
+    constexpr DWORD kChannelBufferSizeInMs = 3 * kChannelPreBufferSizeInMs;
 
     struct ControlPacketType
     {

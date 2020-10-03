@@ -49,9 +49,9 @@ class Network {
 public:
 
     static bool Init(const void* serverBaseAddress,
-                     ConnectHandlerType&& connectHandler,
-                     PlayerInitHandlerType&& playerInitHandler,
-                     DisconnectHandlerType&& disconnectHandler);
+                     ConnectHandlerType connectHandler,
+                     PlayerInitHandlerType playerInitHandler,
+                     DisconnectHandlerType disconnectHandler);
     static void Free();
 
     static bool Bind() noexcept;

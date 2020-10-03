@@ -15,14 +15,13 @@
 #include <imgui/imgui_impl_dx9.h>
 #include <imgui/imgui_impl_win32.h>
 
-bool ImGuiUtil::Init(IDirect3DDevice9* pDevice,
-                     D3DPRESENT_PARAMETERS* pParameters) noexcept
+bool ImGuiUtil::Init(IDirect3DDevice9* const pDevice,
+                     D3DPRESENT_PARAMETERS* const pParameters) noexcept
 {
     assert(pDevice);
     assert(pParameters);
 
-    if (ImGuiUtil::initStatus)
-        return false;
+    if (ImGuiUtil::initStatus) return false;
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -34,6 +33,7 @@ bool ImGuiUtil::Init(IDirect3DDevice9* pDevice,
     ImGuiUtil::dx9loadStatus = ImGui_ImplDX9_Init(pDevice);
 
     ImGuiUtil::renderStatus = false;
+
     ImGuiUtil::initStatus = true;
 
     return true;
@@ -64,6 +64,7 @@ void ImGuiUtil::Free() noexcept
 bool ImGuiUtil::RenderBegin() noexcept
 {
     if (!ImGuiUtil::initStatus) return false;
+
     if (ImGuiUtil::renderStatus) return false;
 
     if (ImGuiUtil::dx9loadStatus) ImGui_ImplDX9_NewFrame();
@@ -84,6 +85,7 @@ bool ImGuiUtil::IsRendering() noexcept
 void ImGuiUtil::RenderEnd() noexcept
 {
     if (!ImGuiUtil::initStatus) return;
+
     if (!ImGuiUtil::renderStatus) return;
 
     ImGui::EndFrame();
@@ -101,12 +103,14 @@ LRESULT ImGuiUtil::OnWndMessage(HWND hWnd, UINT uMsg,
                                 WPARAM wParam, LPARAM lParam) noexcept
 {
     if (!ImGuiUtil::initStatus) return FALSE;
+
     if (!ImGuiUtil::win32loadStatus) return FALSE;
 
     if (uMsg == WM_CHAR)
     {
         wchar_t wChar { NULL };
-        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, (char*)(&wParam), 1, &wChar, 1);
+        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED,
+            reinterpret_cast<LPCSTR>(&wParam), 1, &wChar, 1);
         ImGui::GetIO().AddInputCharacter(wChar);
         return TRUE;
     }

@@ -9,8 +9,9 @@
 
 #include "commonSA.h"
 
-DWORD SAMP::baseSampAddress = NULL;
+DWORD SAMP::baseSampAddress { NULL };
 
-void SAMP::InitSamp(const DWORD baseAddress) {
+void SAMP::InitSamp(const DWORD baseAddress) noexcept
+{
 	SAMP::baseSampAddress = baseAddress;
 }

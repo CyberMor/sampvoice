@@ -16,23 +16,23 @@
 
 #include "Logger.h"
 
-bool Samp::Init(const AddressesBase& addrBase,
-                InitHandlerType&& initHandler,
-                ExitHandlerType&& exitHandler) noexcept
+bool Samp::Init(const AddressesBase& const addrBase,
+                InitHandlerType initHandler,
+                ExitHandlerType exitHandler) noexcept
 {
     if (Samp::initStatus) return false;
 
     Logger::LogToFile("[dbg:samp:init] : module initializing...");
 
-    if (!(Samp::hookSampFree = MakeJumpHook(addrBase.GetSampDestructAddr(), Samp::HookFuncSampFree)))
+    try
     {
-        Logger::LogToFile("[err:samp:init] : failed to create 'SampFree' function hook");
-        return false;
+        Samp::hookSampFree = MakeJumpHook(addrBase.GetSampDestructAddr(), Samp::HookFuncSampFree);
+        Samp::hookSampInit = MakeJumpHook(addrBase.GetSampInitAddr(), Samp::HookFuncSampInit);
     }
-
-    if (!(Samp::hookSampInit = MakeJumpHook(addrBase.GetSampInitAddr(), Samp::HookFuncSampInit)))
+    catch (const std::exception& exception)
     {
-        Logger::LogToFile("[err:samp:init] : failed to create 'SampInit' function hook");
+        Logger::LogToFile("[err:samp:init] : failed to create function hooks");
+        Samp::hookSampInit.reset();
         Samp::hookSampFree.reset();
         return false;
     }
@@ -43,9 +43,10 @@ bool Samp::Init(const AddressesBase& addrBase,
     Samp::exitHandler = std::move(exitHandler);
 
     Samp::loadStatus = false;
-    Samp::initStatus = true;
 
     Logger::LogToFile("[dbg:samp:init] : module initialized");
+
+    Samp::initStatus = true;
 
     return true;
 }
@@ -82,7 +83,7 @@ void Samp::Free() noexcept
     Samp::initStatus = false;
 }
 
-void Samp::AddClientCommand(const char* cmdName, SAMP::CMDPROC cmdHandler) noexcept
+void Samp::AddClientCommand(const char* const cmdName, const SAMP::CMDPROC cmdHandler) noexcept
 {
     if (!cmdName || !*cmdName || !cmdHandler) return;
 
@@ -97,7 +98,7 @@ void Samp::AddClientCommand(const char* cmdName, SAMP::CMDPROC cmdHandler) noexc
     pInputBox->AddCommand(cmdName, cmdHandler);
 }
 
-void Samp::AddMessageToChat(const D3DCOLOR color, const char* message) noexcept
+void Samp::AddMessageToChat(const D3DCOLOR color, const char* const message) noexcept
 {
     if (!message || !*message) return;
 

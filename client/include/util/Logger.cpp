@@ -9,7 +9,7 @@
 
 #include "Logger.h"
 
-bool Logger::Init(const char* fileName) noexcept
+bool Logger::Init(const char* const fileName) noexcept
 {
     const std::scoped_lock lock { Logger::logFileMutex };
 

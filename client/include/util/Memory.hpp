@@ -11,6 +11,7 @@
 
 #include <memory>
 #include <type_traits>
+#include <functional>
 #include <cassert>
 #include <vector>
 #include <string>
@@ -23,6 +24,41 @@
 
 namespace Memory
 {
+    class ScopeExit {
+
+        ScopeExit() = delete;
+        ScopeExit(const ScopeExit&) = delete;
+        ScopeExit(ScopeExit&&) = delete;
+        ScopeExit& operator=(const ScopeExit&) = delete;
+        ScopeExit& operator=(ScopeExit&&) = delete;
+
+    private:
+
+        using CallbackType = std::function<void()>;
+
+    public:
+
+        explicit ScopeExit(CallbackType&& callback) noexcept
+            : callback(std::move(callback)) {}
+
+        ~ScopeExit() noexcept
+        {
+            if (this->callback) this->callback();
+        }
+
+    public:
+
+        void Release() noexcept
+        {
+            this->callback = nullptr;
+        }
+
+    private:
+
+        CallbackType callback { nullptr };
+
+    };
+
     template<class ObjectType> class ObjectContainer {
     public:
 

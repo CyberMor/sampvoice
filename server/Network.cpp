@@ -44,10 +44,10 @@ static inline uint32_t MakeBytesFromBits(uint32_t bits) noexcept
     return (bits >> 3) + (bits & 7 ? 1 : 0);
 }
 
-bool Network::Init(const void* serverBaseAddress,
-                   ConnectHandlerType&& connectHandler,
-                   PlayerInitHandlerType&& playerInitHandler,
-                   DisconnectHandlerType&& disconnectHandler)
+bool Network::Init(const void* const serverBaseAddress,
+                   ConnectHandlerType connectHandler,
+                   PlayerInitHandlerType playerInitHandler,
+                   DisconnectHandlerType disconnectHandler)
 {
     if (!playerInitHandler) return false;
 

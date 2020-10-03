@@ -9,33 +9,38 @@
 
 #include "RakNet.h"
 
-static uint32_t rakClientOffset { 0 };
+namespace
+{
+    uint32_t rakClientOffset { 0 };
+}
 
-bool RakNet::Init(const AddressesBase& addrBase,
-                  ConnectHandlerType&& connectHandler,
-                  PacketIncomingHandlerType&& packetIncomingHandler,
-                  PacketOutcomingHandlerType&& packetOutcomingHandler,
-                  RpcOutcomingHandlerType&& rpcOutcomingHandler,
-                  DisconnectHandlerType&& disconnectHandler) noexcept
+bool RakNet::Init(const AddressesBase& const addrBase,
+                  ConnectHandlerType connectHandler,
+                  PacketIncomingHandlerType packetIncomingHandler,
+                  PacketOutcomingHandlerType packetOutcomingHandler,
+                  RpcOutcomingHandlerType rpcOutcomingHandler,
+                  DisconnectHandlerType disconnectHandler) noexcept
 {
     if (RakNet::initStatus) return false;
 
     Logger::LogToFile("[dbg:raknet:init] : module initializing...");
 
-    if (*(WORD*)(addrBase.GetRcInitAddr()) == 0x4689) rakClientOffset = *(BYTE*)(addrBase.GetRcInitAddr() + 2);
-    else if (*(WORD*)(addrBase.GetRcInitAddr()) == 0x8689) rakClientOffset = *(DWORD*)(addrBase.GetRcInitAddr() + 2);
+    if (*reinterpret_cast<WORD*>(addrBase.GetRcInitAddr()) == 0x4689)
+        rakClientOffset = *reinterpret_cast<BYTE*>(addrBase.GetRcInitAddr() + 2);
+    else if (*reinterpret_cast<WORD*>(addrBase.GetRcInitAddr()) == 0x8689)
+        rakClientOffset = *reinterpret_cast<DWORD*>(addrBase.GetRcInitAddr() + 2);
 
     Logger::LogToFile("[dbg:raknet:init] : finded rakclient interface offset (value:0x%x)", rakClientOffset);
 
-    if (!(RakNet::sampDestructHook = MakeJumpHook(addrBase.GetSampDestructAddr(), RakNet::SampDestructHookFunc)))
+    try
     {
-        Logger::LogToFile("[err:raknet:init] : failed to create 'SampDestruct' function hook");
-        return false;
+        RakNet::sampDestructHook = MakeJumpHook(addrBase.GetSampDestructAddr(), RakNet::SampDestructHookFunc);
+        RakNet::rakClientInitHook = MakeJumpHook(addrBase.GetRcInitAddr(), RakNet::RakClientInitHookFunc);
     }
-
-    if (!(RakNet::rakClientInitHook = MakeJumpHook(addrBase.GetRcInitAddr(), RakNet::RakClientInitHookFunc)))
+    catch (const std::exception& exception)
     {
-        Logger::LogToFile("[err:raknet:init] : failed to create 'RakClientInit' function hook");
+        Logger::LogToFile("[err:raknet:init] : failed to create function hooks");
+        RakNet::rakClientInitHook.reset();
         RakNet::sampDestructHook.reset();
         return false;
     }
@@ -88,8 +93,8 @@ void RakNet::Free() noexcept
 
     Logger::LogToFile("[dbg:raknet:free] : module releasing...");
 
-    RakNet::sampDestructHook.reset();
     RakNet::rakClientInitHook.reset();
+    RakNet::sampDestructHook.reset();
 
     if (RakNet::connectStatus && RakNet::disconnectHandler)
         RakNet::disconnectHandler();
@@ -119,7 +124,7 @@ void RakNet::Free() noexcept
     RakNet::initStatus = false;
 }
 
-RakNet::RakClientHookInterface::RakClientHookInterface(RakClientInterface* pOrigInterface) noexcept
+RakNet::RakClientHookInterface::RakClientHookInterface(RakClientInterface* const pOrigInterface) noexcept
     : pOrigInterface(pOrigInterface) {}
 
 bool RakNet::RakClientHookInterface::RPC(
@@ -198,12 +203,10 @@ void RakNet::RakClientHookInterface::Disconnect(
 {
     Logger::LogToFile("[dbg:raknet:client_%p:disconnect] : disconnecting from server...", this);
 
-    if (RakNet::connectStatus)
-    {
-        if (RakNet::disconnectHandler) RakNet::disconnectHandler();
+    if (RakNet::connectStatus && RakNet::disconnectHandler)
+        RakNet::disconnectHandler();
 
-        RakNet::connectStatus = false;
-    }
+    RakNet::connectStatus = false;
 
     this->pOrigInterface->Disconnect(blockDuration, orderingChannel);
 }
@@ -236,7 +239,7 @@ bool RakNet::RakClientHookInterface::Send(
     const char orderingChannel
 ) noexcept
 {
-    BitStream bitStream((uint8_t*)(dataPointer), dataLength, true);
+    BitStream bitStream { (uint8_t*)(dataPointer), static_cast<uint32_t>(dataLength), true };
 
     if (RakNet::packetOutcomingHandler && !RakNet::packetOutcomingHandler(&bitStream))
         return true;
@@ -359,9 +362,8 @@ bool RakNet::RakClientHookInterface::RPC(
     const bool shiftTimestamp
 ) noexcept
 {
-    const int byteLength = (bitLength >> 3) + (bitLength & 7 ? 1 : 0);
-
-    BitStream bitStream((uint8_t*)(dataPointer), byteLength, true);
+    const uint32_t byteLength = (bitLength >> 3) + (bitLength & 7 ? 1 : 0);
+    BitStream bitStream { (uint8_t*)(dataPointer), byteLength, true };
 
     if (RakNet::rpcOutcomingHandler && !RakNet::rpcOutcomingHandler(*rpcIdPointer, &bitStream))
         return true;

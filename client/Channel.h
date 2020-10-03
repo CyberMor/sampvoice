@@ -35,12 +35,12 @@ public:
     explicit Channel(const DWORD channelFlags,
                      PlayHandlerType&& playHandler,
                      StopHandlerType&& stopHandler,
-                     const WORD speaker = SV::NonePlayer)
+                     const WORD speaker = SV::kNonePlayer)
         : handle(BASS_StreamCreate(
-            SV::Frequency, 1, channelFlags,
+            SV::kFrequency, 1, channelFlags,
             STREAMPROC_PUSH, nullptr))
         , decoder(opus_decoder_create(
-            SV::Frequency, 1, &opusErrorCode))
+            SV::kFrequency, 1, &opusErrorCode))
         , playHandler(std::move(playHandler))
         , stopHandler(std::move(stopHandler))
         , speaker(speaker)
@@ -91,7 +91,7 @@ public:
             this->playing = false;
         }
 
-        this->speaker = SV::NonePlayer;
+        this->speaker = SV::kNonePlayer;
         this->expectedPacketNumber = 0;
         this->initialized = false;
     }
@@ -130,28 +130,28 @@ public:
 
             const DWORD length = opus_decode(
                 this->decoder, dataPtr, dataSize, this->decBuffer,
-                SV::FrameSizeInSamples, true);
+                SV::kFrameSizeInSamples, true);
 
-            if (length == SV::FrameSizeInSamples)
+            if (length == SV::kFrameSizeInSamples)
             {
-                BASS_StreamPutData(this->handle, this->decBuffer, SV::FrameSizeInBytes);
+                BASS_StreamPutData(this->handle, this->decBuffer, SV::kFrameSizeInBytes);
             }
         }
 
         const DWORD length = opus_decode(
             this->decoder, dataPtr, dataSize, this->decBuffer,
-            SV::FrameSizeInSamples, false);
+            SV::kFrameSizeInSamples, false);
 
-        if (length == SV::FrameSizeInSamples)
+        if (length == SV::kFrameSizeInSamples)
         {
-            BASS_StreamPutData(this->handle, this->decBuffer, SV::FrameSizeInBytes);
+            BASS_StreamPutData(this->handle, this->decBuffer, SV::kFrameSizeInBytes);
         }
 
         const DWORD channelStatus = BASS_ChannelIsActive(this->handle);
         const DWORD bufferSize = BASS_ChannelGetData(this->handle, nullptr, BASS_DATA_AVAILABLE);
 
         if ((channelStatus == BASS_ACTIVE_PAUSED || channelStatus == BASS_ACTIVE_STOPPED) &&
-            bufferSize != -1 && bufferSize >= SV::ChannelPreBufferFramesCount * SV::FrameSizeInBytes)
+            bufferSize != -1 && bufferSize >= SV::kChannelPreBufferFramesCount * SV::kFrameSizeInBytes)
         {
             Logger::LogToFile("[sv:dbg:channel_%p:push] : playing channel", this);
 
@@ -170,7 +170,7 @@ public:
 public:
 
     const HSTREAM handle { NULL };
-    WORD speaker { SV::NonePlayer };
+    WORD speaker { SV::kNonePlayer };
 
 private:
 
@@ -178,7 +178,7 @@ private:
     const StopHandlerType stopHandler { nullptr };
 
     OpusDecoder* const decoder { nullptr };
-    opus_int16 decBuffer[SV::FrameSizeInSamples];
+    opus_int16 decBuffer[SV::kFrameSizeInSamples];
 
     DWORD expectedPacketNumber { 0 };
     bool initialized { false };

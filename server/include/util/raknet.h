@@ -38,9 +38,9 @@ class RakNet {
 public:
 
     static bool Init(const void* serverBaseAddr,
-                     ConnectHandlerType&& connectHandler,
-                     DisconnectHandlerType&& disconnectHandler,
-                     PacketHandlerType&& packetHandler);
+                     ConnectHandlerType connectHandler,
+                     DisconnectHandlerType disconnectHandler,
+                     PacketHandlerType packetHandler);
     static void Free() noexcept;
 
     static bool IsLoaded() noexcept;
