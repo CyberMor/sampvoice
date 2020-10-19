@@ -27,7 +27,6 @@ class BlurEffect {
 public:
 
     explicit BlurEffect(IDirect3DDevice9* pDevice,
-                        D3DPRESENT_PARAMETERS* pParameters,
                         const Resource& rEffect);
 
     ~BlurEffect() noexcept;
@@ -42,22 +41,24 @@ private:
 
 private:
 
-    IDirect3DDevice9* pDevice { nullptr };
-    D3DPRESENT_PARAMETERS dParameters {};
+    IDirect3DDevice9* const pDevice;
+
+    IDirect3DSurface9* pDeviceBackBuffer { nullptr };
+
+    UINT backBufferWidth { 0 };
+    UINT backBufferHeight { 0 };
 
     ID3DXEffect* pEffect { nullptr };
     IDirect3DVertexDeclaration9* pVertexDeclaration { nullptr };
 
     IDirect3DTexture9* pBackBufferTexture { nullptr };
     IDirect3DSurface9* pBackBufferSurface { nullptr };
-
     IDirect3DTexture9* pTempBufferTexture { nullptr };
     IDirect3DSurface9* pTempBufferSurface { nullptr };
-
     IDirect3DTexture9* pFrontBufferTexture { nullptr };
     IDirect3DSurface9* pFrontBufferSurface { nullptr };
 
 };
 
-using BlurEffectPtr = std::shared_ptr<BlurEffect>;
-#define MakeBlurEffect std::make_shared<BlurEffect>
+using BlurEffectPtr = std::unique_ptr<BlurEffect>;
+#define MakeBlurEffect std::make_unique<BlurEffect>

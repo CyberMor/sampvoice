@@ -39,8 +39,7 @@ public:
 
     public:
 
-        explicit LockedPlayer(std::string playerName, WORD playerId) noexcept
-            : playerName(std::move(playerName)), playerId(playerId) {}
+        explicit LockedPlayer(std::string playerName, WORD playerId) noexcept;
 
         ~LockedPlayer() noexcept = default;
 

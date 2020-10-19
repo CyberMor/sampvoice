@@ -11,29 +11,35 @@
 
 #include "Logger.h"
 
-Resource::Resource(const HMODULE hModule, const DWORD rId, const char* const rType)
+Resource::Resource(const HMODULE hModule, const DWORD rId, const LPCSTR rType)
 {
     const auto hRsrc = FindResource(hModule, MAKEINTRESOURCE(rId), rType);
 
-    if (!hRsrc)
+    if (hRsrc == nullptr)
     {
         Logger::LogToFile("[err:resource] : failed to find resource (code:%u)", GetLastError());
         throw std::exception();
     }
 
-    if (!(this->resource = LoadResource(hModule, hRsrc)))
+    const auto hGlobal = LoadResource(hModule, hRsrc);
+
+    if (hGlobal == nullptr)
     {
-        Logger::LogToFile("[err:resource] : failed to load resource handle (code:%u)", GetLastError());
+        Logger::LogToFile("[err:resource] : failed to load resource (code:%u)", GetLastError());
         throw std::exception();
     }
 
-    if (!(this->dataPtr = LockResource(this->resource)))
+    this->dataPtr = LockResource(hGlobal);
+
+    if (this->dataPtr == nullptr)
     {
         Logger::LogToFile("[err:resource] : failed to get data pointer (code:%u)", GetLastError());
         throw std::exception();
     }
 
-    if (!(this->dataSize = SizeofResource(hModule, hRsrc)))
+    this->dataSize = SizeofResource(hModule, hRsrc);
+
+    if (this->dataSize == 0)
     {
         Logger::LogToFile("[err:resource] : failed to get data size (code:%u)", GetLastError());
         throw std::exception();

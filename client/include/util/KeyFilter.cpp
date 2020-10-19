@@ -25,7 +25,7 @@ bool KeyFilter::AddKey(const BYTE keyId) noexcept
 
 bool KeyFilter::RemoveKey(const BYTE keyId) noexcept
 {
-    KeyFilter::ReleaseKey(keyId);
+    KeyFilter::PushReleaseEvent(keyId);
 
     if (!KeyFilter::statusKeys[keyId])
         return false;
@@ -41,7 +41,7 @@ void KeyFilter::RemoveAllKeys() noexcept
 {
     Logger::LogToFile("[dbg:keyfilter] : removing all keys...");
 
-    for (DWORD keyId = 0; keyId < sizeof(KeyFilter::statusKeys); ++keyId)
+    for (WORD keyId { 0 }; keyId < KeyFilter::statusKeys.size(); ++keyId)
         KeyFilter::RemoveKey(keyId);
 
     KeyFilter::activeKeys = 0;
@@ -51,34 +51,13 @@ void KeyFilter::ReleaseAllKeys() noexcept
 {
     Logger::LogToFile("[dbg:keyfilter] : releasing all keys...");
 
-    for (DWORD keyId = 0; keyId < sizeof(KeyFilter::statusKeys); ++keyId)
-        KeyFilter::ReleaseKey(keyId);
+    for (WORD keyId { 0 }; keyId < KeyFilter::statusKeys.size(); ++keyId)
+        KeyFilter::PushReleaseEvent(keyId);
 
     KeyFilter::activeKeys = 0;
 }
 
-bool KeyFilter::PopKey(KeyEvent& const event) noexcept
-{
-    if (KeyFilter::keyQueue.empty())
-        return false;
-
-    event = std::move(*KeyFilter::keyQueue.front());
-    KeyFilter::keyQueue.pop();
-
-    return true;
-}
-
-void KeyFilter::OnWndMessage(HWND hWnd, UINT uMsg,
-                             WPARAM wParam, LPARAM lParam) noexcept
-{
-    switch (uMsg)
-    {
-        case WM_KEYDOWN: KeyFilter::PressKey(wParam); break;
-        case WM_KEYUP: KeyFilter::ReleaseKey(wParam); break;
-    }
-}
-
-bool KeyFilter::PressKey(const BYTE keyId) noexcept
+bool KeyFilter::PushPressEvent(const BYTE keyId) noexcept
 {
     if (!KeyFilter::statusKeys[keyId])
         return false;
@@ -95,7 +74,7 @@ bool KeyFilter::PressKey(const BYTE keyId) noexcept
     return KeyFilter::pressedKeys[keyId];
 }
 
-bool KeyFilter::ReleaseKey(const BYTE keyId) noexcept
+bool KeyFilter::PushReleaseEvent(const BYTE keyId) noexcept
 {
     if (!KeyFilter::pressedKeys[keyId])
         return false;
@@ -109,9 +88,20 @@ bool KeyFilter::ReleaseKey(const BYTE keyId) noexcept
     return !KeyFilter::pressedKeys[keyId];
 }
 
+bool KeyFilter::PopEvent(KeyEvent& event) noexcept
+{
+    if (KeyFilter::keyQueue.empty())
+        return false;
+
+    event = *KeyFilter::keyQueue.front();
+    KeyFilter::keyQueue.pop();
+
+    return true;
+}
+
 SPSCQueue<KeyEvent> KeyFilter::keyQueue { 256 };
 
-int KeyFilter::activeKeys { 0 };
+std::array<bool, 256> KeyFilter::pressedKeys {};
+std::array<bool, 256> KeyFilter::statusKeys {};
 
-bool KeyFilter::pressedKeys[256] {};
-bool KeyFilter::statusKeys[256] {};
+int KeyFilter::activeKeys { 0 };

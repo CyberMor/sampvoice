@@ -11,15 +11,17 @@
 
 bool Logger::Init(const char* const logFile, const logprintf_t logFunc) noexcept
 {
-    if (!logFile || !*logFile || !logFunc) return false;
+    if (logFile == nullptr || *logFile == '\0' || logFunc == nullptr)
+        return false;
 
     const std::lock_guard<std::mutex> lockFile { Logger::logFileMutex };
     const std::lock_guard<std::mutex> lockConsole { Logger::logConsoleMutex };
 
-    if (Logger::logFile || Logger::logFunc) return false;
+    if (Logger::logFile != nullptr || Logger::logFunc != nullptr)
+        return false;
 
-    return (Logger::logFile = std::fopen(logFile, "wt")) &&
-           (Logger::logFunc = logFunc);
+    return (Logger::logFile = std::fopen(logFile, "wt")) != nullptr &&
+           (Logger::logFunc = logFunc) != nullptr;
 }
 
 void Logger::Free() noexcept
@@ -27,7 +29,7 @@ void Logger::Free() noexcept
     const std::lock_guard<std::mutex> lockFile { Logger::logFileMutex };
     const std::lock_guard<std::mutex> lockConsole { Logger::logConsoleMutex };
 
-    if (Logger::logFile) std::fclose(Logger::logFile);
+    if (Logger::logFile != nullptr) std::fclose(Logger::logFile);
 
     Logger::logFile = nullptr;
     Logger::logFunc = nullptr;

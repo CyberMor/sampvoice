@@ -10,12 +10,11 @@
 #include "DynamicLocalStreamAtVehicle.h"
 
 #include <cassert>
-
-#include <string.h>
+#include <cstring>
 
 #include <ysf/globals.h>
-#include <util/logger.h>
 #include <util/memory.hpp>
+#include <util/logger.h>
 
 #include "ControlPacket.h"
 #include "PlayerStore.h"
@@ -29,9 +28,9 @@ DynamicLocalStreamAtVehicle::DynamicLocalStreamAtVehicle(
     : LocalStream(distance)
     , DynamicStream(distance, maxPlayers)
 {
-    assert(pNetGame);
-    assert(pNetGame->pPlayerPool);
-    assert(pNetGame->pVehiclePool);
+    assert(pNetGame != nullptr);
+    assert(pNetGame->pPlayerPool != nullptr);
+    assert(pNetGame->pVehiclePool != nullptr);
 
     const auto nameString = name.c_str();
     const auto nameLength = name.size() + 1;
@@ -44,23 +43,23 @@ DynamicLocalStreamAtVehicle::DynamicLocalStreamAtVehicle(
     PackGetStruct(&*this->packetCreateStream, SV::CreateLStreamAtPacket)->target = vehicleId;
     PackGetStruct(&*this->packetCreateStream, SV::CreateLStreamAtPacket)->color = color;
 
-    if (pNetGame->pVehiclePool->pVehicle[vehicleId])
+    if (pNetGame->pVehiclePool->pVehicle[vehicleId] != nullptr)
     {
         PlayerSortList playerList;
 
         const CVector& streamPosition = pNetGame->pVehiclePool->pVehicle[vehicleId]->vecPosition;
 
-        if (pNetGame->pPlayerPool->dwConnectedPlayers)
+        if (pNetGame->pPlayerPool->dwConnectedPlayers != 0)
         {
             const auto playerPoolSize = pNetGame->pPlayerPool->dwPlayerPoolSize;
 
-            for (uint16_t iPlayerId = 0; iPlayerId <= playerPoolSize; ++iPlayerId)
+            for (uint16_t iPlayerId { 0 }; iPlayerId <= playerPoolSize; ++iPlayerId)
             {
                 const auto ipPlayer = pNetGame->pPlayerPool->pPlayer[iPlayerId];
 
                 float distanceToPlayer;
 
-                if (ipPlayer && PlayerStore::IsPlayerHasPlugin(iPlayerId) && ipPlayer->byteVehicleStreamedIn[vehicleId] &&
+                if (ipPlayer != nullptr && PlayerStore::IsPlayerHasPlugin(iPlayerId) && ipPlayer->byteVehicleStreamedIn[vehicleId] &&
                     (distanceToPlayer = (ipPlayer->vecPosition - streamPosition).Length()) <= distance)
                 {
                     playerList.emplace(distanceToPlayer, iPlayerId);
@@ -70,7 +69,8 @@ DynamicLocalStreamAtVehicle::DynamicLocalStreamAtVehicle(
 
         for (const auto& playerInfo : playerList)
         {
-            if (this->attachedListenersCount >= maxPlayers) break;
+            if (this->attachedListenersCount >= maxPlayers)
+                break;
 
             this->Stream::AttachListener(playerInfo.playerId);
         }
@@ -79,30 +79,30 @@ DynamicLocalStreamAtVehicle::DynamicLocalStreamAtVehicle(
 
 void DynamicLocalStreamAtVehicle::Tick()
 {
-    assert(pNetGame);
-    assert(pNetGame->pPlayerPool);
-    assert(pNetGame->pVehiclePool);
+    assert(pNetGame != nullptr);
+    assert(pNetGame->pPlayerPool != nullptr);
+    assert(pNetGame->pVehiclePool != nullptr);
 
     const auto vehicleId = PackGetStruct(&*this->packetCreateStream, SV::CreateLStreamAtPacket)->target;
 
-    if (pNetGame->pVehiclePool->pVehicle[vehicleId])
+    if (pNetGame->pVehiclePool->pVehicle[vehicleId] != nullptr)
     {
         PlayerSortList playerList;
 
         const CVector& streamPosition = pNetGame->pVehiclePool->pVehicle[vehicleId]->vecPosition;
-        const float streamDistance = PackGetStruct(&*this->packetStreamUpdateDistance, SV::UpdateLPStreamDistancePacket)->distance;
+        const float streamDistance = PackGetStruct(&*this->packetStreamUpdateDistance, SV::UpdateLStreamDistancePacket)->distance;
 
-        if (pNetGame->pPlayerPool->dwConnectedPlayers)
+        if (pNetGame->pPlayerPool->dwConnectedPlayers != 0)
         {
             const auto playerPoolSize = pNetGame->pPlayerPool->dwPlayerPoolSize;
 
-            for (uint16_t iPlayerId = 0; iPlayerId <= playerPoolSize; ++iPlayerId)
+            for (uint16_t iPlayerId { 0 }; iPlayerId <= playerPoolSize; ++iPlayerId)
             {
                 const auto ipPlayer = pNetGame->pPlayerPool->pPlayer[iPlayerId];
 
                 float distanceToPlayer;
 
-                if (ipPlayer && PlayerStore::IsPlayerHasPlugin(iPlayerId) && ipPlayer->byteVehicleStreamedIn[vehicleId] &&
+                if (ipPlayer != nullptr && PlayerStore::IsPlayerHasPlugin(iPlayerId) && ipPlayer->byteVehicleStreamedIn[vehicleId] &&
                     (distanceToPlayer = (ipPlayer->vecPosition - streamPosition).Length()) <= streamDistance)
                 {
                     if (!this->HasListener(iPlayerId))
@@ -119,7 +119,8 @@ void DynamicLocalStreamAtVehicle::Tick()
 
         for (const auto& playerInfo : playerList)
         {
-            if (this->attachedListenersCount >= this->maxPlayers) break;
+            if (this->attachedListenersCount >= this->maxPlayers)
+                break;
 
             this->Stream::AttachListener(playerInfo.playerId);
         }

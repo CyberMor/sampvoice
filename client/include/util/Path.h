@@ -12,8 +12,7 @@
 #include <memory>
 #include <string>
 
-class Path {
-public:
+struct Path {
 
     Path(const Path&) = default;
     Path(Path&&) noexcept = default;
@@ -24,13 +23,27 @@ public:
 
     explicit Path();
 
+    ~Path() noexcept = default;
+
 public:
 
     operator const char* () const noexcept;
     operator const std::string& () const noexcept;
 
-    Path& operator/(const std::string& rPath);
-    Path& operator+(const std::string& cName);
+    template<typename StringType>
+    Path& operator / (StringType&& rPath)
+    {
+        return this->pathString += '\\',
+               this->pathString += std::forward<StringType>(rPath),
+              *this;
+    }
+
+    template<typename StringType>
+    Path& operator + (StringType&& cName)
+    {
+        return this->pathString += std::forward<StringType>(cName),
+              *this;
+    }
 
 private:
 
@@ -38,5 +51,5 @@ private:
 
 };
 
-using PathPtr = std::shared_ptr<Path>;
-#define MakePath std::make_shared<Path>
+using PathPtr = std::unique_ptr<Path>;
+#define MakePath std::make_unique<Path>

@@ -29,7 +29,7 @@ public:
 
     explicit Worker()
         : status(std::make_shared<std::atomic_bool>(true))
-        , thread(std::make_shared<std::thread>(Worker::ThreadFunc, status))
+        , thread(std::make_unique<std::thread>(Worker::ThreadFunc, status))
     {}
 
     ~Worker()
@@ -47,17 +47,17 @@ private:
         while (status->load(std::memory_order_relaxed))
         {
             const auto voicePacket = Network::ReceiveVoicePacket();
-            if (!voicePacket) continue;
+            if (voicePacket == nullptr) continue;
 
             auto& voicePacketRef = *voicePacket;
 
             const auto pPlayerInfo = PlayerStore::RequestPlayerWithSharedAccess(voicePacketRef->sender);
 
-            if (pPlayerInfo && !pPlayerInfo->muteStatus.load(std::memory_order_relaxed) &&
+            if (pPlayerInfo != nullptr && !pPlayerInfo->muteStatus.load(std::memory_order_relaxed) &&
                 (pPlayerInfo->recordStatus.load(std::memory_order_relaxed) || !pPlayerInfo->keys.empty()))
             {
-                for (const auto pStream : pPlayerInfo->speakerStreams)
-                    pStream->PushVoicePacket(*&voicePacketRef);
+                for (const auto stream : pPlayerInfo->speakerStreams)
+                    stream->SendVoicePacket(*&voicePacketRef);
             }
 
             PlayerStore::ReleasePlayerWithSharedAccess(voicePacketRef->sender);
@@ -67,9 +67,9 @@ private:
 private:
 
     const std::shared_ptr<std::atomic_bool> status;
-    const std::shared_ptr<std::thread> thread;
+    const std::unique_ptr<std::thread> thread;
 
 };
 
-using WorkerPtr = std::shared_ptr<Worker>;
-#define MakeWorker std::make_shared<Worker>
+using WorkerPtr = std::unique_ptr<Worker>;
+#define MakeWorker std::make_unique<Worker>

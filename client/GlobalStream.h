@@ -15,7 +15,6 @@
 #include <d3d9.h>
 
 #include "Stream.h"
-#include "StreamInfo.h"
 
 class GlobalStream : public Stream {
 
@@ -27,12 +26,11 @@ class GlobalStream : public Stream {
 
 public:
 
-    explicit GlobalStream(PlayHandlerType&& playHandler, StopHandlerType&& stopHandler,
-                          const std::string& name, const D3DCOLOR color)
-        : Stream(NULL, std::move(playHandler), std::move(stopHandler),
-                 StreamType::GlobalStream, name, color) {}
+    explicit GlobalStream(D3DCOLOR color, std::string name) noexcept;
+
+    ~GlobalStream() noexcept = default;
 
 };
 
-using GlobalStreamPtr = std::shared_ptr<GlobalStream>;
-#define MakeGlobalStream std::make_shared<GlobalStream>
+using GlobalStreamPtr = std::unique_ptr<GlobalStream>;
+#define MakeGlobalStream std::make_unique<GlobalStream>

@@ -14,8 +14,6 @@
 
 #include <game/CVector.h>
 
-#define GetTimestamp() std::chrono::duration_cast<std::chrono::milliseconds> \
-                      (std::chrono::system_clock::now().time_since_epoch()).count()
 #define SleepForMilliseconds(mscount) std::this_thread::sleep_for(std::chrono::milliseconds(mscount))
 
 namespace SV
@@ -31,7 +29,7 @@ namespace SV
 
     constexpr WORD  kNonePlayer = 0xffff;
 
-    constexpr BYTE  kVersion = 10;
+    constexpr BYTE  kVersion = 11;
     constexpr DWORD kSignature = 0xDeadBeef;
 
     constexpr DWORD kAudioUpdateThreads = 4;
@@ -50,6 +48,9 @@ namespace SV
     {
         enum : BYTE
         {
+            // v3.0
+            // ---------------------
+
             serverInfo,
             pluginInit,
 
@@ -65,12 +66,20 @@ namespace SV
             createLStreamAtVehicle,
             createLStreamAtPlayer,
             createLStreamAtObject,
-            updateLPStreamDistance,
+            updateLStreamDistance,
             updateLPStreamPosition,
             deleteStream,
 
             pressKey,
-            releaseKey
+            releaseKey,
+
+            // v3.1 added
+            // ---------------------
+
+            setStreamParameter,
+            slideStreamParameter,
+            createEffect,
+            deleteEffect
         };
     };
 
@@ -79,7 +88,6 @@ namespace SV
         enum : BYTE
         {
             keepAlive,
-
             voicePacket
         };
     };
@@ -89,85 +97,122 @@ namespace SV
 
 #pragma pack(push, 1)
 
+    // v3.0
+    // -----------------------------------
+
     struct ConnectPacket
     {
-        DWORD signature;
-        BYTE version;
-        BYTE micro;
+        UINT32 signature;
+        UINT8 version;
+        UINT8 micro;
     };
 
     struct ServerInfoPacket
     {
-        DWORD serverKey;
-        WORD serverPort;
+        UINT32 serverKey;
+        UINT16 serverPort;
     };
 
     struct PluginInitPacket
     {
-        DWORD bitrate;
-        BYTE mute;
+        UINT32 bitrate;
+        UINT8 mute;
     };
 
     struct AddKeyPacket
     {
-        BYTE keyId;
+        UINT8 keyId;
     };
 
     struct RemoveKeyPacket
     {
-        BYTE keyId;
+        UINT8 keyId;
     };
 
     struct CreateGStreamPacket
     {
-        DWORD stream;
-        DWORD color;
-        char name[];
+        UINT32 stream;
+        UINT32 color;
+        CHAR name[];
     };
 
     struct CreateLPStreamPacket
     {
-        DWORD stream;
-        float distance;
+        UINT32 stream;
+        FLOAT distance;
         CVector position;
-        DWORD color;
-        char name[];
+        UINT32 color;
+        CHAR name[];
     };
 
     struct CreateLStreamAtPacket
     {
-        DWORD stream;
-        float distance;
-        WORD target;
-        DWORD color;
-        char name[];
+        UINT32 stream;
+        FLOAT distance;
+        UINT32 target;
+        UINT32 color;
+        CHAR name[];
     };
 
-    struct UpdateLPStreamDistancePacket
+    struct UpdateLStreamDistancePacket
     {
-        DWORD stream;
-        float distance;
+        UINT32 stream;
+        FLOAT distance;
     };
 
     struct UpdateLPStreamPositionPacket
     {
-        DWORD stream;
+        UINT32 stream;
         CVector position;
     };
 
     struct DeleteStreamPacket
     {
-        DWORD stream;
+        UINT32 stream;
     };
 
     struct PressKeyPacket
     {
-        BYTE keyId;
+        UINT8 keyId;
     };
 
     struct ReleaseKeyPacket
     {
-        BYTE keyId;
+        UINT8 keyId;
+    };
+
+    // v3.1 added
+    // -----------------------------------
+
+    struct SetStreamParameterPacket
+    {
+        UINT32 stream;
+        UINT32 parameter;
+        FLOAT value;
+    };
+
+    struct SlideStreamParameterPacket
+    {
+        UINT32 stream;
+        UINT32 parameter;
+        FLOAT startvalue;
+        FLOAT endvalue;
+        UINT32 time;
+    };
+
+    struct CreateEffectPacket
+    {
+        UINT32 stream;
+        UINT32 effect;
+        UINT32 number;
+        INT32 priority;
+        UINT8 params[];
+    };
+
+    struct DeleteEffectPacket
+    {
+        UINT32 stream;
+        UINT32 effect;
     };
 
 #pragma pack(pop)

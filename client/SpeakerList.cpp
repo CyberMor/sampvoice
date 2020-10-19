@@ -10,26 +10,26 @@
 #include "SpeakerList.h"
 
 #include <cassert>
+#include <algorithm>
 
 #include <game/CPed.h>
 #include <game/CSprite.h>
 #include <game/CCamera.h>
 #include <util/ImGuiUtil.h>
 #include <util/GameUtil.h>
+#include <util/Logger.h>
 #include <util/Render.h>
 
 #include "PluginConfig.h"
 
-bool SpeakerList::Init(IDirect3DDevice9* const pDevice,
-                       const AddressesBase& const addrBase,
-                       const Resource& const rSpeakerIcon,
-                       const Resource& const rSpeakerFont) noexcept
+bool SpeakerList::Init(IDirect3DDevice9* const pDevice, const AddressesBase& addrBase,
+    const Resource& rSpeakerIcon, const Resource& rSpeakerFont) noexcept
 {
-    assert(pDevice);
+    if (pDevice == nullptr)
+        return false;
 
-    if (SpeakerList::initStatus) return false;
-
-    if (!ImGuiUtil::IsInited()) return false;
+    if (SpeakerList::initStatus || !ImGuiUtil::IsInited())
+        return false;
 
     try
     {
@@ -38,16 +38,29 @@ bool SpeakerList::Init(IDirect3DDevice9* const pDevice,
     catch (const std::exception& exception)
     {
         Logger::LogToFile("[sv:err:speakerlist:init] : failed to create speaker icon");
+        SpeakerList::tSpeakerIcon.reset();
         return false;
     }
 
-    if (float varFontSize { 0.f }; !Render::ConvertBaseYValueToScreenYValue(kBaseFontSize, varFontSize) ||
-        !(SpeakerList::pSpeakerFont = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(rSpeakerFont.GetDataPtr(),
-            rSpeakerFont.GetDataSize(), varFontSize, nullptr, ImGui::GetIO().Fonts->GetGlyphRangesCyrillic())))
+    Memory::ScopeExit iconResetScope { [] { SpeakerList::tSpeakerIcon.reset(); } };
+
     {
-        Logger::LogToFile("[sv:err:speakerlist:init] : failed to create speaker font");
-        SpeakerList::tSpeakerIcon.reset();
-        return false;
+        float varFontSize { 0.f };
+
+        if (!Render::ConvertBaseYValueToScreenYValue(kBaseFontSize, varFontSize))
+        {
+            Logger::LogToFile("[sv:err:speakerlist:init] : failed to convert font size");
+            return false;
+        }
+
+        SpeakerList::pSpeakerFont = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(rSpeakerFont.GetDataPtr(),
+            rSpeakerFont.GetDataSize(), varFontSize, nullptr, ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
+
+        if (SpeakerList::pSpeakerFont == nullptr)
+        {
+            Logger::LogToFile("[sv:err:speakerlist:init] : failed to create speaker font");
+            return false;
+        }
     }
 
     if (!PluginConfig::IsSpeakerLoaded())
@@ -55,6 +68,8 @@ bool SpeakerList::Init(IDirect3DDevice9* const pDevice,
         PluginConfig::SetSpeakerLoaded(true);
         SpeakerList::ResetConfigs();
     }
+
+    iconResetScope.Release();
 
     SpeakerList::initStatus = true;
     SpeakerList::SyncConfigs();
@@ -64,7 +79,8 @@ bool SpeakerList::Init(IDirect3DDevice9* const pDevice,
 
 void SpeakerList::Free() noexcept
 {
-    if (!SpeakerList::initStatus) return;
+    if (!SpeakerList::initStatus)
+        return;
 
     SpeakerList::tSpeakerIcon.reset();
     delete SpeakerList::pSpeakerFont;
@@ -72,80 +88,42 @@ void SpeakerList::Free() noexcept
     SpeakerList::initStatus = false;
 }
 
-int SpeakerList::GetSpeakerIconOffsetX() noexcept
+void SpeakerList::Show() noexcept
 {
-    return PluginConfig::GetSpeakerIconOffsetX();
+    SpeakerList::showStatus = true;
 }
 
-int SpeakerList::GetSpeakerIconOffsetY() noexcept
+bool SpeakerList::IsShowed() noexcept
 {
-    return PluginConfig::GetSpeakerIconOffsetY();
+    return SpeakerList::showStatus;
 }
 
-float SpeakerList::GetSpeakerIconScale() noexcept
+void SpeakerList::Hide() noexcept
 {
-    return PluginConfig::GetSpeakerIconScale();
-}
-
-void SpeakerList::SetSpeakerIconOffsetX(int speakerIconOffsetX) noexcept
-{
-    if (speakerIconOffsetX > 500) speakerIconOffsetX = 500;
-    if (speakerIconOffsetX < -500) speakerIconOffsetX = -500;
-
-    PluginConfig::SetSpeakerIconOffsetX(speakerIconOffsetX);
-}
-
-void SpeakerList::SetSpeakerIconOffsetY(int speakerIconOffsetY) noexcept
-{
-    if (speakerIconOffsetY > 500) speakerIconOffsetY = 500;
-    if (speakerIconOffsetY < -500) speakerIconOffsetY = -500;
-
-    PluginConfig::SetSpeakerIconOffsetY(speakerIconOffsetY);
-}
-
-void SpeakerList::SetSpeakerIconScale(float speakerIconScale) noexcept
-{
-    if (speakerIconScale > 2.f) speakerIconScale = 2.f;
-    if (speakerIconScale < 0.2f) speakerIconScale = 0.2f;
-
-    PluginConfig::SetSpeakerIconScale(speakerIconScale);
-}
-
-void SpeakerList::SyncConfigs() noexcept
-{
-    SpeakerList::SetSpeakerIconOffsetX(PluginConfig::GetSpeakerIconOffsetX());
-    SpeakerList::SetSpeakerIconOffsetY(PluginConfig::GetSpeakerIconOffsetY());
-    SpeakerList::SetSpeakerIconScale(PluginConfig::GetSpeakerIconScale());
-}
-
-void SpeakerList::ResetConfigs() noexcept
-{
-    PluginConfig::SetSpeakerIconOffsetX(PluginConfig::kDefValSpeakerIconOffsetX);
-    PluginConfig::SetSpeakerIconOffsetY(PluginConfig::kDefValSpeakerIconOffsetY);
-    PluginConfig::SetSpeakerIconScale(PluginConfig::kDefValSpeakerIconScale);
+    SpeakerList::showStatus = false;
 }
 
 void SpeakerList::Render()
 {
-    if (!SpeakerList::initStatus) return;
-    if (!SpeakerList::showStatus) return;
+    if (!SpeakerList::initStatus || !SpeakerList::showStatus)
+        return;
 
     const auto pNetGame = SAMP::pNetGame();
-    if (!pNetGame) return;
+    if (pNetGame == nullptr) return;
 
     const auto pPlayerPool = pNetGame->GetPlayerPool();
-    if (!pPlayerPool) return;
+    if (pPlayerPool == nullptr) return;
 
-    float vLeftIndent = 0.f, vScrWidth = 0.f, vScrHeight = 0.f;
+    float vLeftIndent { 0.f }, vScrWidth { 0.f }, vScrHeight { 0.f };
 
     if (!Render::ConvertBaseXValueToScreenXValue(kBaseLeftIndent, vLeftIndent)) return;
     if (!Render::GetScreenSize(vScrWidth, vScrHeight)) return;
 
-    if (!ImGuiUtil::RenderBegin()) return;
+    if (!ImGuiUtil::BeginRender()) return;
 
-    const ImVec2 vWindowPadding = ImVec2(4, 8);
-    const ImVec2 vFramePadding = ImVec2(4, 8);
-    const ImVec2 vItemPadding = ImVec2(4, 8);
+    const ImVec2 vWindowPadding { 4, 8 };
+    const ImVec2 vFramePadding { 4, 8 };
+    const ImVec2 vItemPadding { 4, 8 };
 
     ImGui::PushFont(SpeakerList::pSpeakerFont);
 
@@ -160,8 +138,8 @@ void SpeakerList::Render()
     const float vPosX = vLeftIndent;
     const float vPosY = (vScrHeight - vHeight) / 2.f;
 
-    ImGui::SetNextWindowPos(ImVec2(vPosX, vPosY));
-    ImGui::SetNextWindowSize(ImVec2(vWidth, vHeight));
+    ImGui::SetNextWindowPos({ vPosX, vPosY });
+    ImGui::SetNextWindowSize({ vWidth, vHeight });
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, vFramePadding);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, vWindowPadding);
@@ -169,15 +147,15 @@ void SpeakerList::Render()
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, vItemPadding);
 
     if (ImGui::Begin("speakerListWindow", nullptr,
-                     ImGuiWindowFlags_NoCollapse         |
-                     ImGuiWindowFlags_NoFocusOnAppearing |
-                     ImGuiWindowFlags_NoTitleBar         |
-                     ImGuiWindowFlags_NoBackground       |
-                     ImGuiWindowFlags_NoSavedSettings    |
-                     ImGuiWindowFlags_NoScrollbar        |
-                     ImGuiWindowFlags_NoMove             |
-                     ImGuiWindowFlags_NoResize           |
-                     ImGuiWindowFlags_NoInputs          ))
+        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoFocusOnAppearing |
+        ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoBackground |
+        ImGuiWindowFlags_NoSavedSettings |
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoInputs))
     {
         ImGui::Columns(3, nullptr, false);
 
@@ -189,27 +167,27 @@ void SpeakerList::Render()
         ImGui::SetColumnOffset(1, vWindowPadding.x + vIconWidth + vFramePadding.x);
         ImGui::SetColumnOffset(2, vWindowPadding.x + vIconWidth + vFramePadding.x + vNickWidth + vFramePadding.x);
 
-        int curTextLine = 0;
+        int curTextLine { 0 };
 
-        for (int playerId = 0; playerId < MAX_PLAYERS; ++playerId)
+        for (WORD playerId { 0 }; playerId < MAX_PLAYERS; ++playerId)
         {
             if (curTextLine >= kBaseLinesCount) break;
 
-            if (const auto playerName = pPlayerPool->GetName(playerId))
+            if (const auto playerName = pPlayerPool->GetName(playerId); playerName != nullptr)
             {
                 if (!SpeakerList::playerStreams[playerId].empty())
                 {
                     for (const auto& playerStream : SpeakerList::playerStreams[playerId])
                     {
-                        if (playerStream->type == StreamType::LocalStreamAtPlayer)
+                        if (playerStream.second.GetType() == StreamType::LocalStreamAtPlayer)
                         {
                             if (GameUtil::IsPlayerVisible(playerId))
                             {
-                                if (const auto pPlayer = pPlayerPool->GetPlayer(playerId))
+                                if (const auto pPlayer = pPlayerPool->GetPlayer(playerId); pPlayer != nullptr)
                                 {
-                                    if (const auto pPlayerPed = pPlayer->m_pPed)
+                                    if (const auto pPlayerPed = pPlayer->m_pPed; pPlayerPed != nullptr)
                                     {
-                                        if (const auto pGamePed = pPlayerPed->m_pGamePed)
+                                        if (const auto pGamePed = pPlayerPed->m_pGamePed; pGamePed != nullptr)
                                         {
                                             const float distanceToCamera = (TheCamera.GetPosition() - pGamePed->GetPosition()).Magnitude();
 
@@ -218,7 +196,7 @@ void SpeakerList::Render()
                                             if (Render::ConvertBaseYValueToScreenYValue(kBaseIconSize, vSpeakerIconSize))
                                             {
                                                 vSpeakerIconSize *= PluginConfig::GetSpeakerIconScale();
-                                                vSpeakerIconSize *= (5.f / distanceToCamera);
+                                                vSpeakerIconSize *= 5.f / distanceToCamera;
 
                                                 float width, height;
                                                 RwV3d playerPos, screenPos;
@@ -228,16 +206,14 @@ void SpeakerList::Render()
 
                                                 if (CSprite::CalcScreenCoors(playerPos, &screenPos, &width, &height, true, true))
                                                 {
-                                                    screenPos.x -= (vSpeakerIconSize / 2.f);
-                                                    screenPos.y -= (vSpeakerIconSize / 2.f);
+                                                    screenPos.x -= vSpeakerIconSize / 2.f;
+                                                    screenPos.y -= vSpeakerIconSize / 2.f;
 
-                                                    const float addX = PluginConfig::GetSpeakerIconOffsetX() * (5.f / distanceToCamera);
-                                                    const float addY = PluginConfig::GetSpeakerIconOffsetY() * (5.f / distanceToCamera);
+                                                    const float addX = PluginConfig::GetSpeakerIconOffsetX() * 5.f / distanceToCamera;
+                                                    const float addY = PluginConfig::GetSpeakerIconOffsetY() * 5.f / distanceToCamera;
 
-                                                    SpeakerList::tSpeakerIcon->Draw(
-                                                        screenPos.x + addX, screenPos.y + addY,
-                                                        vSpeakerIconSize, vSpeakerIconSize, -1, 0.f
-                                                    );
+                                                    SpeakerList::tSpeakerIcon->Draw(screenPos.x + addX, screenPos.y + addY,
+                                                        vSpeakerIconSize, vSpeakerIconSize, -1, 0.f);
                                                 }
                                             }
                                         }
@@ -251,34 +227,30 @@ void SpeakerList::Render()
 
                     ImGui::PushID(playerId);
 
-                    ImGui::Image(
-                        SpeakerList::tSpeakerIcon->GetTexture(),
-                        ImVec2(ImGui::GetTextLineHeight(), ImGui::GetTextLineHeight()),
-                        ImVec2(0, 0), ImVec2(1, 1), ImGui::ColorConvertU32ToFloat4(0x00ffffff |
-                            ((DWORD)((1.f - (float)(curTextLine) / (float)(kBaseLinesCount)) * 255.f) << 24))
-                    );
+                    const auto alphaLevel = static_cast<DWORD>((1.f - static_cast<float>(curTextLine) /
+                        static_cast<float>(kBaseLinesCount)) * 255.f) << 24;
+
+                    const auto color = ImGui::ColorConvertU32ToFloat4(0x00ffffff | alphaLevel);
+
+                    ImGui::Image(SpeakerList::tSpeakerIcon->GetTexture(), { ImGui::GetTextLineHeight(),
+                        ImGui::GetTextLineHeight() }, { 0, 0 }, { 1, 1 }, color);
 
                     ImGui::NextColumn();
 
-                    ImGui::TextColored(
-                        ImGui::ColorConvertU32ToFloat4(0x00ffffff |
-                            ((DWORD)((1.f - (float)(curTextLine) / (float)(kBaseLinesCount)) * 255.f) << 24)),
-                        "%s (%d)", playerName, playerId
-                    );
+                    ImGui::TextColored(color, "%s (%hu)", playerName, playerId);
 
                     ImGui::NextColumn();
 
                     for (const auto& streamInfo : SpeakerList::playerStreams[playerId])
                     {
-                        if (!streamInfo->color) continue;
+                        if (streamInfo.second.GetColor() == NULL)
+                            continue;
 
                         ImGui::PushID(&streamInfo);
 
-                        ImGui::TextColored(
-                            ImGui::ColorConvertU32ToFloat4((streamInfo->color & 0x00ffffff) |
-                                ((DWORD)((1.f - (float)(curTextLine) / (float)(kBaseLinesCount)) * 255.f) << 24)),
-                            "[%s]", streamInfo->name.c_str()
-                        );
+                        const auto streamColor = ImGui::ColorConvertU32ToFloat4((streamInfo.second.GetColor() & 0x00ffffff) | alphaLevel);
+
+                        ImGui::TextColored(streamColor, "[%s]", streamInfo.second.GetName().c_str());
 
                         ImGui::SameLine();
                         ImGui::PopID();
@@ -298,36 +270,67 @@ void SpeakerList::Render()
     ImGui::PopStyleVar(4);
     ImGui::PopFont();
 
-    ImGuiUtil::RenderEnd();
+    ImGuiUtil::EndRender();
 }
 
-void SpeakerList::Show() noexcept
+int SpeakerList::GetSpeakerIconOffsetX() noexcept
 {
-    SpeakerList::showStatus = true;
+    return PluginConfig::GetSpeakerIconOffsetX();
 }
 
-bool SpeakerList::IsShowed() noexcept
+int SpeakerList::GetSpeakerIconOffsetY() noexcept
 {
-    return SpeakerList::showStatus;
+    return PluginConfig::GetSpeakerIconOffsetY();
 }
 
-void SpeakerList::Hide() noexcept
+float SpeakerList::GetSpeakerIconScale() noexcept
 {
-    SpeakerList::showStatus = false;
+    return PluginConfig::GetSpeakerIconScale();
 }
 
-void SpeakerList::OnSpeakerPlay(const Stream& stream, const WORD speaker)
+void SpeakerList::SetSpeakerIconOffsetX(const int speakerIconOffsetX) noexcept
 {
-    assert(speaker >= 0 && speaker < MAX_PLAYERS);
-
-    SpeakerList::playerStreams[speaker].emplace_front(stream.GetInfo());
+    PluginConfig::SetSpeakerIconOffsetX(std::clamp(speakerIconOffsetX, -500, 500));
 }
 
-void SpeakerList::OnSpeakerStop(const Stream& stream, const WORD speaker)
+void SpeakerList::SetSpeakerIconOffsetY(const int speakerIconOffsetY) noexcept
 {
-    assert(speaker >= 0 && speaker < MAX_PLAYERS);
+    PluginConfig::SetSpeakerIconOffsetY(std::clamp(speakerIconOffsetY, -500, 500));
+}
 
-    SpeakerList::playerStreams[speaker].remove(stream.GetInfo());
+void SpeakerList::SetSpeakerIconScale(const float speakerIconScale) noexcept
+{
+    PluginConfig::SetSpeakerIconScale(std::clamp(speakerIconScale, 0.2f, 2.f));
+}
+
+void SpeakerList::SyncConfigs() noexcept
+{
+    SpeakerList::SetSpeakerIconOffsetX(PluginConfig::GetSpeakerIconOffsetX());
+    SpeakerList::SetSpeakerIconOffsetY(PluginConfig::GetSpeakerIconOffsetY());
+    SpeakerList::SetSpeakerIconScale(PluginConfig::GetSpeakerIconScale());
+}
+
+void SpeakerList::ResetConfigs() noexcept
+{
+    PluginConfig::SetSpeakerIconOffsetX(PluginConfig::kDefValSpeakerIconOffsetX);
+    PluginConfig::SetSpeakerIconOffsetY(PluginConfig::kDefValSpeakerIconOffsetY);
+    PluginConfig::SetSpeakerIconScale(PluginConfig::kDefValSpeakerIconScale);
+}
+
+void SpeakerList::OnSpeakerPlay(const Stream& stream, const WORD speaker) noexcept
+{
+    if (speaker != std::clamp<WORD>(speaker, 0, MAX_PLAYERS - 1))
+        return;
+
+    SpeakerList::playerStreams[speaker][(Stream*)(&stream)] = stream.GetInfo();
+}
+
+void SpeakerList::OnSpeakerStop(const Stream& stream, const WORD speaker) noexcept
+{
+    if (speaker != std::clamp<WORD>(speaker, 0, MAX_PLAYERS - 1))
+        return;
+
+    SpeakerList::playerStreams[speaker].erase((Stream*)(&stream));
 }
 
 bool SpeakerList::initStatus { false };
@@ -336,4 +339,4 @@ bool SpeakerList::showStatus { false };
 ImFont* SpeakerList::pSpeakerFont { nullptr };
 TexturePtr SpeakerList::tSpeakerIcon { nullptr };
 
-std::array<std::list<StreamInfoPtr>, MAX_PLAYERS> SpeakerList::playerStreams;
+std::array<std::unordered_map<Stream*, StreamInfo>, MAX_PLAYERS> SpeakerList::playerStreams;

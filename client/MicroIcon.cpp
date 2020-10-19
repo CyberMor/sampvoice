@@ -9,7 +9,7 @@
 
 #include "MicroIcon.h"
 
-#include <cassert>
+#include <algorithm>
 
 #include <util/Logger.h>
 #include <util/GameUtil.h>
@@ -17,14 +17,14 @@
 
 #include "PluginConfig.h"
 
-bool MicroIcon::Init(IDirect3DDevice9* const pDevice,
-                     const Resource& const rPassiveIcon,
-                     const Resource& const rActiveIcon,
-                     const Resource& const rMutedIcon) noexcept
+bool MicroIcon::Init(IDirect3DDevice9* const pDevice, const Resource& rPassiveIcon,
+    const Resource& rActiveIcon, const Resource& rMutedIcon) noexcept
 {
-    assert(pDevice);
+    if (pDevice == nullptr)
+        return false;
 
-    if (MicroIcon::initStatus) return false;
+    if (MicroIcon::initStatus)
+        return false;
 
     try
     {
@@ -35,9 +35,9 @@ bool MicroIcon::Init(IDirect3DDevice9* const pDevice,
     catch (const std::exception& exception)
     {
         Logger::LogToFile("[sv:err:microicon:init] : failed to create icons");
-        MicroIcon::tMutedIcon.reset();
-        MicroIcon::tActiveIcon.reset();
         MicroIcon::tPassiveIcon.reset();
+        MicroIcon::tActiveIcon.reset();
+        MicroIcon::tMutedIcon.reset();
         return false;
     }
 
@@ -57,7 +57,8 @@ bool MicroIcon::Init(IDirect3DDevice9* const pDevice,
 
 void MicroIcon::Free() noexcept
 {
-    if (!MicroIcon::initStatus) return;
+    if (!MicroIcon::initStatus)
+        return;
 
     MicroIcon::tPassiveIcon.reset();
     MicroIcon::tActiveIcon.reset();
@@ -66,81 +67,19 @@ void MicroIcon::Free() noexcept
     MicroIcon::initStatus = false;
 }
 
-int MicroIcon::GetMicroIconPositionX() noexcept
+void MicroIcon::Show() noexcept
 {
-    return PluginConfig::GetMicroIconPositionX();
+    MicroIcon::showStatus = true;
 }
 
-int MicroIcon::GetMicroIconPositionY() noexcept
+bool MicroIcon::IsShowed() noexcept
 {
-    return PluginConfig::GetMicroIconPositionY();
+    return MicroIcon::showStatus;
 }
 
-D3DCOLOR MicroIcon::GetMicroIconColor() noexcept
+void MicroIcon::Hide() noexcept
 {
-    return PluginConfig::GetMicroIconColor();
-}
-
-float MicroIcon::GetMicroIconAngle() noexcept
-{
-    return PluginConfig::GetMicroIconAngle();
-}
-
-float MicroIcon::GetMicroIconScale() noexcept
-{
-    return PluginConfig::GetMicroIconScale();
-}
-
-void MicroIcon::SetMicroIconPositionX(const int x) noexcept
-{
-    PluginConfig::SetMicroIconPositionX(x);
-}
-
-void MicroIcon::SetMicroIconPositionY(const int y) noexcept
-{
-    PluginConfig::SetMicroIconPositionY(y);
-}
-
-void MicroIcon::SetMicroIconPosition(const int x, const int y) noexcept
-{
-    PluginConfig::SetMicroIconPositionX(x);
-    PluginConfig::SetMicroIconPositionY(y);
-}
-
-void MicroIcon::SetMicroIconColor(const D3DCOLOR color) noexcept
-{
-    PluginConfig::SetMicroIconColor(color);
-}
-
-void MicroIcon::SetMicroIconAngle(const float angle) noexcept
-{
-    PluginConfig::SetMicroIconAngle(angle);
-}
-
-void MicroIcon::SetMicroIconScale(float scale) noexcept
-{
-    if (scale > 2.f) scale = 2.f;
-    if (scale < 0.2f) scale = 0.2f;
-
-    PluginConfig::SetMicroIconScale(scale);
-}
-
-void MicroIcon::ResetConfigs() noexcept
-{
-    PluginConfig::SetMicroIconScale(PluginConfig::kDefValMicroIconScale);
-    PluginConfig::SetMicroIconPositionX(PluginConfig::kDefValMicroIconPositionX);
-    PluginConfig::SetMicroIconPositionY(PluginConfig::kDefValMicroIconPositionY);
-    PluginConfig::SetMicroIconColor(PluginConfig::kDefValMicroIconColor);
-    PluginConfig::SetMicroIconAngle(PluginConfig::kDefValMicroIconAngle);
-}
-
-void MicroIcon::SyncConfigs() noexcept
-{
-    MicroIcon::SetMicroIconScale(PluginConfig::GetMicroIconScale());
-    MicroIcon::SetMicroIconPositionX(PluginConfig::GetMicroIconPositionX());
-    MicroIcon::SetMicroIconPositionY(PluginConfig::GetMicroIconPositionY());
-    MicroIcon::SetMicroIconColor(PluginConfig::GetMicroIconColor());
-    MicroIcon::SetMicroIconAngle(PluginConfig::GetMicroIconAngle());
+    MicroIcon::showStatus = false;
 }
 
 void MicroIcon::SetPassiveIcon() noexcept
@@ -202,10 +141,13 @@ void MicroIcon::SwitchToMutedIcon() noexcept
 
 void MicroIcon::Render() noexcept
 {
-    if (!MicroIcon::initStatus) return;
-    if (!MicroIcon::showStatus) return;
+    if (!MicroIcon::initStatus)
+        return;
 
-    float vIconSize;
+    if (!MicroIcon::showStatus)
+        return;
+
+    float vIconSize { 0.f };
 
     if (!Render::ConvertBaseYValueToScreenYValue(kBaseIconSize, vIconSize))
         return;
@@ -222,7 +164,7 @@ void MicroIcon::Render() noexcept
         if (!GameUtil::GetRadarRect(radarRect))
             return;
 
-        float vIconPadding;
+        float vIconPadding { 0.f };
 
         if (!Render::ConvertBaseYValueToScreenYValue(kBaseIconPadding, vIconPadding))
             return;
@@ -236,38 +178,26 @@ void MicroIcon::Render() noexcept
 
     if (MicroIcon::alphaLevelPassiveIcon > 0)
     {
-        MicroIcon::tPassiveIcon->Draw(
-            vIconX, vIconY, vIconSize, vIconSize,
-            (PluginConfig::GetMicroIconColor() & 0x00ffffff) |
-            (MicroIcon::alphaLevelPassiveIcon << 24),
-            PluginConfig::GetMicroIconAngle()
-        );
+        MicroIcon::tPassiveIcon->Draw(vIconX, vIconY, vIconSize, vIconSize, (PluginConfig::GetMicroIconColor() &
+            0x00ffffff) | (MicroIcon::alphaLevelPassiveIcon << 24), PluginConfig::GetMicroIconAngle());
     }
 
     if (MicroIcon::alphaLevelActiveIcon > 0)
     {
-        MicroIcon::tActiveIcon->Draw(
-            vIconX, vIconY, vIconSize, vIconSize,
-            (PluginConfig::GetMicroIconColor() & 0x00ffffff) |
-            (MicroIcon::alphaLevelActiveIcon << 24),
-            PluginConfig::GetMicroIconAngle()
-        );
+        MicroIcon::tActiveIcon->Draw(vIconX, vIconY, vIconSize, vIconSize, (PluginConfig::GetMicroIconColor() &
+            0x00ffffff) | (MicroIcon::alphaLevelActiveIcon << 24), PluginConfig::GetMicroIconAngle());
     }
 
     if (MicroIcon::alphaLevelMutedIcon > 0)
     {
-        MicroIcon::tMutedIcon->Draw(
-            vIconX, vIconY, vIconSize, vIconSize,
-            (PluginConfig::GetMicroIconColor() & 0x00ffffff) |
-            (MicroIcon::alphaLevelMutedIcon << 24),
-            PluginConfig::GetMicroIconAngle()
-        );
+        MicroIcon::tMutedIcon->Draw(vIconX, vIconY, vIconSize, vIconSize, (PluginConfig::GetMicroIconColor() &
+            0x00ffffff) | (MicroIcon::alphaLevelMutedIcon << 24), PluginConfig::GetMicroIconAngle());
     }
 }
 
 void MicroIcon::Update() noexcept
 {
-    if (MicroIcon::alphaLevelDeviationPassiveIcon)
+    if (MicroIcon::alphaLevelDeviationPassiveIcon != 0)
     {
         MicroIcon::alphaLevelPassiveIcon += MicroIcon::alphaLevelDeviationPassiveIcon;
 
@@ -283,7 +213,7 @@ void MicroIcon::Update() noexcept
         }
     }
 
-    if (MicroIcon::alphaLevelDeviationActiveIcon)
+    if (MicroIcon::alphaLevelDeviationActiveIcon != 0)
     {
         MicroIcon::alphaLevelActiveIcon += MicroIcon::alphaLevelDeviationActiveIcon;
 
@@ -299,7 +229,7 @@ void MicroIcon::Update() noexcept
         }
     }
 
-    if (MicroIcon::alphaLevelDeviationMutedIcon)
+    if (MicroIcon::alphaLevelDeviationMutedIcon != 0)
     {
         MicroIcon::alphaLevelMutedIcon += MicroIcon::alphaLevelDeviationMutedIcon;
 
@@ -316,19 +246,78 @@ void MicroIcon::Update() noexcept
     }
 }
 
-void MicroIcon::Show() noexcept
+int MicroIcon::GetMicroIconPositionX() noexcept
 {
-    MicroIcon::showStatus = true;
+    return PluginConfig::GetMicroIconPositionX();
 }
 
-bool MicroIcon::IsShowed() noexcept
+int MicroIcon::GetMicroIconPositionY() noexcept
 {
-    return MicroIcon::showStatus;
+    return PluginConfig::GetMicroIconPositionY();
 }
 
-void MicroIcon::Hide() noexcept
+D3DCOLOR MicroIcon::GetMicroIconColor() noexcept
 {
-    MicroIcon::showStatus = false;
+    return PluginConfig::GetMicroIconColor();
+}
+
+float MicroIcon::GetMicroIconAngle() noexcept
+{
+    return PluginConfig::GetMicroIconAngle();
+}
+
+float MicroIcon::GetMicroIconScale() noexcept
+{
+    return PluginConfig::GetMicroIconScale();
+}
+
+void MicroIcon::SetMicroIconPositionX(const int x) noexcept
+{
+    PluginConfig::SetMicroIconPositionX(x);
+}
+
+void MicroIcon::SetMicroIconPositionY(const int y) noexcept
+{
+    PluginConfig::SetMicroIconPositionY(y);
+}
+
+void MicroIcon::SetMicroIconPosition(const int x, const int y) noexcept
+{
+    PluginConfig::SetMicroIconPositionX(x);
+    PluginConfig::SetMicroIconPositionY(y);
+}
+
+void MicroIcon::SetMicroIconColor(const D3DCOLOR color) noexcept
+{
+    PluginConfig::SetMicroIconColor(color);
+}
+
+void MicroIcon::SetMicroIconAngle(const float angle) noexcept
+{
+    PluginConfig::SetMicroIconAngle(angle);
+}
+
+void MicroIcon::SetMicroIconScale(const float scale) noexcept
+{
+    PluginConfig::SetMicroIconScale(std::clamp(scale, 0.2f, 2.f));
+}
+
+void MicroIcon::ResetConfigs() noexcept
+{
+    PluginConfig::SetMicroIconScale(PluginConfig::kDefValMicroIconScale);
+    PluginConfig::SetMicroIconPositionX(PluginConfig::kDefValMicroIconPositionX);
+    PluginConfig::SetMicroIconPositionY(PluginConfig::kDefValMicroIconPositionY);
+    PluginConfig::SetMicroIconColor(PluginConfig::kDefValMicroIconColor);
+    PluginConfig::SetMicroIconAngle(PluginConfig::kDefValMicroIconAngle);
+}
+
+void MicroIcon::SyncConfigs() noexcept
+{
+    MicroIcon::SetMicroIconScale(PluginConfig::GetMicroIconScale());
+    MicroIcon::SetMicroIconPositionX(PluginConfig::GetMicroIconPositionX());
+    MicroIcon::SetMicroIconPositionY(PluginConfig::GetMicroIconPositionY());
+    MicroIcon::SetMicroIconColor(PluginConfig::GetMicroIconColor());
+    MicroIcon::SetMicroIconAngle(PluginConfig::GetMicroIconAngle());
 }
 
 bool MicroIcon::initStatus { false };

@@ -17,9 +17,9 @@
 #include "Render.h"
 #include "Samp.h"
 
-bool GameUtil::IsKeyDown(const BYTE keyId) noexcept
+bool GameUtil::IsKeyPressed(const int keyId) noexcept
 {
-    return GetKeyState(keyId) & 0x80;
+    return (GetKeyState(keyId) & 0x8000) != 0;
 }
 
 bool GameUtil::IsMenuActive() noexcept
@@ -39,7 +39,8 @@ bool GameUtil::IsWindowActive() noexcept
 
 bool GameUtil::IsGameActive() noexcept
 {
-    return GameUtil::IsWindowActive() && !GameUtil::IsMenuActive();
+    return GameUtil::IsWindowActive() &&
+          !GameUtil::IsMenuActive();
 }
 
 bool GameUtil::HasPlayerPed() noexcept
@@ -83,7 +84,7 @@ bool GameUtil::IsPlayerVisible(const WORD playerId) noexcept
     );
 }
 
-bool GameUtil::GetRadarRect(CRect& const radarRect) noexcept
+bool GameUtil::GetRadarRect(CRect& radarRect) noexcept
 {
     float screenWidth { 0 };
     float screenHeight { 0 };
@@ -91,10 +92,10 @@ bool GameUtil::GetRadarRect(CRect& const radarRect) noexcept
     if (!Render::GetScreenSize(screenWidth, screenHeight))
         return false;
 
-    float multWidth = *reinterpret_cast<float*>(0x859520);   // 1.f / 640.f
-    float multHeight = *reinterpret_cast<float*>(0x859524);  // 1.f / 448.f
-    float radarWidth = *reinterpret_cast<float*>(0x866B74);  // 76.f
-    float radarHeight = *reinterpret_cast<float*>(0x866B78); // 94.f
+    auto multWidth = *reinterpret_cast<float*>(0x859520); // 1.f / 640.f
+    auto multHeight = *reinterpret_cast<float*>(0x859524); // 1.f / 448.f
+    auto radarWidth = *reinterpret_cast<float*>(0x866b74); // 76.f
+    auto radarHeight = *reinterpret_cast<float*>(0x866b78); // 94.f
 
 #if defined(SAMP_R3)
 
@@ -118,7 +119,7 @@ bool GameUtil::GetRadarRect(CRect& const radarRect) noexcept
     return true;
 }
 
-void GameUtil::DisableAntiCheat(const AddressesBase& const addrBase)
+void GameUtil::DisableAntiCheat(const AddressesBase& addrBase)
 {
     struct patch_t
     {
@@ -129,16 +130,16 @@ void GameUtil::DisableAntiCheat(const AddressesBase& const addrBase)
 
     const std::vector<patch_t> patches =
     {
-#define DEFINE_PATCH(offset, bytes) { offset, sizeof(bytes) - 1, bytes }
+#define DefinePatch(offset, bytes) { offset, sizeof(bytes) - 1, bytes }
 #if defined(SAMP_R1)
-        DEFINE_PATCH(0x298116, "\xB8\x45\x00\x00\x00\xC2\x1C\x00"),
-        DEFINE_PATCH(0x286923, "\xB8\x45\x00\x00\x00\xC2\x1C\x00"),
-        DEFINE_PATCH(0x99250,  "\xC3")
+        DefinePatch(0x298116, "\xB8\x45\x00\x00\x00\xC2\x1C\x00"),
+        DefinePatch(0x286923, "\xB8\x45\x00\x00\x00\xC2\x1C\x00"),
+        DefinePatch(0x99250,  "\xC3")
 #elif defined(SAMP_R3)
-        DEFINE_PATCH(0xC4DC0,  "\xB8\x45\x00\x00\x00\xC2\x1C\x00"),
-        DEFINE_PATCH(0x9D1A0,  "\xC3")
+        DefinePatch(0xC4DC0,  "\xB8\x45\x00\x00\x00\xC2\x1C\x00"),
+        DefinePatch(0x9D1A0,  "\xC3")
 #endif
-#undef  DEFINE_PATCH
+#undef  DefinePatch
     };
 
     for (const patch_t& patch : patches)

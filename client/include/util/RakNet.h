@@ -11,13 +11,15 @@
 
 #include <cstdint>
 #include <functional>
+#include <vector>
+
+#include <Windows.h>
 
 #include <raknet/bitstream.h>
 #include <raknet/rakclient.h>
 
 #include "Memory.hpp"
 #include "AddressesBase.h"
-#include "Logger.h"
 
 class RakNet {
 
@@ -30,88 +32,67 @@ class RakNet {
 
 private:
 
-    using ConnectHandlerType = std::function<void(const char*, uint16_t)>;
-    using PacketIncomingHandlerType = std::function<bool(Packet*)>;
-    using PacketOutcomingHandlerType = std::function<bool(BitStream*)>;
-    using RpcOutcomingHandlerType = std::function<bool(int, BitStream*)>;
-    using DisconnectHandlerType = std::function<void()>;
+    using ConnectCallback = std::function<void(const char*, WORD)>;
+    using ReceiveCallback = std::function<bool(Packet&)>;
+    using SendCallback = std::function<bool(BitStream&)>;
+    using RpcCallback = std::function<bool(int, BitStream&)>;
+    using DisconnectCallback = std::function<void()>;
 
 public:
 
-    static bool Init(const AddressesBase& addrBase,
-                     ConnectHandlerType connectHandler,
-                     PacketIncomingHandlerType packetIncomingHandler,
-                     PacketOutcomingHandlerType packetOutcomingHandler,
-                     RpcOutcomingHandlerType rpcOutcomingHandler,
-                     DisconnectHandlerType disconnectHandler) noexcept;
-
+    static bool Init(const AddressesBase& addrBase) noexcept;
     static bool IsInited() noexcept;
     static bool IsLoaded() noexcept;
+    static void Free() noexcept;
+
     static bool IsConnected() noexcept;
 
     static bool Send(BitStream* bitStream) noexcept;
 
-    static void Free() noexcept;
+public:
+
+    static std::size_t AddConnectCallback(ConnectCallback callback) noexcept;
+    static std::size_t AddReceiveCallback(ReceiveCallback callback) noexcept;
+    static std::size_t AddSendCallback(SendCallback callback) noexcept;
+    static std::size_t AddRpcCallback(RpcCallback callback) noexcept;
+    static std::size_t AddDisconnectCallback(DisconnectCallback callback) noexcept;
+
+    static void RemoveConnectCallback(std::size_t callback) noexcept;
+    static void RemoveReceiveCallback(std::size_t callback) noexcept;
+    static void RemoveSendCallback(std::size_t callback) noexcept;
+    static void RemoveRpcCallback(std::size_t callback) noexcept;
+    static void RemoveDisconnectCallback(std::size_t callback) noexcept;
 
 private:
 
     class RakClientHookInterface : public RakClientInterface {
+
+        RakClientHookInterface() = delete;
+        RakClientHookInterface(const RakClientHookInterface&) = delete;
+        RakClientHookInterface(RakClientHookInterface&&) = delete;
+        RakClientHookInterface& operator=(const RakClientHookInterface&) = delete;
+        RakClientHookInterface& operator=(RakClientHookInterface&&) = delete;
+
     public:
 
         explicit RakClientHookInterface(RakClientInterface* pOrigInterface) noexcept;
 
-        // RakClient Interface methods...
-        // ------------------------------------------------
+        ~RakClientHookInterface() noexcept = default;
 
-        bool RPC(
-            int* rpcIdPointer,
-            BitStream* parameters,
-            PacketPriority priority,
-            PacketReliability reliability,
-            char orderingChannel,
-            bool shiftTimestamp
-        ) noexcept override;
+    public:
 
-        bool Send(
-            BitStream* bitStream,
-            PacketPriority priority,
-            PacketReliability reliability,
-            char orderingChannel
-        ) noexcept override;
-
+        bool RPC(int* rpcIdPointer, BitStream* parameters, PacketPriority priority, PacketReliability reliability, char orderingChannel, bool shiftTimestamp) noexcept override;
+        bool Send(BitStream* bitStream, PacketPriority priority, PacketReliability reliability, char orderingChannel) noexcept override;
         Packet* Receive() noexcept override;
-
-        bool Connect(
-            const char* hostIp,
-            uint16_t serverPort,
-            uint16_t clientPort,
-            uint32_t depreciated,
-            int threadSleepTimer
-        ) noexcept override;
-
+        bool Connect(const char* hostIp, uint16_t serverPort, uint16_t clientPort, uint32_t depreciated, int threadSleepTimer) noexcept override;
         void Disconnect(uint32_t blockDuration, uint8_t orderingChannel) noexcept override;
         void InitializeSecurity(const char* privateKeyP, const char* privateKeyQ) noexcept override;
         void SetPassword(const char* password) noexcept override;
         bool HasPassword() noexcept override;
-
-        bool Send(
-            const char* dataPointer,
-            int dataLength,
-            PacketPriority priority,
-            PacketReliability reliability,
-            char orderingChannel
-        ) noexcept override;
-
+        bool Send(const char* dataPointer, int dataLength, PacketPriority priority, PacketReliability reliability, char orderingChannel) noexcept override;
         void DeallocatePacket(Packet* packetPointer) noexcept override;
         void PingServer() noexcept override;
-
-        void PingServer(
-            const char* hostIp,
-            uint16_t serverPort,
-            uint16_t clientPort,
-            bool onlyReplyOnAcceptingConnections
-        ) noexcept override;
-
+        void PingServer(const char* hostIp, uint16_t serverPort, uint16_t clientPort, bool onlyReplyOnAcceptingConnections) noexcept override;
         int GetAveragePing() noexcept override;
         int GetLastPing() noexcept override;
         int GetLowestPing() noexcept override;
@@ -125,17 +106,7 @@ private:
         void RegisterAsRemoteProcedureCall(int* rpcIdPointer, RPCFunction rpcHandler) noexcept override;
         void RegisterClassMemberRPC(int* rpcIdPointer, void* rpcHandler) noexcept override;
         void UnregisterAsRemoteProcedureCall(int* rpcIdPointer) noexcept override;
-
-        bool RPC(
-            int* rpcIdPointer,
-            const char* dataPointer,
-            uint32_t bitLength,
-            PacketPriority priority,
-            PacketReliability reliability,
-            char orderingChannel,
-            bool shiftTimestamp
-        ) noexcept override;
-
+        bool RPC(int* rpcIdPointer, const char* dataPointer, uint32_t bitLength, PacketPriority priority, PacketReliability reliability, char orderingChannel, bool shiftTimestamp) noexcept override;
         void SetTrackFrequencyTable(bool trackFrequencyTable) noexcept override;
         bool GetSendFrequencyTable(uint32_t outputFrequencyTable[256]) noexcept override;
         float GetCompressionRatio() noexcept override;
@@ -163,16 +134,7 @@ private:
         void ApplyNetworkSimulator(double maxSendBps, uint16_t minExtraPing, uint16_t extraPingVariance) noexcept override;
         bool IsNetworkSimulatorActive() noexcept override;
         PlayerIndex GetPlayerIndex() noexcept override;
-
-        bool RPC_(
-            int* rpcIdPointer,
-            BitStream* bitStream,
-            PacketPriority priority,
-            PacketReliability reliability,
-            char orderingChannel,
-            bool shiftTimestamp,
-            NetworkID networkId
-        ) noexcept override;
+        bool RPC_(int* rpcIdPointer, BitStream* bitStream, PacketPriority priority, PacketReliability reliability, char orderingChannel, bool shiftTimestamp, NetworkID networkId) noexcept override;
 
     private:
 
@@ -182,20 +144,21 @@ private:
 
 private:
 
-    static void SampDestructHookFunc() noexcept;
-    static void RakClientInitHookFunc() noexcept;
+    static void HookSampDestruct() noexcept;
+    static void HookRaknetInit() noexcept;
 
 private:
 
     static bool initStatus;
     static bool loadStatus;
+
     static bool connectStatus;
 
-    static ConnectHandlerType connectHandler;
-    static PacketIncomingHandlerType packetIncomingHandler;
-    static PacketOutcomingHandlerType packetOutcomingHandler;
-    static RpcOutcomingHandlerType rpcOutcomingHandler;
-    static DisconnectHandlerType disconnectHandler;
+    static std::vector<ConnectCallback> connectCallbacks;
+    static std::vector<ReceiveCallback> receiveCallbacks;
+    static std::vector<SendCallback> sendCallbacks;
+    static std::vector<RpcCallback> rpcCallbacks;
+    static std::vector<DisconnectCallback> disconnectCallbacks;
 
     static RakClientInterface* pRakClientInterface;
     static RakClientInterface** ppRakClientInterface;

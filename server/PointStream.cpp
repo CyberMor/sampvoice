@@ -27,16 +27,16 @@ PointStream::PointStream(const float distance, const CVector& position) : LocalS
 
 void PointStream::UpdatePosition(const CVector& position)
 {
-    assert(pNetGame);
-    assert(pNetGame->pPlayerPool);
+    assert(pNetGame != nullptr);
+    assert(pNetGame->pPlayerPool != nullptr);
 
     PackGetStruct(&*this->packetStreamUpdatePosition, SV::UpdateLPStreamPositionPacket)->position = position;
 
-    if (pNetGame->pPlayerPool->dwConnectedPlayers)
+    if (pNetGame->pPlayerPool->dwConnectedPlayers != 0)
     {
         const auto playerPoolSize = pNetGame->pPlayerPool->dwPlayerPoolSize;
 
-        for (uint16_t iPlayerId = 0; iPlayerId <= playerPoolSize; ++iPlayerId)
+        for (uint16_t iPlayerId { 0 }; iPlayerId <= playerPoolSize; ++iPlayerId)
         {
             if (this->HasListener(iPlayerId) && PlayerStore::IsPlayerConnected(iPlayerId))
                 Network::SendControlPacket(iPlayerId, *&*this->packetStreamUpdatePosition);

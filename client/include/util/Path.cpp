@@ -9,27 +9,35 @@
 
 #include "Path.h"
 
+#include <array>
+
 #include <ShlObj.h>
 
 #include "Logger.h"
 
 Path::Path()
 {
-    char myDocumentsPath[MAX_PATH] {};
+    constexpr char kSVDirRelativePath[] = "\\" "GTA San Andreas User Files"
+                                          "\\" "sampvoice";
 
-    if (const HRESULT hResult = SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS | CSIDL_FLAG_CREATE,
-        NULL, SHGFP_TYPE_CURRENT, myDocumentsPath); FAILED(hResult))
+    std::array<char, MAX_PATH> myDocumentsPath {};
+
+    if (const auto hResult = SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS | CSIDL_FLAG_CREATE,
+        NULL, SHGFP_TYPE_CURRENT, myDocumentsPath.data()); FAILED(hResult))
     {
-        Logger::LogToFile("[err:path_%p] : failed to get 'MyDocuments' directory (code:%ld)", this, hResult);
+        Logger::LogToFile("[err:path] : failed to get 'MyDocuments' directory (code:%ld)", hResult);
         throw std::exception();
     }
 
-    this->pathString = std::string(myDocumentsPath) + "\\" "GTA San Andreas User Files" "\\" "sampvoice";
+    this->pathString.reserve(MAX_PATH);
 
-    if (const int rCode = SHCreateDirectoryEx(NULL, this->pathString.c_str(), NULL);
-        rCode != ERROR_SUCCESS && rCode != ERROR_FILE_EXISTS && rCode != ERROR_ALREADY_EXISTS)
+    this->pathString.append(myDocumentsPath.data());
+    this->pathString.append(kSVDirRelativePath, sizeof(kSVDirRelativePath) - 1);
+
+    if (const auto rCode = SHCreateDirectoryEx(NULL, this->pathString.c_str(), NULL);
+        rCode != ERROR_ALREADY_EXISTS && rCode != ERROR_FILE_EXISTS && rCode != ERROR_SUCCESS)
     {
-        Logger::LogToFile("[err:path_%p] : failed to create plugin directory (code:%d)", this, rCode);
+        Logger::LogToFile("[err:path] : failed to create plugin directory (code:%d)", rCode);
         throw std::exception();
     }
 }
@@ -42,14 +50,4 @@ Path::operator const char* () const noexcept
 Path::operator const std::string& () const noexcept
 {
     return this->pathString;
-}
-
-Path& Path::operator/(const std::string& rPath)
-{
-    return this->pathString += '\\', this->pathString += rPath, *this;
-}
-
-Path& Path::operator+(const std::string& cName)
-{
-    return this->pathString += cName, *this;
 }

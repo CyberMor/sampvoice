@@ -14,15 +14,6 @@
     <Filter Include="Исходные файлы\source">
       <UniqueIdentifier>{f1434dec-0236-4ca6-90dc-256e70202826}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Исходные файлы\source\streams">
-      <UniqueIdentifier>{7d8874c0-45c7-4abb-b937-54332f664527}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Исходные файлы\source\streams\dynamic">
-      <UniqueIdentifier>{13bb7d76-77c5-402b-8617-27bae6074926}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Исходные файлы\source\streams\static">
-      <UniqueIdentifier>{89163e00-1337-495a-9820-42555d26d861}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Исходные файлы\source\pawn">
       <UniqueIdentifier>{ef494ca9-4322-485d-b2e8-836d3dba4f1d}</UniqueIdentifier>
     </Filter>
@@ -49,6 +40,24 @@
     </Filter>
     <Filter Include="Исходные файлы\source\store">
       <UniqueIdentifier>{ad7f7618-10d7-4487-bc4a-12a5f6fab1f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\source\audio">
+      <UniqueIdentifier>{53af3200-b875-493b-8d80-ed966934bfbb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\source\audio\effects">
+      <UniqueIdentifier>{8f99b111-4e44-4394-9d14-ea7e7cdaedb3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\source\audio\streams">
+      <UniqueIdentifier>{7d8874c0-45c7-4abb-b937-54332f664527}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\source\audio\streams\dynamic">
+      <UniqueIdentifier>{13bb7d76-77c5-402b-8617-27bae6074926}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\source\audio\streams\static">
+      <UniqueIdentifier>{89163e00-1337-495a-9820-42555d26d861}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\source\audio\parameters">
+      <UniqueIdentifier>{2df562c3-999e-45f0-82b6-cde018ecf8b1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -113,43 +122,43 @@
       <Filter>Исходные файлы\source\pawn</Filter>
     </ClInclude>
     <ClInclude Include="DynamicLocalStreamAtVehicle.h">
-      <Filter>Исходные файлы\source\streams\dynamic</Filter>
+      <Filter>Исходные файлы\source\audio\streams\dynamic</Filter>
     </ClInclude>
     <ClInclude Include="DynamicLocalStreamAtPoint.h">
-      <Filter>Исходные файлы\source\streams\dynamic</Filter>
+      <Filter>Исходные файлы\source\audio\streams\dynamic</Filter>
     </ClInclude>
     <ClInclude Include="DynamicLocalStreamAtPlayer.h">
-      <Filter>Исходные файлы\source\streams\dynamic</Filter>
+      <Filter>Исходные файлы\source\audio\streams\dynamic</Filter>
     </ClInclude>
     <ClInclude Include="DynamicLocalStreamAtObject.h">
-      <Filter>Исходные файлы\source\streams\dynamic</Filter>
+      <Filter>Исходные файлы\source\audio\streams\dynamic</Filter>
     </ClInclude>
     <ClInclude Include="StaticLocalStreamAtVehicle.h">
-      <Filter>Исходные файлы\source\streams\static</Filter>
+      <Filter>Исходные файлы\source\audio\streams\static</Filter>
     </ClInclude>
     <ClInclude Include="StaticLocalStreamAtPoint.h">
-      <Filter>Исходные файлы\source\streams\static</Filter>
+      <Filter>Исходные файлы\source\audio\streams\static</Filter>
     </ClInclude>
     <ClInclude Include="StaticLocalStreamAtPlayer.h">
-      <Filter>Исходные файлы\source\streams\static</Filter>
+      <Filter>Исходные файлы\source\audio\streams\static</Filter>
     </ClInclude>
     <ClInclude Include="StaticLocalStreamAtObject.h">
-      <Filter>Исходные файлы\source\streams\static</Filter>
+      <Filter>Исходные файлы\source\audio\streams\static</Filter>
     </ClInclude>
     <ClInclude Include="Stream.h">
-      <Filter>Исходные файлы\source\streams</Filter>
+      <Filter>Исходные файлы\source\audio\streams</Filter>
     </ClInclude>
     <ClInclude Include="PointStream.h">
-      <Filter>Исходные файлы\source\streams</Filter>
+      <Filter>Исходные файлы\source\audio\streams</Filter>
     </ClInclude>
     <ClInclude Include="LocalStream.h">
-      <Filter>Исходные файлы\source\streams</Filter>
+      <Filter>Исходные файлы\source\audio\streams</Filter>
     </ClInclude>
     <ClInclude Include="GlobalStream.h">
-      <Filter>Исходные файлы\source\streams</Filter>
+      <Filter>Исходные файлы\source\audio\streams</Filter>
     </ClInclude>
     <ClInclude Include="DynamicStream.h">
-      <Filter>Исходные файлы\source\streams</Filter>
+      <Filter>Исходные файлы\source\audio\streams</Filter>
     </ClInclude>
     <ClInclude Include="include\SPSCQueue.h">
       <Filter>Исходные файлы\include</Filter>
@@ -165,6 +174,15 @@
     </ClInclude>
     <ClInclude Include="Worker.h">
       <Filter>Исходные файлы\source</Filter>
+    </ClInclude>
+    <ClInclude Include="Effect.h">
+      <Filter>Исходные файлы\source\audio\effects</Filter>
+    </ClInclude>
+    <ClInclude Include="Parameter.h">
+      <Filter>Исходные файлы\source\audio\parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="include\util\timer.h">
+      <Filter>Исходные файлы\include\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -193,43 +211,43 @@
       <Filter>Исходные файлы\source\pawn</Filter>
     </ClCompile>
     <ClCompile Include="DynamicLocalStreamAtVehicle.cpp">
-      <Filter>Исходные файлы\source\streams\dynamic</Filter>
+      <Filter>Исходные файлы\source\audio\streams\dynamic</Filter>
     </ClCompile>
     <ClCompile Include="DynamicLocalStreamAtPoint.cpp">
-      <Filter>Исходные файлы\source\streams\dynamic</Filter>
+      <Filter>Исходные файлы\source\audio\streams\dynamic</Filter>
     </ClCompile>
     <ClCompile Include="DynamicLocalStreamAtPlayer.cpp">
-      <Filter>Исходные файлы\source\streams\dynamic</Filter>
+      <Filter>Исходные файлы\source\audio\streams\dynamic</Filter>
     </ClCompile>
     <ClCompile Include="DynamicLocalStreamAtObject.cpp">
-      <Filter>Исходные файлы\source\streams\dynamic</Filter>
+      <Filter>Исходные файлы\source\audio\streams\dynamic</Filter>
     </ClCompile>
     <ClCompile Include="StaticLocalStreamAtVehicle.cpp">
-      <Filter>Исходные файлы\source\streams\static</Filter>
+      <Filter>Исходные файлы\source\audio\streams\static</Filter>
     </ClCompile>
     <ClCompile Include="StaticLocalStreamAtPoint.cpp">
-      <Filter>Исходные файлы\source\streams\static</Filter>
+      <Filter>Исходные файлы\source\audio\streams\static</Filter>
     </ClCompile>
     <ClCompile Include="StaticLocalStreamAtPlayer.cpp">
-      <Filter>Исходные файлы\source\streams\static</Filter>
+      <Filter>Исходные файлы\source\audio\streams\static</Filter>
     </ClCompile>
     <ClCompile Include="StaticLocalStreamAtObject.cpp">
-      <Filter>Исходные файлы\source\streams\static</Filter>
+      <Filter>Исходные файлы\source\audio\streams\static</Filter>
     </ClCompile>
     <ClCompile Include="Stream.cpp">
-      <Filter>Исходные файлы\source\streams</Filter>
+      <Filter>Исходные файлы\source\audio\streams</Filter>
     </ClCompile>
     <ClCompile Include="PointStream.cpp">
-      <Filter>Исходные файлы\source\streams</Filter>
+      <Filter>Исходные файлы\source\audio\streams</Filter>
     </ClCompile>
     <ClCompile Include="LocalStream.cpp">
-      <Filter>Исходные файлы\source\streams</Filter>
+      <Filter>Исходные файлы\source\audio\streams</Filter>
     </ClCompile>
     <ClCompile Include="GlobalStream.cpp">
-      <Filter>Исходные файлы\source\streams</Filter>
+      <Filter>Исходные файлы\source\audio\streams</Filter>
     </ClCompile>
     <ClCompile Include="DynamicStream.cpp">
-      <Filter>Исходные файлы\source\streams</Filter>
+      <Filter>Исходные файлы\source\audio\streams</Filter>
     </ClCompile>
     <ClCompile Include="ControlPacket.cpp">
       <Filter>Исходные файлы\source\network</Filter>
@@ -239,6 +257,15 @@
     </ClCompile>
     <ClCompile Include="PlayerStore.cpp">
       <Filter>Исходные файлы\source\store</Filter>
+    </ClCompile>
+    <ClCompile Include="Effect.cpp">
+      <Filter>Исходные файлы\source\audio\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="Parameter.cpp">
+      <Filter>Исходные файлы\source\audio\parameters</Filter>
+    </ClCompile>
+    <ClCompile Include="include\util\timer.cpp">
+      <Filter>Исходные файлы\include\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

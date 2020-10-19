@@ -13,6 +13,7 @@
 #include <type_traits>
 #include <iostream>
 #include <cassert>
+#include <cstring>
 #include <fstream>
 #include <vector>
 
@@ -27,7 +28,6 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <string.h>
 #endif
 
 #ifdef _WIN32
@@ -41,26 +41,24 @@
 #define RequireArithmeticType(type) static_assert(std::is_arithmetic<type>::value, #type " is not arithmetic type")
 #define RequireAddressType(type) static_assert(std::is_arithmetic<type>::value || std::is_pointer<type>::value, #type " is not address type")
 #define RequireVarHasType(var, type) static_assert(std::is_same<decltype(var), type>::value, #var " type does not correspond to " #type)
-
 #define SizeOfArray(arr) ((sizeof(arr) / sizeof(0[arr])) / ((size_t)(!(sizeof(arr) % sizeof(0[arr])))))
 
 namespace Memory
 {
     using addr_t = void*;
+    using size_t = std::size_t;
     using byte_t = unsigned char;
 
     template<class ObjectType> class ObjectContainer {
     public:
 
+        ObjectContainer() = default;
         ObjectContainer(const ObjectContainer&) = default;
         ObjectContainer(ObjectContainer&&) noexcept = default;
         ObjectContainer& operator=(const ObjectContainer&) = default;
         ObjectContainer& operator=(ObjectContainer&&) noexcept = default;
 
     public:
-
-        explicit ObjectContainer()
-            : bytes(sizeof(ObjectType)) {}
 
         explicit ObjectContainer(const size_t addMemSize)
             : bytes(sizeof(ObjectType) + addMemSize) {}
@@ -121,11 +119,11 @@ namespace Memory
 
     private:
 
-        std::vector<byte_t> bytes;
+        std::vector<byte_t> bytes { sizeof(ObjectType) };
 
     };
 
-    template<class ObjectType> using ObjectContainerPtr = std::shared_ptr<ObjectContainer<ObjectType>>;
+    template<class ObjectType> using ObjectContainerPtr = std::unique_ptr<ObjectContainer<ObjectType>>;
 
     class UnprotectScope {
 
@@ -208,7 +206,7 @@ namespace Memory
 
     };
 
-    using UnprotectScopePtr = std::shared_ptr<UnprotectScope>;
+    using UnprotectScopePtr = std::unique_ptr<UnprotectScope>;
 
     class Patch {
 
@@ -283,7 +281,7 @@ namespace Memory
 
     };
 
-    using PatchPtr = std::shared_ptr<Patch>;
+    using PatchPtr = std::unique_ptr<Patch>;
 
     class JumpHook {
 
@@ -360,7 +358,7 @@ namespace Memory
 
     };
 
-    using JumpHookPtr = std::shared_ptr<JumpHook>;
+    using JumpHookPtr = std::unique_ptr<JumpHook>;
 
     class Scanner {
     public:
@@ -414,7 +412,7 @@ namespace Memory
 
     };
 
-    using ScannerPtr = std::shared_ptr<Scanner>;
+    using ScannerPtr = std::unique_ptr<Scanner>;
 
     template<class MemAddrType = addr_t, class ModuleAddrType = addr_t, class ModuleSizeType = size_t>
     static bool GetModuleInfo(const MemAddrType memAddr, ModuleAddrType& moduleAddr, ModuleSizeType& moduleSize) noexcept
@@ -426,25 +424,35 @@ namespace Memory
 #ifdef _WIN32
         MEMORY_BASIC_INFORMATION info {};
 
-        if (!VirtualQuery((LPCVOID)(memAddr), &info, sizeof(info))) return false;
+        if (VirtualQuery((LPCVOID)(memAddr), &info, sizeof(info)) == 0)
+            return false;
 
-        if (!(moduleAddr = (ModuleAddrType)(info.AllocationBase))) return false;
+        if ((moduleAddr = (ModuleAddrType)(info.AllocationBase)) == nullptr)
+            return false;
 
         const auto dos = (IMAGE_DOS_HEADER*)(info.AllocationBase);
         const auto pe = (IMAGE_NT_HEADERS*)(((DWORD)(dos)) + dos->e_lfanew);
 
-        if (pe->Signature != IMAGE_NT_SIGNATURE) return false;
+        if (pe->Signature != IMAGE_NT_SIGNATURE)
+            return false;
 
-        if (!(moduleSize = (ModuleSizeType)(pe->OptionalHeader.SizeOfImage))) return false;
+        if ((moduleSize = (ModuleSizeType)(pe->OptionalHeader.SizeOfImage)) == 0)
+            return false;
 #else
         Dl_info info {};
         struct stat buf {};
 
-        if (!dladdr((addr_t)(memAddr), &info)) return false;
-        if (stat(info.dli_fname, &buf) != 0) return false;
+        if (dladdr((addr_t)(memAddr), &info) == 0)
+            return false;
 
-        if (!(moduleAddr = (ModuleAddrType)(info.dli_fbase))) return false;
-        if (!(moduleSize = (ModuleSizeType)(buf.st_size))) return false;
+        if (stat(info.dli_fname, &buf) == -1)
+            return false;
+
+        if ((moduleAddr = (ModuleAddrType)(info.dli_fbase)) == nullptr)
+            return false;
+
+        if ((moduleSize = (ModuleSizeType)(buf.st_size)) == 0)
+            return false;
 #endif
 
         return true;
@@ -476,8 +484,8 @@ namespace Memory
     }
 }
 
-#define MakeObjectContainer(ObjectType) std::make_shared<Memory::ObjectContainer<ObjectType>>
-#define MakeUnprotectScope              std::make_shared<Memory::UnprotectScope>
-#define MakePatch                       std::make_shared<Memory::Patch>
-#define MakeJumpHook                    std::make_shared<Memory::JumpHook>
-#define MakeScanner                     std::make_shared<Memory::Scanner>
+#define MakeObjectContainer(ObjectType) std::make_unique<Memory::ObjectContainer<ObjectType>>
+#define MakeUnprotectScope              std::make_unique<Memory::UnprotectScope>
+#define MakePatch                       std::make_unique<Memory::Patch>
+#define MakeJumpHook                    std::make_unique<Memory::JumpHook>
+#define MakeScanner                     std::make_unique<Memory::Scanner>

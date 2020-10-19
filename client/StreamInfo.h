@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 
 #include <d3d9.h>
@@ -17,35 +16,37 @@
 enum class StreamType
 {
     None,
-
     GlobalStream,
-
     LocalStreamAtPoint,
     LocalStreamAtVehicle,
     LocalStreamAtPlayer,
     LocalStreamAtObject
 };
 
-class StreamInfo {
+struct StreamInfo {
 
-    StreamInfo() = delete;
-    StreamInfo(const StreamInfo&) = delete;
-    StreamInfo(StreamInfo&&) = delete;
-    StreamInfo& operator=(const StreamInfo&) = delete;
-    StreamInfo& operator=(StreamInfo&&) = delete;
-
-public:
-
-    StreamInfo(const StreamType type, const std::string& name, const D3DCOLOR color)
-        : type(type), name(name), color(color) {}
+    StreamInfo() noexcept = default;
+    StreamInfo(const StreamInfo&) = default;
+    StreamInfo(StreamInfo&&) noexcept = default;
+    StreamInfo& operator=(const StreamInfo&) = default;
+    StreamInfo& operator=(StreamInfo&&) noexcept = default;
 
 public:
 
-    const StreamType type;
-    const std::string name;
-    const D3DCOLOR color;
+    StreamInfo(StreamType type, D3DCOLOR color, std::string name) noexcept;
+
+    ~StreamInfo() noexcept = default;
+
+public:
+
+    StreamType GetType() const noexcept;
+    D3DCOLOR GetColor() const noexcept;
+    const std::string& GetName() const noexcept;
+
+private:
+
+    StreamType type { StreamType::None };
+    D3DCOLOR color { -1u };
+    std::string name;
 
 };
-
-using StreamInfoPtr = std::shared_ptr<StreamInfo>;
-#define MakeStreamInfo std::make_shared<StreamInfo>

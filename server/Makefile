@@ -1,6 +1,6 @@
 OUTPUT_FILE = "sampvoice.so"
 
-COMMON_FLAGS = -m32 -march=i486 -Ofast -w -fpermissive
+COMMON_FLAGS = -m32 -O3 -Ofast -w -fpermissive
 COMPILE_FLAGS = $(COMMON_FLAGS) -c -idirafter "include"
 PRELINK_FLAGS = $(COMMON_FLAGS) -shared -static-libstdc++
 

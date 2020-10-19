@@ -18,10 +18,8 @@ static DWORD WINAPI LibraryWaitingThread(LPVOID)
 {
     HMODULE sampBaseAddress { nullptr };
 
-    while (!(sampBaseAddress = GetModuleHandle(libraryName.c_str())))
-    {
+    while ((sampBaseAddress = GetModuleHandle(libraryName.c_str())) == nullptr)
         SleepForMilliseconds(50);
-    }
 
     Plugin::OnSampLoad(sampBaseAddress);
 
@@ -36,17 +34,17 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReasonForCall, LPVOID)
     if (!Plugin::OnPluginLoad(hModule))
         return FALSE;
 
-    if (const auto cmdLine = GetCommandLine())
+    if (const auto cmdLine = GetCommandLine(); cmdLine != nullptr)
     {
-        std::string iString;
         std::istringstream cmdStream { cmdLine };
+        std::string iString;
 
-        while ((cmdStream >> iString) && (iString != "-svlib"));
+        while (cmdStream >> iString && iString != "-svlib");
         if (cmdStream >> iString) libraryName = std::move(iString);
     }
 
-    const auto waitingThread = CreateThread(NULL, 0, LibraryWaitingThread,
-                                            NULL, NULL, NULL);
+    const auto waitingThread = CreateThread(NULL, 0,
+        LibraryWaitingThread, NULL, NULL, NULL);
 
     return waitingThread != nullptr ? TRUE : FALSE;
 }

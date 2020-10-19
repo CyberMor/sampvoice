@@ -30,16 +30,18 @@ public:
     static void Free() noexcept;
 
     template<class... ARGS>
-    static bool LogToFile(const char* message, const ARGS... args) noexcept
+    static bool LogToFile(const char* const message, const ARGS... args) noexcept
     {
         const std::lock_guard<std::mutex> lock { Logger::logFileMutex };
 
-        if (!Logger::logFile) return false;
+        if (Logger::logFile == nullptr)
+            return false;
 
         const auto cTime = std::time(nullptr);
         const auto timeOfDay = std::localtime(&cTime);
 
-        if (!timeOfDay) return false;
+        if (timeOfDay == nullptr)
+            return false;
 
         std::fprintf(Logger::logFile, "[%.2d:%.2d:%.2d] : ",
             timeOfDay->tm_hour, timeOfDay->tm_min, timeOfDay->tm_sec);
@@ -51,11 +53,12 @@ public:
     }
 
     template<class... ARGS>
-    static bool LogToConsole(const char* message, const ARGS... args) noexcept
+    static bool LogToConsole(const char* const message, const ARGS... args) noexcept
     {
         const std::lock_guard<std::mutex> lock { Logger::logConsoleMutex };
 
-        if (!Logger::logFunc) return false;
+        if (Logger::logFunc == nullptr)
+            return false;
 
         Logger::logFunc(message, args...);
 
@@ -63,7 +66,7 @@ public:
     }
 
     template<class... ARGS>
-    static inline void Log(const char* message, const ARGS... args) noexcept
+    static inline void Log(const char* const message, const ARGS... args) noexcept
     {
         Logger::LogToFile(message, args...);
         Logger::LogToConsole(message, args...);

@@ -19,14 +19,14 @@
 
 struct VoicePacket
 {
-    DWORD hash;
-    DWORD svrkey;
-    DWORD packet;
-    DWORD stream;
-    WORD  sender;
-    WORD  length;
-    DWORD packid;
-    BYTE  data[];
+    UINT32 hash;
+    UINT32 svrkey;
+    UINT32 packet;
+    UINT32 stream;
+    UINT16 sender;
+    UINT16 length;
+    UINT32 packid;
+    UINT8 data[];
 
     DWORD GetFullSize() const noexcept;
     bool CheckHeader() const noexcept;
@@ -35,7 +35,8 @@ struct VoicePacket
 
 #pragma pack(pop)
 
-static_assert(offsetof(VoicePacket, hash) == 0, "[VoicePacket] : 'hash' field should be located at beginning of packet struct");
+static_assert(offsetof(VoicePacket, hash) == 0, "[VoicePacket] : 'hash' "
+    "field should be located at beginning of packet struct");
 
 using VoicePacketContainer = Memory::ObjectContainer<VoicePacket>;
 using VoicePacketContainerPtr = Memory::ObjectContainerPtr<VoicePacket>;

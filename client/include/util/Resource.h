@@ -23,7 +23,7 @@ class Resource {
 
 public:
 
-    explicit Resource(HMODULE hModule, DWORD rId, const char* rType);
+    explicit Resource(HMODULE hModule, DWORD rId, LPCSTR rType);
 
     ~Resource() noexcept = default;
 
@@ -34,11 +34,10 @@ public:
 
 private:
 
-    HGLOBAL resource { nullptr };
     LPVOID dataPtr { nullptr };
     DWORD dataSize { 0 };
 
 };
 
-using ResourcePtr = std::shared_ptr<Resource>;
-#define MakeResource std::make_shared<Resource>
+using ResourcePtr = std::unique_ptr<Resource>;
+#define MakeResource std::make_unique<Resource>

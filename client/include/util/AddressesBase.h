@@ -14,13 +14,12 @@
 #include <Windows.h>
 
 struct AddressesBase {
-public:
 
-    AddressesBase() noexcept = default;
+    AddressesBase() = delete;
     AddressesBase(const AddressesBase&) noexcept = default;
-    AddressesBase(AddressesBase&&) noexcept = default;
+    AddressesBase(AddressesBase&&) = delete;
     AddressesBase& operator=(const AddressesBase&) noexcept = default;
-    AddressesBase& operator=(AddressesBase&&) noexcept = default;
+    AddressesBase& operator=(AddressesBase&&) = delete;
 
 public:
 
@@ -36,13 +35,13 @@ public:
     DWORD GetBassSetConfigAddr() const noexcept;
     DWORD GetSampInitAddr() const noexcept;
     DWORD GetSampDestructAddr() const noexcept;
-    DWORD GetSampOpenChatFunc() const noexcept;
-    DWORD GetSampSwitchModeFunc() const noexcept;
-    DWORD GetSampOpenScoreboardFunc() const noexcept;
-    DWORD GetSampCreatePlayerInPoolFunc() const noexcept;
-    DWORD GetSampDeletePlayerFromPoolFunc() const noexcept;
-    DWORD GetSampSpawnLocalPlayerFunc() const noexcept;
-    DWORD GetSampDrawLabelFunc() const noexcept;
+    DWORD GetOpenChatFunc() const noexcept;
+    DWORD GetSwitchModeFunc() const noexcept;
+    DWORD GetOpenScoreboardFunc() const noexcept;
+    DWORD GetCreatePlayerInPoolFunc() const noexcept;
+    DWORD GetDeletePlayerFromPoolFunc() const noexcept;
+    DWORD GetSpawnLocalPlayerFunc() const noexcept;
+    DWORD GetDrawLabelFunc() const noexcept;
 
 private:
 
@@ -52,15 +51,15 @@ private:
     DWORD bassSetConfigAddr { NULL };
     DWORD sampInitAddr { NULL };
     DWORD sampDestructAddr { NULL };
-    DWORD sampOpenChatFunc { NULL };
-    DWORD sampSwitchModeFunc { NULL };
-    DWORD sampOpenScoreboardFunc { NULL };
-    DWORD sampCreatePlayerInPoolFunc { NULL };
-    DWORD sampDeletePlayerFromPoolFunc { NULL };
-    DWORD sampSpawnLocalPlayerFunc { NULL };
-    DWORD sampDrawLabelFunc { NULL };
+    DWORD openChatFunc { NULL };
+    DWORD switchModeFunc { NULL };
+    DWORD openScoreboardFunc { NULL };
+    DWORD createPlayerInPoolFunc { NULL };
+    DWORD deletePlayerFromPoolFunc { NULL };
+    DWORD spawnLocalPlayerFunc { NULL };
+    DWORD drawLabelFunc { NULL };
 
 };
 
-using AddressesBasePtr = std::shared_ptr<AddressesBase>;
-#define MakeAddressesBase std::make_shared<AddressesBase>
+using AddressesBasePtr = std::unique_ptr<AddressesBase>;
+#define MakeAddressesBase std::make_unique<AddressesBase>

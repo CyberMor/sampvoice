@@ -14,7 +14,6 @@
 #include <functional>
 #include <cassert>
 #include <vector>
-#include <string>
 
 #include <Windows.h>
 
@@ -25,12 +24,13 @@
 namespace Memory
 {
     class ScopeExit {
+    public:
 
-        ScopeExit() = delete;
+        ScopeExit() noexcept = default;
         ScopeExit(const ScopeExit&) = delete;
-        ScopeExit(ScopeExit&&) = delete;
+        ScopeExit(ScopeExit&&) noexcept = default;
         ScopeExit& operator=(const ScopeExit&) = delete;
-        ScopeExit& operator=(ScopeExit&&) = delete;
+        ScopeExit& operator=(ScopeExit&&) noexcept = default;
 
     private:
 
@@ -38,7 +38,7 @@ namespace Memory
 
     public:
 
-        explicit ScopeExit(CallbackType&& callback) noexcept
+        explicit ScopeExit(CallbackType callback) noexcept
             : callback(std::move(callback)) {}
 
         ~ScopeExit() noexcept
@@ -62,24 +62,33 @@ namespace Memory
     template<class ObjectType> class ObjectContainer {
     public:
 
-        explicit ObjectContainer()
-            : bytes(sizeof(ObjectType)) {}
+        ObjectContainer() = default;
+        ObjectContainer(const ObjectContainer&) = default;
+        ObjectContainer(ObjectContainer&&) noexcept = default;
+        ObjectContainer& operator=(const ObjectContainer&) = default;
+        ObjectContainer& operator=(ObjectContainer&&) noexcept = default;
+
+    public:
 
         explicit ObjectContainer(const DWORD addMemSize)
             : bytes(sizeof(ObjectType) + addMemSize) {}
 
-        template<class MemAddrType = LPVOID, class MemSizeType = DWORD>
+        template<class MemAddrType = LPCVOID, class MemSizeType = DWORD>
         explicit ObjectContainer(const MemAddrType memAddr, const MemSizeType memSize)
             : bytes((DWORD)(memSize))
         {
             RequestAddressType(MemAddrType);
             RequestArithmeticType(MemSizeType);
 
-            assert((LPVOID)(memAddr));
+            assert((LPCVOID)(memAddr));
             assert((DWORD)(memSize));
+
+            assert((DWORD)(memSize) >= sizeof(ObjectType));
 
             std::memcpy(this->bytes.data(), (LPCVOID)(memAddr), this->bytes.size());
         }
+
+        ~ObjectContainer() noexcept = default;
 
     public:
 
@@ -120,11 +129,11 @@ namespace Memory
 
     private:
 
-        std::vector<BYTE> bytes;
+        std::vector<BYTE> bytes { sizeof(ObjectType) };
 
     };
 
-    template<class ObjectType> using ObjectContainerPtr = std::shared_ptr<ObjectContainer<ObjectType>>;
+    template<class ObjectType> using ObjectContainerPtr = std::unique_ptr<ObjectContainer<ObjectType>>;
 
     class UnprotectScope {
 
@@ -192,7 +201,7 @@ namespace Memory
 
     };
 
-    using UnprotectScopePtr = std::shared_ptr<UnprotectScope>;
+    using UnprotectScopePtr = std::unique_ptr<UnprotectScope>;
 
     class Patch {
 
@@ -204,7 +213,7 @@ namespace Memory
 
     public:
 
-        template<class MemAddrType = LPVOID, class PatchAddrType = LPVOID, class MemSizeType = DWORD>
+        template<class MemAddrType = LPVOID, class PatchAddrType = LPCVOID, class MemSizeType = DWORD>
         explicit Patch(const MemAddrType memAddr, const PatchAddrType patchAddr, const MemSizeType memSize, const bool enabled = true)
             : patchData((DWORD)(memSize)), origData((DWORD)(memSize)), memAddr((LPVOID)(memAddr)), memSize((DWORD)(memSize))
         {
@@ -213,7 +222,7 @@ namespace Memory
             RequestArithmeticType(MemSizeType);
 
             assert((LPVOID)(memAddr));
-            assert((LPVOID)(patchAddr));
+            assert((LPCVOID)(patchAddr));
             assert((DWORD)(memSize));
 
             std::memcpy(this->patchData.data(), (LPCVOID)(patchAddr), this->memSize);
@@ -267,7 +276,7 @@ namespace Memory
 
     };
 
-    using PatchPtr = std::shared_ptr<Patch>;
+    using PatchPtr = std::unique_ptr<Patch>;
 
     class JumpHook {
 
@@ -307,7 +316,7 @@ namespace Memory
 
     public:
 
-        template<class InjectAddrType = LPVOID, class HookAddrType = LPVOID>
+        template<class InjectAddrType = LPVOID, class HookAddrType = LPCVOID>
         explicit JumpHook(const InjectAddrType injectAddr, const HookAddrType hookAddr, const bool enabled = true)
             : patch(injectAddr, &JumpInstruction(((DWORD)(hookAddr)) - (((DWORD)(injectAddr)) +
                 sizeof(JumpInstruction))), sizeof(JumpInstruction), enabled)
@@ -316,7 +325,7 @@ namespace Memory
             RequestAddressType(HookAddrType);
 
             assert((LPVOID)(injectAddr));
-            assert((LPVOID)(hookAddr));
+            assert((LPCVOID)(hookAddr));
         }
 
         ~JumpHook() noexcept = default;
@@ -344,7 +353,7 @@ namespace Memory
 
     };
 
-    using JumpHookPtr = std::shared_ptr<JumpHook>;
+    using JumpHookPtr = std::unique_ptr<JumpHook>;
 
     class CallHook {
 
@@ -384,7 +393,7 @@ namespace Memory
 
     public:
 
-        template<class InjectAddrType = LPVOID, class HookAddrType = LPVOID>
+        template<class InjectAddrType = LPVOID, class HookAddrType = LPCVOID>
         explicit CallHook(const InjectAddrType injectAddr, const HookAddrType hookAddr, const bool enabled = true)
             : callFuncAddr((LPVOID)((((DWORD)(injectAddr)) + sizeof(CallInstruction)) + ((CallInstruction*)(injectAddr))->offset))
             , patch(injectAddr, &CallInstruction(((DWORD)(hookAddr)) - (((DWORD)(injectAddr)) + sizeof(CallInstruction))),
@@ -394,7 +403,7 @@ namespace Memory
             RequestAddressType(HookAddrType);
 
             assert((LPVOID)(injectAddr));
-            assert((LPVOID)(hookAddr));
+            assert((LPCVOID)(hookAddr));
         }
 
         ~CallHook() noexcept = default;
@@ -426,7 +435,7 @@ namespace Memory
 
     };
 
-    using CallHookPtr = std::shared_ptr<CallHook>;
+    using CallHookPtr = std::unique_ptr<CallHook>;
 
     class DllFuncHook {
 
@@ -438,14 +447,14 @@ namespace Memory
 
     public:
 
-        template<class HookAddrType = LPVOID>
-        explicit DllFuncHook(const std::string& moduleName, const std::string& functionName,
+        template<class HookAddrType = LPCVOID>
+        explicit DllFuncHook(const char* moduleName, const char* functionName,
                              const HookAddrType hookAddr, const bool enabled = true)
-            : hook(GetProcAddress(GetModuleHandle(moduleName.c_str()), functionName.c_str()), hookAddr, enabled)
+            : hook(GetProcAddress(GetModuleHandle(moduleName), functionName), hookAddr, enabled)
         {
             RequestAddressType(HookAddrType);
 
-            assert((LPVOID)(hookAddr));
+            assert((LPCVOID)(hookAddr));
         }
 
         ~DllFuncHook() noexcept = default;
@@ -473,12 +482,12 @@ namespace Memory
 
     };
 
-    using DllFuncHookPtr = std::shared_ptr<DllFuncHook>;
+    using DllFuncHookPtr = std::unique_ptr<DllFuncHook>;
 
     class Scanner {
     public:
 
-        Scanner() noexcept = default;
+        Scanner() = delete;
         Scanner(const Scanner&) noexcept = default;
         Scanner(Scanner&&) noexcept = default;
         Scanner& operator=(const Scanner&) noexcept = default;
@@ -486,14 +495,14 @@ namespace Memory
 
     public:
 
-        template<class MemAddrType = LPVOID, class MemSizeType = DWORD>
+        template<class MemAddrType = LPCVOID, class MemSizeType = DWORD>
         explicit Scanner(const MemAddrType memAddr, const MemSizeType memSize) noexcept
-            : memAddr((LPVOID)(memAddr)), memSize((DWORD)(memSize))
+            : memAddr((LPCVOID)(memAddr)), memSize((DWORD)(memSize))
         {
             RequestAddressType(MemAddrType);
             RequestArithmeticType(MemSizeType);
 
-            assert((LPVOID)(memAddr));
+            assert((LPCVOID)(memAddr));
             assert((DWORD)(memSize));
         }
 
@@ -503,9 +512,6 @@ namespace Memory
 
         LPVOID Find(PCCH pattern, PCCH mask) const noexcept
         {
-            if (!this->memAddr || !this->memSize)
-                return nullptr;
-
             PCCH currentByte = (PCCH)(this->memAddr);
             PCCH lastByte = (PCCH)((DWORD)(this->memAddr) +
                 this->memSize - std::strlen(mask));
@@ -523,14 +529,14 @@ namespace Memory
 
     private:
 
-        LPVOID memAddr { nullptr };
+        LPCVOID memAddr { nullptr };
         DWORD memSize { NULL };
 
     };
 
-    using ScannerPtr = std::shared_ptr<Scanner>;
+    using ScannerPtr = std::unique_ptr<Scanner>;
 
-    template<class MemAddrType = LPVOID, class ModuleAddrType = LPVOID, class ModuleSizeType = DWORD>
+    template<class MemAddrType = LPCVOID, class ModuleAddrType = LPCVOID, class ModuleSizeType = DWORD>
     static bool GetModuleInfo(const MemAddrType memAddr, ModuleAddrType& moduleAddr, ModuleSizeType& moduleSize) noexcept
     {
         RequestAddressType(MemAddrType);
@@ -539,10 +545,10 @@ namespace Memory
 
         MEMORY_BASIC_INFORMATION info {};
 
-        if (!VirtualQuery((LPCVOID)(memAddr), &info, sizeof(info)))
+        if (VirtualQuery((LPCVOID)(memAddr), &info, sizeof(info)) == 0)
             return false;
 
-        if (!(moduleAddr = (ModuleAddrType)(info.AllocationBase)))
+        if ((moduleAddr = (ModuleAddrType)(info.AllocationBase)) == nullptr)
             return false;
 
         const auto dos = (IMAGE_DOS_HEADER*)(info.AllocationBase);
@@ -551,14 +557,14 @@ namespace Memory
         if (pe->Signature != IMAGE_NT_SIGNATURE)
             return false;
 
-        if (!(moduleSize = (ModuleSizeType)(pe->OptionalHeader.SizeOfImage)))
+        if ((moduleSize = (ModuleSizeType)(pe->OptionalHeader.SizeOfImage)) == 0)
             return false;
 
         return true;
     }
 
     template<class MemAddrType = LPVOID, class MemSizeType = DWORD>
-    static void FillWithNops(const MemAddrType memAddr, const MemSizeType memSize) noexcept
+    static inline void FillWithNops(const MemAddrType memAddr, const MemSizeType memSize) noexcept
     {
         RequestAddressType(MemAddrType);
         RequestArithmeticType(MemSizeType);
@@ -573,10 +579,10 @@ namespace Memory
     }
 }
 
-#define MakeObjectContainer(ObjectType) std::make_shared<Memory::ObjectContainer<ObjectType>>
-#define MakeUnprotectScope              std::make_shared<Memory::UnprotectScope>
-#define MakePatch                       std::make_shared<Memory::Patch>
-#define MakeJumpHook                    std::make_shared<Memory::JumpHook>
-#define MakeCallHook                    std::make_shared<Memory::CallHook>
-#define MakeDllFuncHook                 std::make_shared<Memory::DllFuncHook>
-#define MakeScanner                     std::make_shared<Memory::Scanner>
+#define MakeObjectContainer(ObjectType) std::make_unique<Memory::ObjectContainer<ObjectType>>
+#define MakeUnprotectScope              std::make_unique<Memory::UnprotectScope>
+#define MakePatch                       std::make_unique<Memory::Patch>
+#define MakeJumpHook                    std::make_unique<Memory::JumpHook>
+#define MakeCallHook                    std::make_unique<Memory::CallHook>
+#define MakeDllFuncHook                 std::make_unique<Memory::DllFuncHook>
+#define MakeScanner                     std::make_unique<Memory::Scanner>

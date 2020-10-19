@@ -37,20 +37,15 @@ class Plugin {
 
 public:
 
-    static bool OnPluginLoad(HMODULE hModule);
-    static bool OnSampLoad(HMODULE hModule);
+    static bool OnPluginLoad(HMODULE hModule) noexcept;
+    static bool OnSampLoad(HMODULE hModule) noexcept;
 
 private:
 
-    static void OnDeviceInit(IDirect3D9* pDirect, IDirect3DDevice9* pDevice,
-                             D3DPRESENT_PARAMETERS* pParameters);
-    static void OnBeforeReset();
-    static void OnRender();
-    static void OnAfterReset(IDirect3DDevice9* pDevice,
-                             D3DPRESENT_PARAMETERS* pParameters);
-    static void OnDeviceFree();
+    static void OnInitGame() noexcept;
+    static void OnExitGame() noexcept;
 
-    static LRESULT CALLBACK OnWndMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    static void MainLoop();
 
     static void ConnectHandler(const std::string& serverIp, WORD serverPort);
     static void PluginConnectHandler(SV::ConnectPacket& connectStruct);
@@ -58,12 +53,15 @@ private:
     static void ControlPacketHandler(const ControlPacket& controlPacket);
     static void DisconnectHandler();
 
-    static void MainLoop();
+    static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+    static void OnDeviceInit(IDirect3D9* pDirect, IDirect3DDevice9* pDevice, const D3DPRESENT_PARAMETERS& dParameters);
+    static void OnBeforeReset();
+    static void OnRender();
+    static void OnAfterReset(IDirect3DDevice9* pDevice, const D3DPRESENT_PARAMETERS& dParameters);
+    static void OnDeviceFree();
 
     static void DrawRadarHook();
-
-    static void OnInitGame();
-    static void OnExitGame();
 
 private:
 
@@ -80,10 +78,6 @@ private:
 
     static LONG origWndProc;
     static HWND origWndHandle;
-
-    static IDirect3D9* pDirect;
-    static IDirect3DDevice9* pDevice;
-    static D3DPRESENT_PARAMETERS parameters;
 
     static Memory::CallHookPtr drawRadarHook;
 

@@ -26,17 +26,17 @@ class Texture {
 
 public:
 
-    explicit Texture(IDirect3DDevice9* pDevice, const Resource& rTexture);
+    explicit Texture(IDirect3DDevice9* pDevice,
+                     const Resource& rTexture);
 
     ~Texture() noexcept;
 
 public:
 
     IDirect3DTexture9* GetTexture() const noexcept;
-    IDirect3DSurface9* GetSurface() const noexcept;
     ID3DXSprite* GetSprite() const noexcept;
-    int GetWidth() const noexcept;
-    int GetHeight() const noexcept;
+    UINT GetWidth() const noexcept;
+    UINT GetHeight() const noexcept;
 
 public:
 
@@ -46,11 +46,11 @@ public:
 private:
 
     IDirect3DTexture9* pTexture { nullptr };
-    IDirect3DSurface9* pSurface { nullptr };
     ID3DXSprite* pSprite { nullptr };
-    D3DSURFACE_DESC textureInfo {};
+    UINT textureWidth { 0 };
+    UINT textureHeight { 0 };
 
 };
 
-using TexturePtr = std::shared_ptr<Texture>;
-#define MakeTexture std::make_shared<Texture>
+using TexturePtr = std::unique_ptr<Texture>;
+#define MakeTexture std::make_unique<Texture>

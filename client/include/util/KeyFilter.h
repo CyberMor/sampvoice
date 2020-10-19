@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <array>
+
 #include <Windows.h>
 
 #include <SPSCQueue.h>
@@ -17,14 +19,14 @@ struct KeyEvent {
 
     KeyEvent() noexcept = default;
     KeyEvent(const KeyEvent&) noexcept = default;
-    KeyEvent(KeyEvent&&) noexcept = default;
+    KeyEvent(KeyEvent&&) = delete;
     KeyEvent& operator=(const KeyEvent&) noexcept = default;
-    KeyEvent& operator=(KeyEvent&&) noexcept = default;
+    KeyEvent& operator=(KeyEvent&&) = delete;
 
 public:
 
-    KeyEvent(BYTE keyId, bool isPressed, int actKeys) noexcept
-        : keyId(keyId), isPressed(isPressed), actKeys(actKeys) {}
+    explicit KeyEvent(BYTE keyId, bool isPressed, int activeKeys) noexcept
+        : keyId(keyId), isPressed(isPressed), activeKeys(activeKeys) {}
 
     ~KeyEvent() noexcept = default;
 
@@ -32,7 +34,7 @@ public:
 
     BYTE keyId { NULL };
     bool isPressed { false };
-    int actKeys { 0 };
+    int activeKeys { 0 };
 
 };
 
@@ -53,23 +55,18 @@ public:
     static void RemoveAllKeys() noexcept;
     static void ReleaseAllKeys() noexcept;
 
-    static bool PopKey(KeyEvent& event) noexcept;
+    static bool PushPressEvent(BYTE keyId) noexcept;
+    static bool PushReleaseEvent(BYTE keyId) noexcept;
 
-    static void OnWndMessage(HWND hWnd, UINT uMsg,
-                             WPARAM wParam, LPARAM lParam) noexcept;
-
-private:
-
-    static bool PressKey(BYTE keyId) noexcept;
-    static bool ReleaseKey(BYTE keyId) noexcept;
+    static bool PopEvent(KeyEvent& event) noexcept;
 
 private:
 
     static SPSCQueue<KeyEvent> keyQueue;
 
-    static int activeKeys;
+    static std::array<bool, 256> pressedKeys;
+    static std::array<bool, 256> statusKeys;
 
-    static bool pressedKeys[256];
-    static bool statusKeys[256];
+    static int activeKeys;
 
 };

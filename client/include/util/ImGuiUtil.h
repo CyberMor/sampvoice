@@ -23,17 +23,18 @@ class ImGuiUtil {
 
 public:
 
-    static bool Init(IDirect3DDevice9* pDevice,
-                     D3DPRESENT_PARAMETERS* pParameters) noexcept;
+    static bool Init(IDirect3DDevice9* pDevice) noexcept;
     static bool IsInited() noexcept;
     static void Free() noexcept;
 
-    static bool RenderBegin() noexcept;
+    static bool BeginRender() noexcept;
     static bool IsRendering() noexcept;
-    static void RenderEnd() noexcept;
+    static void EndRender() noexcept;
 
-    static LRESULT OnWndMessage(HWND hWnd, UINT uMsg,
-                                WPARAM wParam, LPARAM lParam) noexcept;
+public:
+
+    static LRESULT WindowProc(HWND hWnd, UINT uMsg,
+        WPARAM wParam, LPARAM lParam) noexcept;
 
 private:
 

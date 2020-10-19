@@ -9,9 +9,11 @@
 
 #pragma once
 
-#include <thread>
+#include <cstdint>
 #include <functional>
+#include <thread>
 #include <string>
+#include <vector>
 
 #include <WinSock2.h>
 
@@ -19,6 +21,7 @@
 #include <raknet/bitstream.h>
 #include <raknet/rakclient.h>
 #include <util/AddressesBase.h>
+#include <util/Timer.h>
 
 #include "ControlPacket.h"
 #include "VoicePacket.h"
@@ -35,22 +38,24 @@ class Network {
 
 public:
 
-    static constexpr BYTE RaknetPacketId = 222;
-    static constexpr int RaknetConnectRcpId = 25;
-    static constexpr DWORD MaxVoicePacketSize = 1400;
-    static constexpr DWORD MaxVoiceDataSize = MaxVoicePacketSize - sizeof(VoicePacket);
-    static constexpr DWORD RecvBufferSize = 2 * 1024 * 1024;
-    static constexpr DWORD SendBufferSize = 64 * 1024;
-    static constexpr int64_t KeepAliveInterval = 2000;
+    static constexpr BYTE kRaknetPacketId = 222;
+    static constexpr int kRaknetConnectRcpId = 25;
+    static constexpr DWORD kMaxVoicePacketSize = 1400;
+    static constexpr DWORD kMaxVoiceDataSize = kMaxVoicePacketSize - sizeof(VoicePacket);
+    static constexpr DWORD kRecvBufferSize = 2 * 1024 * 1024;
+    static constexpr DWORD kSendBufferSize = 64 * 1024;
+    static constexpr Timer::time_t kKeepAliveInterval = 2000;
 
 private:
 
-    using ConnectHandlerType = std::function<void(const std::string&, WORD)>;
-    using PluginConnectHandlerType = std::function<void(SV::ConnectPacket&)>;
-    using PluginInitHandlerType = std::function<bool(const SV::PluginInitPacket&)>;
-    using DisconnectHandlerType = std::function<void()>;
+    using ConnectCallback = std::function<void(const std::string&, WORD)>;
+    using SvConnectCallback = std::function<void(SV::ConnectPacket&)>;
+    using SvInitCallback = std::function<bool(const SV::PluginInitPacket&)>;
+    using DisconnectCallback = std::function<void()>;
 
-    struct ConnectionStatusType
+private:
+
+    struct ConnectionStatus
     {
         enum
         {
@@ -63,31 +68,31 @@ private:
 
 public:
 
-    static bool Init(const AddressesBase& addrBase,
-                     ConnectHandlerType connectHandler,
-                     PluginConnectHandlerType pluginConnectHandler,
-                     PluginInitHandlerType pluginInitHandler,
-                     DisconnectHandlerType disconnectHandler);
-    static void Free();
+    static bool Init(const AddressesBase& addrBase) noexcept;
+    static void Free() noexcept;
 
-    static bool SendControlPacket(WORD packet, LPCVOID dataAddr = nullptr,
-                                  WORD dataSize = NULL);
+    static bool SendControlPacket(WORD packet, LPCVOID dataAddr = nullptr, WORD dataSize = 0) noexcept;
+    static bool SendVoicePacket(LPCVOID dataAddr, WORD dataSize) noexcept;
+    static void EndSequence() noexcept;
+    static ControlPacketContainerPtr ReceiveControlPacket() noexcept;
+    static VoicePacketContainerPtr ReceiveVoicePacket() noexcept;
 
-    static bool SendVoicePacket(LPCVOID dataAddr, WORD dataSize);
-    static void EndSequence();
-
-    static ControlPacketContainerPtr ReceiveControlPacket();
-    static VoicePacketContainerPtr ReceiveVoicePacket();
-
-private:
-
-    static void VoiceThread();
+    static std::size_t AddConnectCallback(ConnectCallback callback) noexcept;
+    static std::size_t AddSvConnectCallback(SvConnectCallback callback) noexcept;
+    static std::size_t AddSvInitCallback(SvInitCallback callback) noexcept;
+    static std::size_t AddDisconnectCallback(DisconnectCallback callback) noexcept;
+    static void RemoveConnectCallback(std::size_t callback) noexcept;
+    static void RemoveSvConnectCallback(std::size_t callback) noexcept;
+    static void RemoveSvInitCallback(std::size_t callback) noexcept;
+    static void RemoveDisconnectCallback(std::size_t callback) noexcept;
 
 private:
 
-    static void OnRaknetConnect(PCCH serverIp, WORD serverPort);
-    static bool OnRaknetSendRpc(int rpcId, BitStream* rpcParameters);
-    static bool OnRaknetReceivePacket(Packet* packet);
+    static void VoiceThread() noexcept;
+
+    static void OnRaknetConnect(PCCH ip, WORD port) noexcept;
+    static bool OnRaknetRpc(int id, BitStream& parameters) noexcept;
+    static bool OnRaknetReceive(Packet& packet) noexcept;
     static void OnRaknetDisconnect() noexcept;
 
 private:
@@ -96,22 +101,19 @@ private:
 
     static SOCKET socketHandle;
     static int connectionStatus;
+    static std::thread voiceThread;
+    static std::string serverIp;
+    static DWORD serverKey;
 
-    static ConnectHandlerType connectHandler;
-    static PluginConnectHandlerType pluginConnectHandler;
-    static PluginInitHandlerType pluginInitHandler;
-    static DisconnectHandlerType disconnectHandler;
+    static std::vector<ConnectCallback> connectCallbacks;
+    static std::vector<SvConnectCallback> svConnectCallbacks;
+    static std::vector<SvInitCallback> svInitCallbacks;
+    static std::vector<DisconnectCallback> disconnectCallbacks;
 
     static SPSCQueue<ControlPacketContainerPtr> controlQueue;
     static SPSCQueue<VoicePacketContainerPtr> voiceQueue;
 
-    static std::thread voiceThread;
-    static std::string serverIp;
-
     static VoicePacketContainer inputVoicePacket;
     static VoicePacketContainer outputVoicePacket;
-
-    static DWORD serverKey;
-    static DWORD packetId;
 
 };

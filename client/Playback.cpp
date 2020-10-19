@@ -9,6 +9,8 @@
 
 #include "Playback.h"
 
+#include <algorithm>
+
 #include <audio/bass_fx.h>
 #include <game/CCamera.h>
 #include <util/Logger.h>
@@ -19,13 +21,11 @@
 #pragma comment(lib, "bass.lib")
 #pragma comment(lib, "bass_fx.lib")
 
-bool Playback::Init(const AddressesBase& const addrBase) noexcept
+bool Playback::Init(const AddressesBase& addrBase) noexcept
 {
     if (Playback::initStatus) return false;
 
     Logger::LogToFile("[sv:dbg:playback:init] : module initializing...");
-
-    Memory::FillWithNops(addrBase.GetBassSetConfigAddr(), 8);
 
     try
     {
@@ -37,6 +37,8 @@ bool Playback::Init(const AddressesBase& const addrBase) noexcept
         Playback::bassInitHook.reset();
         return false;
     }
+
+    Memory::FillWithNops(addrBase.GetBassSetConfigAddr(), 8);
 
     if (!PluginConfig::IsPlaybackLoaded())
     {
@@ -63,6 +65,19 @@ void Playback::Free() noexcept
     Logger::LogToFile("[sv:dbg:playback:free] : module released");
 
     Playback::initStatus = false;
+}
+
+void Playback::Tick() noexcept
+{
+    if (!Playback::loadStatus) return;
+
+    BASS_Set3DPosition(
+        reinterpret_cast<const BASS_3DVECTOR*>(&TheCamera.GetPosition()), nullptr,
+        reinterpret_cast<const BASS_3DVECTOR*>(&TheCamera.GetMatrix()->at),
+        reinterpret_cast<const BASS_3DVECTOR*>(&TheCamera.GetMatrix()->up)
+    );
+
+    BASS_Apply3D();
 }
 
 bool Playback::GetSoundEnable() noexcept
@@ -95,14 +110,11 @@ void Playback::SetSoundEnable(const bool soundEnable) noexcept
     else BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, 100 * PluginConfig::GetSoundVolume());
 }
 
-void Playback::SetSoundVolume(int soundVolume) noexcept
+void Playback::SetSoundVolume(const int soundVolume) noexcept
 {
     if (!Playback::loadStatus) return;
 
-    if (soundVolume < 0) soundVolume = 0;
-    if (soundVolume > 100) soundVolume = 100;
-
-    PluginConfig::SetSoundVolume(soundVolume);
+    PluginConfig::SetSoundVolume(std::clamp(soundVolume, 0, 100));
 
     if (PluginConfig::GetSoundEnable())
     {
@@ -118,26 +130,33 @@ void Playback::SetSoundBalancer(const bool soundBalancer) noexcept
 
     PluginConfig::SetSoundBalancer(soundBalancer);
 
-    if (PluginConfig::GetSoundBalancer() && !balancerFxHandle)
+    if (PluginConfig::GetSoundBalancer() && balancerFxHandle == NULL)
     {
-        BASS_BFX_COMPRESSOR2 balancerParameters {};
+        balancerFxHandle = BASS_ChannelSetFX(Playback::deviceOutputChannel, BASS_FX_BFX_COMPRESSOR2, 0);
 
-        balancerParameters.lChannel = BASS_BFX_CHANALL;
-        balancerParameters.fGain = 10;
-        balancerParameters.fAttack = 0.01f;
-        balancerParameters.fRelease = 0.01f;
-        balancerParameters.fThreshold = -40;
-        balancerParameters.fRatio = 12;
-
-        if (!(balancerFxHandle = BASS_ChannelSetFX(Playback::deviceOutputChannel, BASS_FX_BFX_COMPRESSOR2, 1)))
+        if (balancerFxHandle == NULL)
         {
             Logger::LogToFile("[sv:err:playback:setsoundbalancer] : failed to set balancer effect (code:%d)", BASS_ErrorGetCode());
             return PluginConfig::SetSoundBalancer(false);
         }
 
-        BASS_FXSetParameters(balancerFxHandle, &balancerParameters);
+        BASS_BFX_COMPRESSOR2 balancerParameters {};
+
+        balancerParameters.lChannel = BASS_BFX_CHANALL;
+        balancerParameters.fGain = 10.f;
+        balancerParameters.fAttack = 0.01f;
+        balancerParameters.fRelease = 0.01f;
+        balancerParameters.fThreshold = -40.f;
+        balancerParameters.fRatio = 12.f;
+
+        if (BASS_FXSetParameters(balancerFxHandle, &balancerParameters) == FALSE)
+        {
+            Logger::LogToFile("[sv:err:playback:setsoundbalancer] : failed to set parameters (code:%d)", BASS_ErrorGetCode());
+            BASS_ChannelRemoveFX(Playback::deviceOutputChannel, balancerFxHandle);
+            balancerFxHandle = NULL; PluginConfig::SetSoundBalancer(false);
+        }
     }
-    else if (!PluginConfig::GetSoundBalancer() && balancerFxHandle)
+    else if (!PluginConfig::GetSoundBalancer() && balancerFxHandle != NULL)
     {
         BASS_ChannelRemoveFX(Playback::deviceOutputChannel, balancerFxHandle);
         balancerFxHandle = NULL;
@@ -152,24 +171,32 @@ void Playback::SetSoundFilter(const bool soundFilter) noexcept
 
     PluginConfig::SetSoundFilter(soundFilter);
 
-    if (PluginConfig::GetSoundFilter() && !filterFxHandle)
+    if (PluginConfig::GetSoundFilter() && filterFxHandle == NULL)
     {
-        BASS_BFX_BQF parameqParameters {};
+        filterFxHandle = BASS_ChannelSetFX(Playback::deviceOutputChannel, BASS_FX_BFX_BQF, 0);
 
-        parameqParameters.lFilter = BASS_BFX_BQF_HIGHSHELF;
-        parameqParameters.lChannel = BASS_BFX_CHANALL;
-        parameqParameters.fCenter = 100;
-        parameqParameters.fQ = 0.7f;
-
-        if (!(filterFxHandle = BASS_ChannelSetFX(Playback::deviceOutputChannel, BASS_FX_BFX_BQF, 1)))
+        if (filterFxHandle == NULL)
         {
             Logger::LogToFile("[sv:err:playback:setsoundfilter] : failed to set filter effect (code:%d)", BASS_ErrorGetCode());
             return PluginConfig::SetSoundFilter(false);
         }
 
-        BASS_FXSetParameters(filterFxHandle, &parameqParameters);
+        BASS_BFX_BQF parameqParameters {};
+
+        parameqParameters.lChannel = BASS_BFX_CHANALL;
+        parameqParameters.lFilter = BASS_BFX_BQF_LOWPASS;
+        parameqParameters.fCenter = 3400.f;
+        parameqParameters.fBandwidth = 0;
+        parameqParameters.fQ = 0.707f;
+
+        if (BASS_FXSetParameters(filterFxHandle, &parameqParameters) == FALSE)
+        {
+            Logger::LogToFile("[sv:err:playback:setsoundfilter] : failed to set parameters (code:%d)", BASS_ErrorGetCode());
+            BASS_ChannelRemoveFX(Playback::deviceOutputChannel, filterFxHandle);
+            filterFxHandle = NULL; PluginConfig::SetSoundFilter(false);
+        }
     }
-    else if (!PluginConfig::GetSoundFilter() && filterFxHandle)
+    else if (!PluginConfig::GetSoundFilter() && filterFxHandle != NULL)
     {
         BASS_ChannelRemoveFX(Playback::deviceOutputChannel, filterFxHandle);
         filterFxHandle = NULL;
@@ -192,19 +219,6 @@ void Playback::ResetConfigs() noexcept
     PluginConfig::SetSoundFilter(PluginConfig::kDefValSoundFilter);
 }
 
-void Playback::Update() noexcept
-{
-    if (!Playback::loadStatus) return;
-
-    BASS_Set3DPosition(
-        reinterpret_cast<const BASS_3DVECTOR*>(&TheCamera.GetPosition()), nullptr,
-        reinterpret_cast<const BASS_3DVECTOR*>(&TheCamera.GetMatrix()->at),
-        reinterpret_cast<const BASS_3DVECTOR*>(&TheCamera.GetMatrix()->up)
-    );
-
-    BASS_Apply3D();
-}
-
 BOOL WINAPI Playback::BassInitHookFunc(const int device, const DWORD freq, const DWORD flags,
                                        const HWND win, const GUID* const dsguid) noexcept
 {
@@ -225,28 +239,27 @@ BOOL WINAPI Playback::BassInitHookFunc(const int device, const DWORD freq, const
         "freq:%u, flags:0x%x, win:0x%x, dsguid:0x%x)...", device, SV::kFrequency, BASS_DEVICE_MONO |
                                                           BASS_DEVICE_3D | flags, win, dsguid);
 
-    if (!BASS_Init(device, SV::kFrequency, BASS_DEVICE_MONO | BASS_DEVICE_3D | flags, win, dsguid))
+    if (BASS_Init(device, SV::kFrequency, BASS_DEVICE_MONO | BASS_DEVICE_3D | flags, win, dsguid) == FALSE)
     {
-        Logger::LogToFile("[sv:err:playback:bassinithook] : failed to init "
-            "bass library (code:%d)", BASS_ErrorGetCode());
+        Logger::LogToFile("[sv:err:playback:bassinithook] : failed to init bass library (code:%d)", BASS_ErrorGetCode());
         return FALSE;
     }
 
     if (HIWORD(BASS_FX_GetVersion()) != BASSVERSION)
     {
-        Logger::LogToFile("[sv:err:playback:init] : failed to check version "
-            "bassfx library (code:%d)", BASS_ErrorGetCode());
+        Logger::LogToFile("[sv:err:playback:init] : failed to check version bassfx library (code:%d)", BASS_ErrorGetCode());
         return FALSE;
     }
 
-    if (!(Playback::deviceOutputChannel = BASS_StreamCreate(0, 0, NULL, STREAMPROC_DEVICE, nullptr)))
+    Playback::deviceOutputChannel = BASS_StreamCreate(0, 0, NULL, STREAMPROC_DEVICE, nullptr);
+
+    if (Playback::deviceOutputChannel == NULL)
     {
-        Logger::LogToFile("[sv:err:playback:init] : failed to create device "
-            "output channel (code:%d)", BASS_ErrorGetCode());
+        Logger::LogToFile("[sv:err:playback:init] : failed to create device output channel (code:%d)", BASS_ErrorGetCode());
         return FALSE;
     }
 
-    BASS_Set3DFactors(1, 1, 0);
+    BASS_Set3DFactors(1.f, 1.f, 0.f);
     BASS_Set3DPosition(&kZeroVector, &kZeroVector, &kZeroVector, &kZeroVector);
     BASS_Apply3D();
 

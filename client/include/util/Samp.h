@@ -9,7 +9,9 @@
 
 #pragma once
 
+#include <cstdint>
 #include <functional>
+#include <vector>
 
 #include <d3d9.h>
 
@@ -29,14 +31,12 @@ class Samp {
 
 private:
 
-    using InitHandlerType = std::function<void()>;
-    using ExitHandlerType = std::function<void()>;
+    using LoadCallback = std::function<void()>;
+    using ExitCallback = std::function<void()>;
 
 public:
 
-    static bool Init(const AddressesBase& addrBase,
-                     InitHandlerType initHandler,
-                     ExitHandlerType exitHandler) noexcept;
+    static bool Init(const AddressesBase& addrBase) noexcept;
     static bool IsInited() noexcept;
     static bool IsLoaded() noexcept;
     static void Free() noexcept;
@@ -45,18 +45,26 @@ public:
     static void AddMessageToChat(D3DCOLOR color, const char* message) noexcept;
     static void ToggleSampCursor(int mode) noexcept;
 
+public:
+
+    static std::size_t AddLoadCallback(LoadCallback callback) noexcept;
+    static std::size_t AddExitCallback(ExitCallback callback) noexcept;
+
+    static void RemoveLoadCallback(std::size_t callback) noexcept;
+    static void RemoveExitCallback(std::size_t callback) noexcept;
+
 private:
 
-    static void HookFuncSampInit() noexcept;
-    static void HookFuncSampFree() noexcept;
+    static void HookSampInit() noexcept;
+    static void HookSampFree() noexcept;
 
 private:
 
     static bool initStatus;
     static bool loadStatus;
 
-    static InitHandlerType initHandler;
-    static ExitHandlerType exitHandler;
+    static std::vector<LoadCallback> loadCallbacks;
+    static std::vector<ExitCallback> exitCallbacks;
 
     static Memory::JumpHookPtr hookSampInit;
     static Memory::JumpHookPtr hookSampFree;

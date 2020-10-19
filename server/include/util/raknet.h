@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <functional>
 #include <shared_mutex>
+#include <vector>
 #include <array>
 
 #include <MPMCQueue.h>
@@ -31,16 +32,15 @@ class RakNet {
     RakNet& operator=(const RakNet&) = delete;
     RakNet& operator=(RakNet&&) = delete;
 
-    using ConnectHandlerType = std::function<void(uint16_t, RPCParameters*)>;
-    using PacketHandlerType = std::function<bool(uint16_t, Packet*)>;
-    using DisconnectHandlerType = std::function<void(uint16_t)>;
+private:
+
+    using ConnectCallback = std::function<void(uint16_t, RPCParameters&)>;
+    using PacketCallback = std::function<bool(uint16_t, Packet&)>;
+    using DisconnectCallback = std::function<void(uint16_t)>;
 
 public:
 
-    static bool Init(const void* serverBaseAddr,
-                     ConnectHandlerType connectHandler,
-                     DisconnectHandlerType disconnectHandler,
-                     PacketHandlerType packetHandler);
+    static bool Init(const void* serverBaseAddr) noexcept;
     static void Free() noexcept;
 
     static bool IsLoaded() noexcept;
@@ -49,6 +49,13 @@ public:
     static bool SendRPC(uint8_t rpcId, uint16_t playerId, const void* dataPtr, int dataSize);
     static bool SendPacket(uint8_t packetId, uint16_t playerId, const void* dataPtr, int dataSize);
     static bool KickPlayer(uint16_t playerId) noexcept;
+
+    static std::size_t AddConnectCallback(ConnectCallback callback) noexcept;
+    static std::size_t AddPacketCallback(PacketCallback callback) noexcept;
+    static std::size_t AddDisconnectCallback(DisconnectCallback callback) noexcept;
+    static void RemoveConnectCallback(std::size_t callback) noexcept;
+    static void RemovePacketCallback(std::size_t callback) noexcept;
+    static void RemoveDisconnectCallback(std::size_t callback) noexcept;
 
 private:
 
@@ -65,16 +72,16 @@ private:
 
     static void* pRakServerInterface;
 
-    static ConnectHandlerType connectHandler;
-    static DisconnectHandlerType disconnectHandler;
-    static PacketHandlerType packetHandler;
+    static std::vector<ConnectCallback> connectCallbacks;
+    static std::vector<PacketCallback> packetCallbacks;
+    static std::vector<DisconnectCallback> disconnectCallbacks;
 
     static std::array<bool, MAX_PLAYERS> playerStatus;
 
     static RPCFunction origConnectHandler;
 
-    static Memory::JumpHookPtr disconnectHook;
-    static Memory::JumpHookPtr getRakServerInterfaceHook;
+    static Memory::JumpHookPtr hookDisconnect;
+    static Memory::JumpHookPtr hookGetRakServerInterface;
 
 private:
 
@@ -88,11 +95,11 @@ private:
 
     private:
 
-        using BitStreamPtr = std::shared_ptr<BitStream>;
+        using BitStreamPtr = std::unique_ptr<BitStream>;
 
     public:
 
-        explicit SendRpcInfo(BitStreamPtr&& bitStream, uint16_t playerId, uint8_t rpcId) noexcept
+        explicit SendRpcInfo(BitStreamPtr bitStream, uint16_t playerId, uint8_t rpcId) noexcept
             : bitStream(std::move(bitStream)), playerId(playerId), rpcId(rpcId) {}
 
         ~SendRpcInfo() noexcept = default;
@@ -115,11 +122,11 @@ private:
 
     private:
 
-        using BitStreamPtr = std::shared_ptr<BitStream>;
+        using BitStreamPtr = std::unique_ptr<BitStream>;
 
     public:
 
-        explicit SendPacketInfo(BitStreamPtr&& bitStream, uint16_t playerId) noexcept
+        explicit SendPacketInfo(BitStreamPtr bitStream, uint16_t playerId) noexcept
             : bitStream(std::move(bitStream)), playerId(playerId) {}
 
         ~SendPacketInfo() noexcept = default;

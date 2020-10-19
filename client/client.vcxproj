@@ -9,6 +9,8 @@
   <ItemGroup>
     <ClInclude Include="BlackList.h" />
     <ClInclude Include="Channel.h" />
+    <ClInclude Include="Effect.h" />
+    <ClInclude Include="include\util\Timer.h" />
     <ClInclude Include="Network.h" />
     <ClInclude Include="ControlPacket.h" />
     <ClInclude Include="GlobalStream.h" />
@@ -79,12 +81,15 @@
     <ClInclude Include="include\samp\SpecialAction.h" />
     <ClInclude Include="include\samp\VehicleSelection.h" />
     <ClInclude Include="MicroIcon.h" />
+    <ClInclude Include="Parameter.h" />
     <ClInclude Include="Plugin.h" />
     <ClInclude Include="PluginConfig.h" />
     <ClInclude Include="PluginMenu.h" />
     <ClInclude Include="Playback.h" />
     <ClInclude Include="Record.h" />
     <ClInclude Include="resources\resource.h" />
+    <ClInclude Include="SetController.h" />
+    <ClInclude Include="SlideController.h" />
     <ClInclude Include="Stream.h" />
     <ClInclude Include="StreamAtObject.h" />
     <ClInclude Include="StreamAtPlayer.h" />
@@ -500,7 +505,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BlackList.cpp" />
+    <ClCompile Include="Channel.cpp" />
     <ClCompile Include="ControlPacket.cpp" />
+    <ClCompile Include="Effect.cpp" />
+    <ClCompile Include="GlobalStream.cpp" />
     <ClCompile Include="include\samp\AimStuff.cpp" />
     <ClCompile Include="include\samp\CActor.cpp" />
     <ClCompile Include="include\samp\CActorPool.cpp" />
@@ -561,8 +569,11 @@
     <ClCompile Include="include\samp\Settings.cpp" />
     <ClCompile Include="include\samp\VehicleSelection.cpp" />
     <ClCompile Include="include\util\AddressesBase.cpp" />
+    <ClCompile Include="include\util\Timer.cpp" />
+    <ClCompile Include="LocalStream.cpp" />
     <ClCompile Include="MicroIcon.cpp" />
     <ClCompile Include="Network.cpp" />
+    <ClCompile Include="Parameter.cpp" />
     <ClCompile Include="Plugin.cpp" />
     <ClCompile Include="PluginConfig.cpp" />
     <ClCompile Include="PluginMenu.cpp" />
@@ -853,7 +864,15 @@
     <ClCompile Include="include\util\BlurEffect.cpp" />
     <ClCompile Include="include\util\Texture.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SetController.cpp" />
+    <ClCompile Include="SlideController.cpp" />
     <ClCompile Include="SpeakerList.cpp" />
+    <ClCompile Include="Stream.cpp" />
+    <ClCompile Include="StreamAtObject.cpp" />
+    <ClCompile Include="StreamAtPlayer.cpp" />
+    <ClCompile Include="StreamAtPoint.cpp" />
+    <ClCompile Include="StreamAtVehicle.cpp" />
+    <ClCompile Include="StreamInfo.cpp" />
     <ClCompile Include="VoicePacket.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -939,6 +958,7 @@
       <ImportLibrary />
       <ImageHasSafeExceptionHandlers>
       </ImageHasSafeExceptionHandlers>
+      <Version>3.1</Version>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>

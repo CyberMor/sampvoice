@@ -12,9 +12,12 @@
     <ClInclude Include="DynamicLocalStreamAtPoint.h" />
     <ClInclude Include="DynamicLocalStreamAtVehicle.h" />
     <ClInclude Include="DynamicStream.h" />
+    <ClInclude Include="Effect.h" />
     <ClInclude Include="GlobalStream.h" />
     <ClInclude Include="include\MPMCQueue.h" />
     <ClInclude Include="include\SPSCQueue.h" />
+    <ClInclude Include="include\util\timer.h" />
+    <ClInclude Include="Parameter.h" />
     <ClInclude Include="PlayerInfo.h" />
     <ClInclude Include="PlayerStore.h" />
     <ClInclude Include="PointStream.h" />
@@ -53,9 +56,12 @@
     <ClCompile Include="DynamicLocalStreamAtPoint.cpp" />
     <ClCompile Include="DynamicLocalStreamAtVehicle.cpp" />
     <ClCompile Include="DynamicStream.cpp" />
+    <ClCompile Include="Effect.cpp" />
     <ClCompile Include="GlobalStream.cpp" />
+    <ClCompile Include="include\util\timer.cpp" />
     <ClCompile Include="LocalStream.cpp" />
     <ClCompile Include="Network.cpp" />
+    <ClCompile Include="Parameter.cpp" />
     <ClCompile Include="Pawn.cpp" />
     <ClCompile Include="PlayerStore.cpp" />
     <ClCompile Include="PointStream.cpp" />

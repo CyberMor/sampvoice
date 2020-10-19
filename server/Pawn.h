@@ -20,6 +20,7 @@
 #include "Stream.h"
 #include "LocalStream.h"
 #include "PointStream.h"
+#include "Effect.h"
 
 class PawnInterface {
 public:
@@ -152,7 +153,117 @@ public:
 
     // --------------------------------------------------------------------------
 
+    virtual void    SvStreamParameterSet           (Stream* stream,
+                                                    uint8_t parameter,
+                                                    float value) = 0;
+
+    virtual void    SvStreamParameterReset         (Stream* stream,
+                                                    uint8_t parameter) = 0;
+
+    virtual bool    SvStreamParameterHas           (Stream* stream,
+                                                    uint8_t parameter) = 0;
+
+    virtual float   SvStreamParameterGet           (Stream* stream,
+                                                    uint8_t parameter) = 0;
+
+    virtual void    SvStreamParameterSlideFromTo   (Stream* stream,
+                                                    uint8_t parameter,
+                                                    float startvalue,
+                                                    float endvalue,
+                                                    uint32_t time) = 0;
+
+    virtual void    SvStreamParameterSlideTo       (Stream* stream,
+                                                    uint8_t parameter,
+                                                    float endvalue,
+                                                    uint32_t time) = 0;
+
+    virtual void    SvStreamParameterSlide         (Stream* stream,
+                                                    uint8_t parameter,
+                                                    float deltavalue,
+                                                    uint32_t time) = 0;
+
+    // --------------------------------------------------------------------------
+
     virtual void    SvDeleteStream                 (Stream* stream) = 0;
+
+    // --------------------------------------------------------------------------
+
+    virtual Effect* SvEffectCreateChorus           (int priority,
+                                                    float wetdrymix,
+                                                    float depth,
+                                                    float feedback,
+                                                    float frequency,
+                                                    uint32_t waveform,
+                                                    float delay,
+                                                    uint32_t phase) = 0;
+
+    virtual Effect* SvEffectCreateCompressor       (int priority,
+                                                    float gain,
+                                                    float attack,
+                                                    float release,
+                                                    float threshold,
+                                                    float ratio,
+                                                    float predelay) = 0;
+
+    virtual Effect* SvEffectCreateDistortion       (int priority,
+                                                    float gain,
+                                                    float edge,
+                                                    float posteqcenterfrequency,
+                                                    float posteqbandwidth,
+                                                    float prelowpasscutoff) = 0;
+
+    virtual Effect* SvEffectCreateEcho             (int priority,
+                                                    float wetdrymix,
+                                                    float feedback,
+                                                    float leftdelay,
+                                                    float rightdelay,
+                                                    bool pandelay) = 0;
+
+    virtual Effect* SvEffectCreateFlanger          (int priority,
+                                                    float wetdrymix,
+                                                    float depth,
+                                                    float feedback,
+                                                    float frequency,
+                                                    uint32_t waveform,
+                                                    float delay,
+                                                    uint32_t phase) = 0;
+
+    virtual Effect* SvEffectCreateGargle           (int priority,
+                                                    uint32_t ratehz,
+                                                    uint32_t waveshape) = 0;
+
+    virtual Effect* SvEffectCreateI3dl2reverb      (int priority,
+                                                    int room,
+                                                    int roomhf,
+                                                    float roomrollofffactor,
+                                                    float decaytime,
+                                                    float decayhfratio,
+                                                    int reflections,
+                                                    float reflectionsdelay,
+                                                    int reverb,
+                                                    float reverbdelay,
+                                                    float diffusion,
+                                                    float density,
+                                                    float hfreference) = 0;
+
+    virtual Effect* SvEffectCreateParameq          (int priority,
+                                                    float center,
+                                                    float bandwidth,
+                                                    float gain) = 0;
+
+    virtual Effect* SvEffectCreateReverb           (int priority,
+                                                    float ingain,
+                                                    float reverbmix,
+                                                    float reverbtime,
+                                                    float highfreqrtratio) = 0;
+
+    virtual void    SvEffectAttachStream           (Effect* effect,
+                                                    Stream* stream) = 0;
+
+    virtual void    SvEffectDetachStream           (Effect* effect,
+                                                    Stream* stream) = 0;
+
+    virtual void    SvEffectDelete                 (Effect* effect) = 0;
 
 };
 
@@ -203,13 +314,32 @@ private:
     static cell AMX_NATIVE_CALL n_SvHasSpeakerInStream(AMX* amx, cell* params);
     static cell AMX_NATIVE_CALL n_SvDetachSpeakerFromStream(AMX* amx, cell* params);
     static cell AMX_NATIVE_CALL n_SvDetachAllSpeakersFromStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvStreamParameterSet(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvStreamParameterReset(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvStreamParameterHas(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvStreamParameterGet(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvStreamParameterSlideFromTo(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvStreamParameterSlideTo(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvStreamParameterSlide(AMX* amx, cell* params);
     static cell AMX_NATIVE_CALL n_SvDeleteStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvEffectCreateChorus(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvEffectCreateCompressor(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvEffectCreateDistortion(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvEffectCreateEcho(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvEffectCreateFlanger(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvEffectCreateGargle(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvEffectCreateI3dl2reverb(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvEffectCreateParameq(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvEffectCreateReverb(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvEffectAttachStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvEffectDetachStream(AMX* amx, cell* params);
+    static cell AMX_NATIVE_CALL n_SvEffectDelete(AMX* amx, cell* params);
 
 private:
 
-    static PawnInterfacePtr pInterface;
-
     static bool debugStatus;
+
+    static PawnInterfacePtr pInterface;
 
 private:
 

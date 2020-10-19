@@ -9,23 +9,26 @@
 
 #pragma once
 
-#include <mutex>
-#include <iostream>
 #include <ctime>
+#include <iostream>
+#include <algorithm>
+#include <mutex>
+#include <array>
 
 #include <d3d9.h>
 
 #include "Samp.h"
 
-#define kStringErrorColor "e65f39"
-#define kStringInfoColor "ffe0a5"
-#define kStringSuccessColor "6bbf17"
-#define kStringDebugColor "6bbaed"
+#define DefineColor(name, rgb) \
+constexpr auto k##name##Color = 0xff##rgb##u; \
+constexpr auto k##name##ColorStr = #rgb;
 
-constexpr DWORD kErrorColor = 0xffe65f39;
-constexpr DWORD kInfoColor = 0xffffe0a5;
-constexpr DWORD kSuccessColor = 0xff6bbf17;
-constexpr DWORD kDebugColor = 0xff6bbaed;
+DefineColor(Debug,   6bbaed);
+DefineColor(Success, 6bbf17);
+DefineColor(Error,   e65f39);
+DefineColor(Info,    ffe0a5);
+
+#undef DefineColor
 
 class Logger {
 
@@ -39,19 +42,21 @@ class Logger {
 public:
 
     static bool Init(const char* fileName) noexcept;
-    static void Free() noexcept;
+    static bool Free() noexcept;
 
     template<class... ARGS>
-    static bool LogToFile(const char* const message, const ARGS... args) noexcept
+    static bool LogToFile(const char* message, ARGS... args) noexcept
     {
         const std::scoped_lock lock { Logger::logFileMutex };
 
-        if (!Logger::logFile) return false;
+        if (Logger::logFile == nullptr)
+            return false;
 
         const auto cTime = std::time(nullptr);
         const auto timeOfDay = std::localtime(&cTime);
 
-        if (!timeOfDay) return false;
+        if (timeOfDay == nullptr)
+            return false;
 
         std::fprintf(Logger::logFile, "[%.2d:%.2d:%.2d] : ",
             timeOfDay->tm_hour, timeOfDay->tm_min, timeOfDay->tm_sec);
@@ -63,13 +68,14 @@ public:
     }
 
     template<class... ARGS>
-    static bool LogToChat(const D3DCOLOR color, const char* const message, const ARGS... args) noexcept
+    static bool LogToChat(D3DCOLOR color, const char* message, ARGS... args) noexcept
     {
-        constexpr auto MaxLengthMessageToChat = 144;
+        constexpr auto kMaxLengthMessage = 144;
 
-        char messageBuffer[MaxLengthMessageToChat];
+        std::array<char, kMaxLengthMessage> messageBuffer;
 
-        if (_snprintf(messageBuffer, sizeof(messageBuffer), message, args...) == -1)
+        if (const auto length = std::snprintf(messageBuffer.data(), messageBuffer.size(), message, args...);
+            length != std::clamp(length, 0, static_cast<int>(messageBuffer.size() - 1)))
         {
             Logger::LogToFile("[inf:logger:logtochat] : message is too long to display in chat");
             return false;
@@ -77,14 +83,14 @@ public:
 
         {
             const std::scoped_lock lock { Logger::logChatMutex };
-            Samp::AddMessageToChat(color, messageBuffer);
+            Samp::AddMessageToChat(color, messageBuffer.data());
         }
 
         return true;
     }
 
     template<class... ARGS>
-    static inline void Log(const D3DCOLOR color, const char* const message, const ARGS... args) noexcept
+    static inline void Log(D3DCOLOR color, const char* message, ARGS... args) noexcept
     {
         Logger::LogToFile(message, args...);
         Logger::LogToChat(color, message, args...);
@@ -92,7 +98,7 @@ public:
 
 private:
 
-    static FILE* logFile;
+    static std::FILE* logFile;
 
     static std::mutex logFileMutex;
     static std::mutex logChatMutex;

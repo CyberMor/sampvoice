@@ -14,8 +14,6 @@
 
 #include <d3d9.h>
 
-#include <audio/bass.h>
-
 #include "Stream.h"
 #include "StreamInfo.h"
 #include "Channel.h"
@@ -28,43 +26,27 @@ class LocalStream : public Stream {
     LocalStream& operator=(const LocalStream&) = delete;
     LocalStream& operator=(LocalStream&&) = delete;
 
-public:
+protected:
 
-    explicit LocalStream(const DWORD streamFlags, PlayHandlerType&& playHandler, StopHandlerType&& stopHandler,
-                         const StreamType type, const std::string& name, const D3DCOLOR color, const float distance)
-        : Stream(streamFlags, std::move(playHandler), std::move(stopHandler), type, name, color)
-        , distance(distance) {}
+    explicit LocalStream(StreamType type, D3DCOLOR color,
+                         std::string name, float distance) noexcept;
+
+public:
 
     virtual ~LocalStream() noexcept = default;
 
 public:
 
-    void UpdateDistance(const float distance) noexcept
-    {
-        this->distance = distance;
-
-        for (const auto& iChan : this->channels)
-        {
-            BASS_ChannelSet3DAttributes(iChan->handle, BASS_3DMODE_NORMAL,
-                this->distance * 0.1f, this->distance, -1, -1, -1);
-        }
-    }
+    void SetDistance(float distance) noexcept;
 
 protected:
 
-    virtual void ChannelCreationHandler(const Channel& channel) noexcept override
-    {
-        this->Stream::ChannelCreationHandler(channel);
+    void OnChannelCreate(const Channel& channel) noexcept override;
 
-        BASS_ChannelSet3DAttributes(channel.handle, BASS_3DMODE_NORMAL,
-            this->distance * 0.1f, this->distance, -1, -1, -1);
-    }
+private:
 
-protected:
-
-    float distance { 0.f };
+    float distance;
 
 };
 
-using LocalStreamPtr = std::shared_ptr<LocalStream>;
-#define MakeLocalStream std::make_shared<LocalStream>
+using LocalStreamPtr = std::unique_ptr<LocalStream>;

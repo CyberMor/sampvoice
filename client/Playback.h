@@ -27,6 +27,8 @@ public:
     static bool Init(const AddressesBase& addrBase) noexcept;
     static void Free() noexcept;
 
+    static void Tick() noexcept;
+
     static bool GetSoundEnable() noexcept;
     static int GetSoundVolume() noexcept;
     static bool GetSoundBalancer() noexcept;
@@ -39,8 +41,6 @@ public:
 
     static void SyncConfigs() noexcept;
     static void ResetConfigs() noexcept;
-
-    static void Update() noexcept;
 
 private:
 

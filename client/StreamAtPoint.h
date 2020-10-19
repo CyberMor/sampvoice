@@ -14,10 +14,8 @@
 
 #include <d3d9.h>
 
-#include <audio/bass.h>
 #include <game/CVector.h>
 
-#include "StreamInfo.h"
 #include "LocalStream.h"
 #include "Channel.h"
 
@@ -31,49 +29,24 @@ class StreamAtPoint : public LocalStream {
 
 public:
 
-    explicit StreamAtPoint(PlayHandlerType&& playHandler, StopHandlerType&& stopHandler,
-                           const std::string& name, const D3DCOLOR color,
-                           const CVector& position, const float distance)
-        : LocalStream(BASS_SAMPLE_3D | BASS_SAMPLE_MUTEMAX,
-                      std::move(playHandler), std::move(stopHandler),
-                      StreamType::LocalStreamAtPoint,
-                      name, color, distance)
-        , position(position) {}
+    explicit StreamAtPoint(D3DCOLOR color, std::string name,
+                           float distance, const CVector& position) noexcept;
 
     ~StreamAtPoint() noexcept = default;
 
 public:
 
-    void UpdatePosition(const CVector& position) noexcept
-    {
-        this->position = position;
-
-        for (const auto& iChan : this->channels)
-        {
-            BASS_ChannelSet3DPosition(iChan->handle,
-                reinterpret_cast<BASS_3DVECTOR*>(&this->position),
-                nullptr, nullptr);
-        }
-    }
+    void SetPosition(const CVector& position) noexcept;
 
 private:
 
-    void ChannelCreationHandler(const Channel& channel) noexcept override
-    {
-        static const BASS_3DVECTOR kZeroVector { 0, 0, 0 };
-
-        this->LocalStream::ChannelCreationHandler(channel);
-
-        BASS_ChannelSet3DPosition(channel.handle,
-            reinterpret_cast<BASS_3DVECTOR*>(&this->position),
-            &kZeroVector, &kZeroVector);
-    }
+    void OnChannelCreate(const Channel& channel) noexcept override;
 
 private:
 
-    CVector position { 0, 0, 0 };
+    CVector position;
 
 };
 
-using StreamAtPointPtr = std::shared_ptr<StreamAtPoint>;
-#define MakeStreamAtPoint std::make_shared<StreamAtPoint>
+using StreamAtPointPtr = std::unique_ptr<StreamAtPoint>;
+#define MakeStreamAtPoint std::make_unique<StreamAtPoint>

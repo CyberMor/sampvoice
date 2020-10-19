@@ -14,11 +14,6 @@
 
 #include <d3d9.h>
 
-#include <audio/bass.h>
-#include <samp/CNetGame.h>
-#include <game/CPed.h>
-
-#include "StreamInfo.h"
 #include "LocalStream.h"
 #include "Channel.h"
 
@@ -32,88 +27,24 @@ class StreamAtPlayer : public LocalStream {
 
 public:
 
-    explicit StreamAtPlayer(PlayHandlerType&& playHandler, StopHandlerType&& stopHandler,
-                            const std::string& name, const D3DCOLOR color,
-                            const WORD playerId, const float distance)
-        : LocalStream(BASS_SAMPLE_3D | BASS_SAMPLE_MUTEMAX,
-                      std::move(playHandler), std::move(stopHandler),
-                      StreamType::LocalStreamAtPlayer,
-                      name, color, distance)
-        , playerId(playerId) {}
+    explicit StreamAtPlayer(D3DCOLOR color, std::string name,
+                            float distance, WORD playerId) noexcept;
 
     ~StreamAtPlayer() noexcept = default;
 
 public:
 
-    void Tick() noexcept override
-    {
-        this->LocalStream::Tick();
-
-        const auto pNetGame = SAMP::pNetGame();
-        if (!pNetGame) return;
-
-        const auto pPlayerPool = pNetGame->GetPlayerPool();
-        if (!pPlayerPool) return;
-
-        const auto pPlayer = pPlayerPool->GetPlayer(this->playerId);
-        if (!pPlayer) return;
-
-        const auto pPlayerPed = pPlayer->m_pPed;
-        if (!pPlayerPed) return;
-
-        const auto pPlayerGamePed = pPlayerPed->m_pGamePed;
-        if (!pPlayerGamePed) return;
-
-        const auto pPlayerMatrix = pPlayerGamePed->GetMatrix();
-        if (!pPlayerMatrix) return;
-
-        for (const auto& iChan : this->channels)
-        {
-            if (iChan->speaker != SV::kNonePlayer)
-            {
-                BASS_ChannelSet3DPosition(iChan->handle,
-                    reinterpret_cast<BASS_3DVECTOR*>(&pPlayerMatrix->pos),
-                    nullptr, nullptr);
-            }
-        }
-    }
+    void Tick() noexcept override;
 
 private:
 
-    void ChannelCreationHandler(const Channel& channel) noexcept override
-    {
-        static const BASS_3DVECTOR kZeroVector { 0, 0, 0 };
-
-        this->LocalStream::ChannelCreationHandler(channel);
-
-        const auto pNetGame = SAMP::pNetGame();
-        if (!pNetGame) return;
-
-        const auto pPlayerPool = pNetGame->GetPlayerPool();
-        if (!pPlayerPool) return;
-
-        const auto pPlayer = pPlayerPool->GetPlayer(this->playerId);
-        if (!pPlayer) return;
-
-        const auto pPlayerPed = pPlayer->m_pPed;
-        if (!pPlayerPed) return;
-
-        const auto pPlayerGamePed = pPlayerPed->m_pGamePed;
-        if (!pPlayerGamePed) return;
-
-        const auto pPlayerMatrix = pPlayerGamePed->GetMatrix();
-        if (!pPlayerMatrix) return;
-
-        BASS_ChannelSet3DPosition(channel.handle,
-            reinterpret_cast<BASS_3DVECTOR*>(&pPlayerMatrix->pos),
-            &kZeroVector, &kZeroVector);
-    }
+    void OnChannelCreate(const Channel& channel) noexcept override;
 
 private:
 
-    const WORD playerId { NULL };
+    const WORD playerId;
 
 };
 
-using StreamAtPlayerPtr = std::shared_ptr<StreamAtPlayer>;
-#define MakeStreamAtPlayer std::make_shared<StreamAtPlayer>
+using StreamAtPlayerPtr = std::unique_ptr<StreamAtPlayer>;
+#define MakeStreamAtPlayer std::make_unique<StreamAtPlayer>

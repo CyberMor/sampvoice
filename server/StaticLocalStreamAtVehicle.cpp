@@ -9,7 +9,7 @@
 
 #include "StaticLocalStreamAtVehicle.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "ControlPacket.h"
 #include "Header.h"

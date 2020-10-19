@@ -15,13 +15,38 @@
 #include <imgui/imgui_impl_dx9.h>
 #include <imgui/imgui_impl_win32.h>
 
-bool ImGuiUtil::Init(IDirect3DDevice9* const pDevice,
-                     D3DPRESENT_PARAMETERS* const pParameters) noexcept
-{
-    assert(pDevice);
-    assert(pParameters);
+#include "Memory.hpp"
+#include "Logger.h"
 
-    if (ImGuiUtil::initStatus) return false;
+bool ImGuiUtil::Init(IDirect3DDevice9* const pDevice) noexcept
+{
+    assert(pDevice != nullptr);
+
+    if (ImGuiUtil::initStatus)
+        return false;
+
+    HWND hDeviceWindow { nullptr };
+    {
+        IDirect3DSwapChain9* pSwapChain { nullptr };
+
+        if (const auto hResult = pDevice->GetSwapChain(0, &pSwapChain); FAILED(hResult))
+        {
+            Logger::LogToFile("[err:imgui:init] : failed to get swap chain (code:%ld)", hResult);
+            return false;
+        }
+
+        const Memory::ScopeExit scope { [&pSwapChain] { pSwapChain->Release(); } };
+
+        D3DPRESENT_PARAMETERS dParameters {};
+
+        if (const auto hResult = pSwapChain->GetPresentParameters(&dParameters); FAILED(hResult))
+        {
+            Logger::LogToFile("[err:imgui:init] : failed to get present parameters (code:%ld)", hResult);
+            return false;
+        }
+
+        hDeviceWindow = dParameters.hDeviceWindow;
+    }
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -29,11 +54,10 @@ bool ImGuiUtil::Init(IDirect3DDevice9* const pDevice,
     ImGui::GetIO().IniFilename = NULL;
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-    ImGuiUtil::win32loadStatus = ImGui_ImplWin32_Init(pParameters->hDeviceWindow);
+    ImGuiUtil::win32loadStatus = ImGui_ImplWin32_Init(hDeviceWindow);
     ImGuiUtil::dx9loadStatus = ImGui_ImplDX9_Init(pDevice);
 
     ImGuiUtil::renderStatus = false;
-
     ImGuiUtil::initStatus = true;
 
     return true;
@@ -46,29 +70,37 @@ bool ImGuiUtil::IsInited() noexcept
 
 void ImGuiUtil::Free() noexcept
 {
-    ImGuiUtil::RenderEnd();
+    ImGuiUtil::EndRender();
 
-    if (!ImGuiUtil::initStatus) return;
-
-    if (ImGuiUtil::dx9loadStatus) ImGui_ImplDX9_Shutdown();
-    if (ImGuiUtil::win32loadStatus) ImGui_ImplWin32_Shutdown();
+    if (ImGuiUtil::dx9loadStatus)
+        ImGui_ImplDX9_Shutdown();
 
     ImGuiUtil::dx9loadStatus = false;
+
+    if (ImGuiUtil::win32loadStatus)
+        ImGui_ImplWin32_Shutdown();
+
     ImGuiUtil::win32loadStatus = false;
 
-    ImGui::DestroyContext();
+    if (ImGuiUtil::initStatus)
+        ImGui::DestroyContext();
 
     ImGuiUtil::initStatus = false;
 }
 
-bool ImGuiUtil::RenderBegin() noexcept
+bool ImGuiUtil::BeginRender() noexcept
 {
-    if (!ImGuiUtil::initStatus) return false;
+    if (!ImGuiUtil::initStatus)
+        return false;
 
-    if (ImGuiUtil::renderStatus) return false;
+    if (ImGuiUtil::renderStatus)
+        return false;
 
-    if (ImGuiUtil::dx9loadStatus) ImGui_ImplDX9_NewFrame();
-    if (ImGuiUtil::win32loadStatus) ImGui_ImplWin32_NewFrame();
+    if (ImGuiUtil::dx9loadStatus)
+        ImGui_ImplDX9_NewFrame();
+
+    if (ImGuiUtil::win32loadStatus)
+        ImGui_ImplWin32_NewFrame();
 
     ImGui::NewFrame();
 
@@ -82,11 +114,13 @@ bool ImGuiUtil::IsRendering() noexcept
     return ImGuiUtil::renderStatus;
 }
 
-void ImGuiUtil::RenderEnd() noexcept
+void ImGuiUtil::EndRender() noexcept
 {
-    if (!ImGuiUtil::initStatus) return;
+    if (!ImGuiUtil::initStatus)
+        return;
 
-    if (!ImGuiUtil::renderStatus) return;
+    if (!ImGuiUtil::renderStatus)
+        return;
 
     ImGui::EndFrame();
     ImGui::Render();
@@ -99,19 +133,23 @@ void ImGuiUtil::RenderEnd() noexcept
     ImGuiUtil::renderStatus = false;
 }
 
-LRESULT ImGuiUtil::OnWndMessage(HWND hWnd, UINT uMsg,
-                                WPARAM wParam, LPARAM lParam) noexcept
+LRESULT ImGuiUtil::WindowProc(const HWND hWnd, const UINT uMsg,
+                              const WPARAM wParam, const LPARAM lParam) noexcept
 {
-    if (!ImGuiUtil::initStatus) return FALSE;
+    if (!ImGuiUtil::initStatus)
+        return FALSE;
 
-    if (!ImGuiUtil::win32loadStatus) return FALSE;
+    if (!ImGuiUtil::win32loadStatus)
+        return FALSE;
 
     if (uMsg == WM_CHAR)
     {
-        wchar_t wChar { NULL };
-        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED,
-            reinterpret_cast<LPCSTR>(&wParam), 1, &wChar, 1);
-        ImGui::GetIO().AddInputCharacter(wChar);
+        if (wchar_t wChar; MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED,
+            reinterpret_cast<LPCSTR>(&wParam), 1, &wChar, 1) == 1)
+        {
+            ImGui::GetIO().AddInputCharacter(wChar);
+        }
+
         return TRUE;
     }
 

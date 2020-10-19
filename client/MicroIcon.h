@@ -32,11 +32,24 @@ private:
 
 public:
 
-    static bool Init(IDirect3DDevice9* pDevice,
-                     const Resource& rPassiveIcon,
-                     const Resource& rActiveIcon,
-                     const Resource& rMutedIcon) noexcept;
+    static bool Init(IDirect3DDevice9* pDevice, const Resource& rPassiveIcon,
+        const Resource& rActiveIcon, const Resource& rMutedIcon) noexcept;
     static void Free() noexcept;
+
+    static void Show() noexcept;
+    static bool IsShowed() noexcept;
+    static void Hide() noexcept;
+
+    static void Render() noexcept;
+    static void Update() noexcept;
+
+    static void SetPassiveIcon() noexcept;
+    static void SetActiveIcon() noexcept;
+    static void SetMutedIcon() noexcept;
+
+    static void SwitchToPassiveIcon() noexcept;
+    static void SwitchToActiveIcon() noexcept;
+    static void SwitchToMutedIcon() noexcept;
 
     static int GetMicroIconPositionX() noexcept;
     static int GetMicroIconPositionY() noexcept;
@@ -54,25 +67,9 @@ public:
     static void ResetConfigs() noexcept;
     static void SyncConfigs() noexcept;
 
-    static void SetPassiveIcon() noexcept;
-    static void SetActiveIcon() noexcept;
-    static void SetMutedIcon() noexcept;
-
-    static void SwitchToPassiveIcon() noexcept;
-    static void SwitchToActiveIcon() noexcept;
-    static void SwitchToMutedIcon() noexcept;
-
-    static void Render() noexcept;
-    static void Update() noexcept;
-
-    static void Show() noexcept;
-    static bool IsShowed() noexcept;
-    static void Hide() noexcept;
-
 private:
 
     static bool initStatus;
-
     static bool showStatus;
 
     static int alphaLevelPassiveIcon;

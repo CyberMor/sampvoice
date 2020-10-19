@@ -13,18 +13,30 @@ bool Logger::Init(const char* const fileName) noexcept
 {
     const std::scoped_lock lock { Logger::logFileMutex };
 
-    return !Logger::logFile && (Logger::logFile = fopen(fileName, "wt"));
+    if (Logger::logFile != nullptr)
+        return false;
+
+    Logger::logFile = std::fopen(fileName, "wt");
+
+    if (Logger::logFile == nullptr)
+        return false;
+
+    return true;
 }
 
-void Logger::Free() noexcept
+bool Logger::Free() noexcept
 {
     const std::scoped_lock lock { Logger::logFileMutex };
 
-    fclose(Logger::logFile);
+    if (std::fclose(Logger::logFile) == EOF)
+        return false;
+
     Logger::logFile = nullptr;
+
+    return true;
 }
 
-FILE* Logger::logFile { nullptr };
+std::FILE* Logger::logFile { nullptr };
 
 std::mutex Logger::logFileMutex;
 std::mutex Logger::logChatMutex;

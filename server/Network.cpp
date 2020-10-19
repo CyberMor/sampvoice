@@ -44,33 +44,71 @@ static inline uint32_t MakeBytesFromBits(uint32_t bits) noexcept
     return (bits >> 3) + (bits & 7 ? 1 : 0);
 }
 
-bool Network::Init(const void* const serverBaseAddress,
-                   ConnectHandlerType connectHandler,
-                   PlayerInitHandlerType playerInitHandler,
-                   DisconnectHandlerType disconnectHandler)
+bool Network::Init(const void* const serverBaseAddress) noexcept
 {
-    if (!playerInitHandler) return false;
-
     if (Network::initStatus) return false;
 
     Logger::Log("[sv:dbg:network:init] : module initializing...");
 
-    if (!RakNet::Init(serverBaseAddress, Network::ConnectHandler,
-        Network::DisconnectHandler, Network::PacketHandler))
+    if (!RakNet::Init(serverBaseAddress))
     {
         Logger::Log("[sv:err:network:init] : failed to init raknet");
         return false;
     }
 
-    Network::connectHandler = std::move(connectHandler);
-    Network::playerInitHandler = std::move(playerInitHandler);
-    Network::disconnectHandler = std::move(disconnectHandler);
+    RakNet::AddConnectCallback(Network::ConnectHandler);
+    RakNet::AddPacketCallback(Network::PacketHandler);
+    RakNet::AddDisconnectCallback(Network::DisconnectHandler);
 
     Logger::Log("[sv:dbg:network:init] : module initialized");
 
     Network::initStatus = true;
 
     return true;
+}
+
+void Network::Free() noexcept
+{
+    if (!Network::initStatus) return;
+
+    Logger::Log("[sv:dbg:network:free] : module releasing...");
+
+    if (Network::bindStatus)
+    {
+        closesocket(Network::socketHandle);
+
+        Network::socketHandle = NULL;
+        Network::serverPort = NULL;
+
+#ifdef _WIN32
+        WSACleanup();
+#endif
+
+        {
+            const std::unique_lock<std::shared_mutex> lock { Network::playerKeyToPlayerIdTableMutex };
+            Network::playerKeyToPlayerIdTable.clear();
+        }
+
+        for (uint16_t iPlayerId { 0 }; iPlayerId < MAX_PLAYERS; ++iPlayerId)
+        {
+            Network::playerStatusTable[iPlayerId].store(false, std::memory_order_release);
+            std::atomic_store(&Network::playerAddrTable[iPlayerId], { nullptr });
+        }
+
+        while (!Network::controlQueue.empty()) Network::controlQueue.pop();
+    }
+
+    Network::bindStatus = false;
+
+    RakNet::Free();
+
+    Network::connectCallbacks.clear();
+    Network::playerInitCallbacks.clear();
+    Network::disconnectCallbacks.clear();
+
+    Logger::Log("[sv:dbg:network:free] : module released");
+
+    Network::initStatus = false;
 }
 
 bool Network::Bind() noexcept
@@ -98,7 +136,7 @@ bool Network::Bind() noexcept
     }
 
     {
-        const auto sendBufferSize { SendBufferSize }, recvBufferSize { RecvBufferSize };
+        const auto sendBufferSize { kSendBufferSize }, recvBufferSize { kRecvBufferSize };
 
         if (setsockopt(Network::socketHandle, SOL_SOCKET, SO_SNDBUF, (char*)(&sendBufferSize), sizeof(sendBufferSize)) == SOCKET_ERROR ||
             setsockopt(Network::socketHandle, SOL_SOCKET, SO_RCVBUF, (char*)(&recvBufferSize), sizeof(recvBufferSize)) == SOCKET_ERROR)
@@ -154,9 +192,12 @@ bool Network::Bind() noexcept
     return true;
 }
 
-void Network::Process(const int64_t curTime) noexcept
+void Network::Process() noexcept
 {
-    static int64_t lastTime { NULL };
+    static Timer::time_t lastTime { 0 };
+
+    assert(pNetGame != nullptr);
+    assert(pNetGame->pPlayerPool != nullptr);
 
     if (!Network::initStatus) return;
 
@@ -164,7 +205,9 @@ void Network::Process(const int64_t curTime) noexcept
 
     if (!Network::bindStatus) return;
 
-    if (curTime - lastTime >= KeepAliveInterval)
+    const auto curTime = Timer::Get();
+
+    if (curTime - lastTime >= kKeepAliveInterval)
     {
         VoicePacket keepAlivePacket;
 
@@ -176,17 +219,17 @@ void Network::Process(const int64_t curTime) noexcept
         keepAlivePacket.svrkey = NULL;
         keepAlivePacket.CalcHash();
 
-        if (pNetGame->pPlayerPool->dwConnectedPlayers)
+        if (pNetGame->pPlayerPool->dwConnectedPlayers != 0)
         {
             const auto playerPoolSize = pNetGame->pPlayerPool->dwPlayerPoolSize;
 
-            for (uint16_t iPlayerId = 0; iPlayerId <= playerPoolSize; ++iPlayerId)
+            for (uint16_t iPlayerId { 0 }; iPlayerId <= playerPoolSize; ++iPlayerId)
             {
                 if (!Network::playerStatusTable[iPlayerId].load(std::memory_order_acquire))
                     continue;
 
                 const auto playerAddr = std::atomic_load(&Network::playerAddrTable[iPlayerId]);
-                if (!playerAddr) continue;
+                if (playerAddr == nullptr) continue;
 
                 sendto(Network::socketHandle, reinterpret_cast<char*>(&keepAlivePacket), sizeof(keepAlivePacket),
                     NULL, reinterpret_cast<sockaddr*>(playerAddr.get()), sizeof(*playerAddr));
@@ -201,7 +244,7 @@ bool Network::SendControlPacket(const uint16_t playerId, const ControlPacket& co
 {
     if (!Network::initStatus) return false;
 
-    return RakNet::SendPacket(RaknetPacketId, playerId, &controlPacket, controlPacket.GetFullSize());
+    return RakNet::SendPacket(kRaknetPacketId, playerId, &controlPacket, controlPacket.GetFullSize());
 }
 
 bool Network::SendVoicePacket(const uint16_t playerId, const VoicePacket& voicePacket)
@@ -212,7 +255,7 @@ bool Network::SendVoicePacket(const uint16_t playerId, const VoicePacket& voiceP
         return false;
 
     const auto playerAddr = std::atomic_load(&Network::playerAddrTable[playerId]);
-    if (!playerAddr) return false;
+    if (playerAddr == nullptr) return false;
 
     return sendto(Network::socketHandle, (char*)(&voicePacket), voicePacket.GetFullSize(),
         NULL, (sockaddr*)(playerAddr.get()), sizeof(*playerAddr)) == voicePacket.GetFullSize();
@@ -228,7 +271,7 @@ ControlPacketContainerPtr Network::ReceiveControlPacket(uint16_t& sender) noexce
     Network::controlQueue.pop();
 
     sender = packetInfo.sender;
-    return packetInfo.packet;
+    return std::move(packetInfo.packet);
 }
 
 VoicePacketContainerPtr Network::ReceiveVoicePacket()
@@ -238,7 +281,7 @@ VoicePacketContainerPtr Network::ReceiveVoicePacket()
 
     sockaddr_in playerAddr {};
     int addrLen { sizeof(playerAddr) };
-    char packetBuffer[MaxVoicePacketSize];
+    char packetBuffer[kMaxVoicePacketSize];
 
     const auto length = recvfrom(Network::socketHandle, packetBuffer,
         sizeof(packetBuffer), NULL, reinterpret_cast<sockaddr*>(&playerAddr), &addrLen);
@@ -254,7 +297,7 @@ VoicePacketContainerPtr Network::ReceiveVoicePacket()
 
     const auto playerKey = MakeQword(playerAddr.sin_addr.s_addr, voicePacketPtr->svrkey);
 
-    uint16_t playerId { SV::NonePlayer };
+    uint16_t playerId { SV::kNonePlayer };
 
     {
         const std::shared_lock<std::shared_mutex> lock { Network::playerKeyToPlayerIdTableMutex };
@@ -271,7 +314,7 @@ VoicePacketContainerPtr Network::ReceiveVoicePacket()
     if (!std::atomic_load(&Network::playerAddrTable[playerId]))
     {
         const auto playerAddrPtr = std::make_shared<sockaddr_in>(playerAddr);
-        if (!playerAddrPtr) return nullptr;
+        if (playerAddrPtr == nullptr) return nullptr;
 
         std::shared_ptr<sockaddr_in> expAddrPtr { nullptr };
         if (std::atomic_compare_exchange_strong(&Network::playerAddrTable[playerId], &expAddrPtr, playerAddrPtr))
@@ -280,7 +323,14 @@ VoicePacketContainerPtr Network::ReceiveVoicePacket()
 
             ControlPacket* controlPacket { nullptr };
             PackAlloca(controlPacket, SV::ControlPacketType::pluginInit, sizeof(SV::PluginInitPacket));
-            Network::playerInitHandler(playerId, *PackGetStruct(controlPacket, SV::PluginInitPacket));
+            PackGetStruct(controlPacket, SV::PluginInitPacket)->bitrate = SV::kDefaultBitrate;
+            PackGetStruct(controlPacket, SV::PluginInitPacket)->mute = false;
+
+            for (const auto& playerInitCallback : Network::playerInitCallbacks)
+            {
+                if (playerInitCallback != nullptr) playerInitCallback(playerId, *PackGetStruct(controlPacket, SV::PluginInitPacket));
+            }
+
             if (!Network::SendControlPacket(playerId, *controlPacket))
                 Logger::Log("[sv:err:network:receive] : failed to send player (%hu) plugin init packet", playerId);
         }
@@ -289,8 +339,8 @@ VoicePacketContainerPtr Network::ReceiveVoicePacket()
     if (voicePacketPtr->packet == SV::VoicePacketType::keepAlive)
         return nullptr;
 
-    const auto voicePacket = MakeVoicePacketContainer(voicePacketPtr, voicePacketSize);
-    if (!voicePacket) return nullptr;
+    auto voicePacket = MakeVoicePacketContainer(voicePacketPtr, voicePacketSize);
+    if (voicePacket == nullptr) return nullptr;
 
     auto& voicePacketRef = *voicePacket;
 
@@ -300,68 +350,111 @@ VoicePacketContainerPtr Network::ReceiveVoicePacket()
     return voicePacket;
 }
 
-void Network::Free()
+std::size_t Network::AddConnectCallback(ConnectCallback callback) noexcept
+{
+    if (!Network::initStatus) return -1;
+
+    for (std::size_t i { 0 }; i < Network::connectCallbacks.size(); ++i)
+    {
+        if (Network::connectCallbacks[i] == nullptr)
+        {
+            Network::connectCallbacks[i] = std::move(callback);
+            return i;
+        }
+    }
+
+    Network::connectCallbacks.emplace_back(std::move(callback));
+    return Network::connectCallbacks.size() - 1;
+}
+
+std::size_t Network::AddPlayerInitCallback(PlayerInitCallback callback) noexcept
+{
+    if (!Network::initStatus) return -1;
+
+    for (std::size_t i { 0 }; i < Network::playerInitCallbacks.size(); ++i)
+    {
+        if (Network::playerInitCallbacks[i] == nullptr)
+        {
+            Network::playerInitCallbacks[i] = std::move(callback);
+            return i;
+        }
+    }
+
+    Network::playerInitCallbacks.emplace_back(std::move(callback));
+    return Network::playerInitCallbacks.size() - 1;
+}
+
+std::size_t Network::AddDisconnectCallback(DisconnectCallback callback) noexcept
+{
+    if (!Network::initStatus) return -1;
+
+    for (std::size_t i { 0 }; i < Network::disconnectCallbacks.size(); ++i)
+    {
+        if (Network::disconnectCallbacks[i] == nullptr)
+        {
+            Network::disconnectCallbacks[i] = std::move(callback);
+            return i;
+        }
+    }
+
+    Network::disconnectCallbacks.emplace_back(std::move(callback));
+    return Network::disconnectCallbacks.size() - 1;
+}
+
+void Network::RemoveConnectCallback(const std::size_t callback) noexcept
 {
     if (!Network::initStatus) return;
 
-    Logger::Log("[sv:dbg:network:free] : module releasing...");
+    if (callback >= Network::connectCallbacks.size())
+        return;
 
-    if (Network::bindStatus)
-    {
-        closesocket(Network::socketHandle);
-
-        Network::socketHandle = NULL;
-        Network::serverPort = NULL;
-
-#ifdef _WIN32
-        WSACleanup();
-#endif
-
-        {
-            const std::unique_lock<std::shared_mutex> lock { Network::playerKeyToPlayerIdTableMutex };
-            Network::playerKeyToPlayerIdTable.clear();
-        }
-
-        for (uint16_t iPlayerId = 0; iPlayerId < MAX_PLAYERS; ++iPlayerId)
-        {
-            Network::playerStatusTable[iPlayerId].store(false, std::memory_order_release);
-            std::atomic_store(&Network::playerAddrTable[iPlayerId], { nullptr });
-        }
-
-        while (!Network::controlQueue.empty()) Network::controlQueue.pop();
-    }
-
-    Network::bindStatus = false;
-
-    RakNet::Free();
-
-    Network::connectHandler = nullptr;
-    Network::playerInitHandler = nullptr;
-    Network::disconnectHandler = nullptr;
-
-    Logger::Log("[sv:dbg:network:free] : module released");
-
-    Network::initStatus = false;
+    Network::connectCallbacks[callback] = nullptr;
 }
 
-bool Network::ConnectHandler(const uint16_t playerId, RPCParameters* rpc)
+void Network::RemovePlayerInitCallback(const std::size_t callback) noexcept
+{
+    if (!Network::initStatus) return;
+
+    if (callback >= Network::playerInitCallbacks.size())
+        return;
+
+    Network::playerInitCallbacks[callback] = nullptr;
+}
+
+void Network::RemoveDisconnectCallback(const std::size_t callback) noexcept
+{
+    if (!Network::initStatus) return;
+
+    if (callback >= Network::disconnectCallbacks.size())
+        return;
+
+    Network::disconnectCallbacks[callback] = nullptr;
+}
+
+bool Network::ConnectHandler(const uint16_t playerId, RPCParameters& rpc)
 {
     if (!Network::initStatus) return true;
 
-    const auto rpcParametersLength = MakeBytesFromBits(rpc->numberOfBitsOfData);
-    const auto connectStruct = (SV::ConnectPacket*)(Memory::Scanner(rpc->input,
-        rpcParametersLength).Find(SV::SignaturePattern, SV::SignatureMask));
+    const auto rpcParametersLength = MakeBytesFromBits(rpc.numberOfBitsOfData);
+    const auto connectStruct = (SV::ConnectPacket*)(Memory::Scanner(rpc.input,
+        rpcParametersLength).Find(SV::kSignaturePattern, SV::kSignatureMask));
 
     const uint8_t* connectStructEndPointer = ((uint8_t*)(connectStruct)) + sizeof(*connectStruct);
-    const uint8_t* connectPacketEndPointer = rpc->input + rpcParametersLength;
+    const uint8_t* connectPacketEndPointer = rpc.input + rpcParametersLength;
 
-    if (!connectStruct || connectStructEndPointer > connectPacketEndPointer) return true;
+    if (connectStruct == nullptr || connectStructEndPointer > connectPacketEndPointer)
+        return true;
 
     const uint32_t playerAddr = RakNet::GetPlayerIdFromIndex(playerId).binaryAddress;
-    if (!playerAddr || playerAddr == UNASSIGNED_PLAYER_ID.binaryAddress) return true;
+    if (playerAddr == NULL || playerAddr == UNASSIGNED_PLAYER_ID.binaryAddress) return true;
 
     if (Network::playerStatusTable[playerId].exchange(false, std::memory_order_acq_rel))
-        if (Network::disconnectHandler) Network::disconnectHandler(playerId);
+    {
+        for (const auto& disconnectCallback : Network::disconnectCallbacks)
+        {
+            if (disconnectCallback != nullptr) disconnectCallback(playerId);
+        }
+    }
 
     Logger::Log("[sv:dbg:network:connect] : connecting player (%hu) with address (%s) ...",
         playerId, inet_ntoa(*(in_addr*)(&playerAddr)));
@@ -370,7 +463,7 @@ bool Network::ConnectHandler(const uint16_t playerId, RPCParameters* rpc)
     uint32_t randomNumber; uint64_t playerKey;
 
     do playerKey = MakeQword(playerAddr, randomNumber = genRandomNumber());
-    while (!randomNumber || Network::playerKeyToPlayerIdTable.find(playerKey) !=
+    while (randomNumber == NULL || Network::playerKeyToPlayerIdTable.find(playerKey) !=
         Network::playerKeyToPlayerIdTable.end());
 
     Logger::Log("[sv:dbg:network:connect] : player (%hu) assigned key (%llx)", playerId, playerKey);
@@ -386,7 +479,10 @@ bool Network::ConnectHandler(const uint16_t playerId, RPCParameters* rpc)
 
     Network::playerKeyTable[playerId] = playerKey;
 
-    if (Network::connectHandler) Network::connectHandler(playerId, *connectStruct);
+    for (const auto& connectCallback : Network::connectCallbacks)
+    {
+        if (connectCallback != nullptr) connectCallback(playerId, *connectStruct);
+    }
 
     Network::playerStatusTable[playerId].store(true, std::memory_order_release);
 
@@ -400,20 +496,19 @@ bool Network::ConnectHandler(const uint16_t playerId, RPCParameters* rpc)
     return true;
 }
 
-bool Network::PacketHandler(const uint16_t playerId, Packet* packet)
+bool Network::PacketHandler(const uint16_t playerId, Packet& packet)
 {
     if (!Network::initStatus) return true;
 
-    if (packet->length < sizeof(uint8_t) + sizeof(ControlPacket)) return true;
-    if (*packet->data != Network::RaknetPacketId) return true;
+    if (packet.length < sizeof(uint8_t) + sizeof(ControlPacket)) return true;
+    if (*packet.data != Network::kRaknetPacketId) return true;
 
-    const auto controlPacketPtr = (ControlPacket*)(packet->data + sizeof(uint8_t));
-    const auto controlPacketSize = packet->length - sizeof(uint8_t);
+    const auto controlPacketPtr = (ControlPacket*)(packet.data + sizeof(uint8_t));
+    const auto controlPacketSize = packet.length - sizeof(uint8_t);
 
     if (controlPacketSize != controlPacketPtr->GetFullSize()) return false;
 
-    if (auto controlPacket = MakeControlPacketContainer(controlPacketPtr, controlPacketSize))
-        Network::controlQueue.try_emplace(std::move(controlPacket), playerId);
+    Network::controlQueue.try_emplace(MakeControlPacketContainer(controlPacketPtr, controlPacketSize), playerId);
 
     return false;
 }
@@ -436,7 +531,10 @@ void Network::DisconnectHandler(const uint16_t playerId)
 
     Network::playerKeyTable[playerId] = NULL;
 
-    if (Network::disconnectHandler) Network::disconnectHandler(playerId);
+    for (const auto& disconnectCallback : Network::disconnectCallbacks)
+    {
+        if (disconnectCallback != nullptr) disconnectCallback(playerId);
+    }
 }
 
 bool Network::initStatus { false };
@@ -452,8 +550,8 @@ std::array<uint64_t, MAX_PLAYERS> Network::playerKeyTable {};
 std::shared_mutex Network::playerKeyToPlayerIdTableMutex;
 std::map<uint64_t, uint16_t> Network::playerKeyToPlayerIdTable;
 
-Network::ConnectHandlerType Network::connectHandler { nullptr };
-Network::PlayerInitHandlerType Network::playerInitHandler { nullptr };
-Network::DisconnectHandlerType Network::disconnectHandler { nullptr };
+std::vector<Network::ConnectCallback> Network::connectCallbacks;
+std::vector<Network::PlayerInitCallback> Network::playerInitCallbacks;
+std::vector<Network::DisconnectCallback> Network::disconnectCallbacks;
 
 SPSCQueue<Network::ControlPacketInfo> Network::controlQueue { 32 * MAX_PLAYERS };

@@ -10,12 +10,11 @@
 #include "DynamicLocalStreamAtPoint.h"
 
 #include <cassert>
-
-#include <string.h>
+#include <cstring>
 
 #include <ysf/globals.h>
-#include <util/logger.h>
 #include <util/memory.hpp>
+#include <util/logger.h>
 
 #include "ControlPacket.h"
 #include "PlayerStore.h"
@@ -30,8 +29,8 @@ DynamicLocalStreamAtPoint::DynamicLocalStreamAtPoint(
     , DynamicStream(distance, maxPlayers)
     , PointStream(distance, position)
 {
-    assert(pNetGame);
-    assert(pNetGame->pPlayerPool);
+    assert(pNetGame != nullptr);
+    assert(pNetGame->pPlayerPool != nullptr);
 
     const auto nameString = name.c_str();
     const auto nameLength = name.size() + 1;
@@ -46,17 +45,17 @@ DynamicLocalStreamAtPoint::DynamicLocalStreamAtPoint(
 
     PlayerSortList playerList;
 
-    if (pNetGame->pPlayerPool->dwConnectedPlayers)
+    if (pNetGame->pPlayerPool->dwConnectedPlayers != 0)
     {
         const auto playerPoolSize = pNetGame->pPlayerPool->dwPlayerPoolSize;
 
-        for (uint16_t iPlayerId = 0; iPlayerId <= playerPoolSize; ++iPlayerId)
+        for (uint16_t iPlayerId { 0 }; iPlayerId <= playerPoolSize; ++iPlayerId)
         {
             const auto ipPlayer = pNetGame->pPlayerPool->pPlayer[iPlayerId];
 
             float distanceToPlayer;
 
-            if (ipPlayer && PlayerStore::IsPlayerHasPlugin(iPlayerId) &&
+            if (ipPlayer != nullptr && PlayerStore::IsPlayerHasPlugin(iPlayerId) &&
                 (distanceToPlayer = (ipPlayer->vecPosition - position).Length()) <= distance)
             {
                 playerList.emplace(distanceToPlayer, iPlayerId);
@@ -66,7 +65,8 @@ DynamicLocalStreamAtPoint::DynamicLocalStreamAtPoint(
 
     for (const auto& playerInfo : playerList)
     {
-        if (this->attachedListenersCount >= maxPlayers) break;
+        if (this->attachedListenersCount >= maxPlayers)
+            break;
 
         this->Stream::AttachListener(playerInfo.playerId);
     }
@@ -74,25 +74,25 @@ DynamicLocalStreamAtPoint::DynamicLocalStreamAtPoint(
 
 void DynamicLocalStreamAtPoint::Tick()
 {
-    assert(pNetGame);
-    assert(pNetGame->pPlayerPool);
+    assert(pNetGame != nullptr);
+    assert(pNetGame->pPlayerPool != nullptr);
 
     PlayerSortList playerList;
 
     const CVector& streamPosition = PackGetStruct(&*this->packetCreateStream, SV::CreateLPStreamPacket)->position;
-    const float streamDistance = PackGetStruct(&*this->packetStreamUpdateDistance, SV::UpdateLPStreamDistancePacket)->distance;
+    const float streamDistance = PackGetStruct(&*this->packetStreamUpdateDistance, SV::UpdateLStreamDistancePacket)->distance;
 
-    if (pNetGame->pPlayerPool->dwConnectedPlayers)
+    if (pNetGame->pPlayerPool->dwConnectedPlayers != 0)
     {
         const auto playerPoolSize = pNetGame->pPlayerPool->dwPlayerPoolSize;
 
-        for (uint16_t iPlayerId = 0; iPlayerId <= playerPoolSize; ++iPlayerId)
+        for (uint16_t iPlayerId { 0 }; iPlayerId <= playerPoolSize; ++iPlayerId)
         {
             const auto ipPlayer = pNetGame->pPlayerPool->pPlayer[iPlayerId];
 
             float distanceToPlayer;
 
-            if (ipPlayer && PlayerStore::IsPlayerHasPlugin(iPlayerId) &&
+            if (ipPlayer != nullptr && PlayerStore::IsPlayerHasPlugin(iPlayerId) &&
                 (distanceToPlayer = (ipPlayer->vecPosition - streamPosition).Length()) <= streamDistance)
             {
                 if (!this->HasListener(iPlayerId))
@@ -109,7 +109,8 @@ void DynamicLocalStreamAtPoint::Tick()
 
     for (const auto& playerInfo : playerList)
     {
-        if (this->attachedListenersCount >= this->maxPlayers) break;
+        if (this->attachedListenersCount >= this->maxPlayers)
+            break;
 
         this->Stream::AttachListener(playerInfo.playerId);
     }

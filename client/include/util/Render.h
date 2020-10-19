@@ -9,19 +9,15 @@
 
 #pragma once
 
-#include <mutex>
+#include <cstdint>
 #include <functional>
+#include <mutex>
+#include <vector>
 
 #include <d3d9.h>
 #include <d3dx9.h>
 
 #include "Memory.hpp"
-#include "Logger.h"
-
-#define GtaDirectPointer *reinterpret_cast<IDirect3D9**>(0xC97C20)
-#define GtaDevicePointer *reinterpret_cast<IDirect3DDevice9**>(0xC97C28)
-#define GtaParametersPointer reinterpret_cast<D3DPRESENT_PARAMETERS*>(0xC9C040)
-#define GtaDirect3DCreate9 reinterpret_cast<IDirect3D9*(CALLBACK*)(UINT)>(0x807C2B)
 
 class Render {
 
@@ -34,28 +30,22 @@ class Render {
 
 private:
 
-    using DeviceInitHandlerType = std::function<void(IDirect3D9*, IDirect3DDevice9*, D3DPRESENT_PARAMETERS*)>;
-    using BeforeResetHandlerType = std::function<void()>;
-    using BeginSceneHandlerType = std::function<void()>;
-    using RenderHandlerType = std::function<void()>;
-    using EndSceneHandlerType = std::function<void()>;
-    using AfterResetHandlerType = std::function<void(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*)>;
-    using DeviceFreeHandlerType = std::function<void()>;
+    using DeviceInitCallback = std::function<void(IDirect3D9*, IDirect3DDevice9*, const D3DPRESENT_PARAMETERS&)>;
+    using BeforeResetCallback = std::function<void()>;
+    using BeginSceneCallback = std::function<void()>;
+    using RenderCallback = std::function<void()>;
+    using EndSceneCallback = std::function<void()>;
+    using AfterResetCallback = std::function<void(IDirect3DDevice9*, const D3DPRESENT_PARAMETERS&)>;
+    using DeviceFreeCallback = std::function<void()>;
 
 public:
 
-    static constexpr float BaseWidth = 640.f;
-    static constexpr float BaseHeight = 480.f;
+    static constexpr float kBaseWidth = 640.f;
+    static constexpr float kBaseHeight = 480.f;
 
 public:
 
-    static bool Init(DeviceInitHandlerType deviceInitHandler,
-                     BeforeResetHandlerType beforeResetHandler,
-                     BeginSceneHandlerType beginSceneHandler,
-                     RenderHandlerType renderHandler,
-                     EndSceneHandlerType endSceneHandler,
-                     AfterResetHandlerType afterResetHandler,
-                     DeviceFreeHandlerType deviceFreeHandler) noexcept;
+    static bool Init() noexcept;
     static void Free() noexcept;
 
     static bool GetWindowHandle(HWND& windowHandle) noexcept;
@@ -65,836 +55,57 @@ public:
     static bool ConvertScreenXValueToBaseXValue(float screenValue, float& baseValue) noexcept;
     static bool ConvertScreenYValueToBaseYValue(float screenValue, float& baseValue) noexcept;
 
+public:
+
+    static std::size_t AddDeviceInitCallback(DeviceInitCallback callback) noexcept;
+    static std::size_t AddBeforeResetCallback(BeforeResetCallback callback) noexcept;
+    static std::size_t AddBeginSceneCallback(BeginSceneCallback callback) noexcept;
+    static std::size_t AddRenderCallback(RenderCallback callback) noexcept;
+    static std::size_t AddEndSceneCallback(EndSceneCallback callback) noexcept;
+    static std::size_t AddAfterResetCallback(AfterResetCallback callback) noexcept;
+    static std::size_t AddDeviceFreeCallback(DeviceFreeCallback callback) noexcept;
+
+    static void RemoveDeviceInitCallback(std::size_t callback) noexcept;
+    static void RemoveBeforeResetCallback(std::size_t callback) noexcept;
+    static void RemoveBeginSceneCallback(std::size_t callback) noexcept;
+    static void RemoveRenderCallback(std::size_t callback) noexcept;
+    static void RemoveEndSceneCallback(std::size_t callback) noexcept;
+    static void RemoveAfterResetCallback(std::size_t callback) noexcept;
+    static void RemoveDeviceFreeCallback(std::size_t callback) noexcept;
+
 private:
 
     interface IDirect3DDevice9Hook : public IDirect3DDevice9 {
 
-        explicit IDirect3DDevice9Hook(IDirect3DDevice9* const pOrigInterface) noexcept
-            : pOrigInterface(pOrigInterface) { this->pOrigInterface->AddRef(); }
-
-        ~IDirect3DDevice9Hook() noexcept { this->pOrigInterface->Release(); }
-
-        // IDirect3DDevice9 Interface methods...
-        // ------------------------------------------------
-
-        HRESULT __stdcall Present(CONST RECT* const pSourceRect,
-                                  CONST RECT* const pDestRect,
-                                  const HWND hDestWindowOverride,
-                                  CONST RGNDATA* const pDirtyRegion) noexcept override
-        {
-            if (this->pOrigInterface == Render::pDeviceInterface && !this->resetStatus)
-                if (Render::renderHandler) Render::renderHandler();
-
-            return this->pOrigInterface->Present(pSourceRect, pDestRect,
-                hDestWindowOverride, pDirtyRegion);
-        }
-
-        HRESULT __stdcall QueryInterface(REFIID const riid,
-                                         VOID** const ppvObj) noexcept override
-        {
-            *ppvObj = nullptr;
-
-            const auto hResult = this->pOrigInterface->QueryInterface(riid, ppvObj);
-
-            if (SUCCEEDED(hResult)) *ppvObj = this;
-
-            return hResult;
-        }
-
-        ULONG __stdcall AddRef() noexcept override
-        {
-            return this->pOrigInterface->AddRef();
-        }
-
-        ULONG __stdcall Release() noexcept override
-        {
-            const auto count = this->pOrigInterface->Release();
-
-            if (count <= 1)
-            {
-                if (this->pOrigInterface == Render::pDeviceInterface)
-                {
-                    if (Render::deviceFreeHandler)
-                        Render::deviceFreeHandler();
-
-                    Render::deviceMutex.lock();
-                    Render::pDirectInterface = nullptr;
-                    Render::pDeviceInterface = nullptr;
-                    Render::deviceMutex.unlock();
-                }
-
-                delete this;
-                return 0;
-            }
-
-            return count;
-        }
-
-        HRESULT __stdcall TestCooperativeLevel() noexcept override
-        {
-            return this->pOrigInterface->TestCooperativeLevel();
-        }
-
-        UINT __stdcall GetAvailableTextureMem() noexcept override
-        {
-            return this->pOrigInterface->GetAvailableTextureMem();
-        }
-
-        HRESULT __stdcall EvictManagedResources() noexcept override
-        {
-            return this->pOrigInterface->EvictManagedResources();
-        }
-
-        HRESULT __stdcall GetDirect3D(IDirect3D9** const ppD3D9) noexcept override
-        {
-            return this->pOrigInterface->GetDirect3D(ppD3D9);
-        }
-
-        HRESULT __stdcall GetDeviceCaps(D3DCAPS9* const pCaps) noexcept override
-        {
-            return this->pOrigInterface->GetDeviceCaps(pCaps);
-        }
-
-        HRESULT __stdcall GetDisplayMode(const UINT iSwapChain,
-                                         D3DDISPLAYMODE* const pMode) noexcept override
-        {
-            return this->pOrigInterface->GetDisplayMode(iSwapChain, pMode);
-        }
-
-        HRESULT __stdcall GetCreationParameters(D3DDEVICE_CREATION_PARAMETERS* const pParameters) noexcept override
-        {
-            return this->pOrigInterface->GetCreationParameters(pParameters);
-        }
-
-        HRESULT __stdcall SetCursorProperties(const UINT XHotSpot, const UINT YHotSpot,
-                                              IDirect3DSurface9* const pCursorBitmap) noexcept override
-        {
-            return this->pOrigInterface->SetCursorProperties(XHotSpot, YHotSpot, pCursorBitmap);
-        }
-
-        VOID __stdcall SetCursorPosition(const int X, const int Y, const DWORD Flags) noexcept override
-        {
-            this->pOrigInterface->SetCursorPosition(X, Y, Flags);
-        }
-
-        BOOL __stdcall ShowCursor(const BOOL bShow) noexcept override
-        {
-            return this->pOrigInterface->ShowCursor(bShow);
-        }
-
-        HRESULT __stdcall CreateAdditionalSwapChain(D3DPRESENT_PARAMETERS* const pPresentationParameters,
-                                                    IDirect3DSwapChain9** const pSwapChain) noexcept override
-        {
-            return this->pOrigInterface->CreateAdditionalSwapChain(pPresentationParameters, pSwapChain);
-        }
-
-        HRESULT __stdcall GetSwapChain(const UINT iSwapChain,
-                                       IDirect3DSwapChain9** const pSwapChain) noexcept override
-        {
-            return this->pOrigInterface->GetSwapChain(iSwapChain, pSwapChain);
-        }
-
-        UINT __stdcall GetNumberOfSwapChains() noexcept override
-        {
-            return this->pOrigInterface->GetNumberOfSwapChains();
-        }
-
-        HRESULT __stdcall Reset(D3DPRESENT_PARAMETERS* const pPresentationParameters) noexcept override
-        {
-            if (this->pOrigInterface == Render::pDeviceInterface && !this->resetStatus)
-            {
-                if (Render::beforeResetHandler)
-                    Render::beforeResetHandler();
-
-                this->resetStatus = true;
-            }
-
-            const auto hResult = this->pOrigInterface->Reset(pPresentationParameters);
-
-            if (this->pOrigInterface == Render::pDeviceInterface && SUCCEEDED(hResult))
-            {
-                Render::deviceMutex.lock();
-                Render::deviceParameters = *pPresentationParameters;
-                Render::deviceMutex.unlock();
-
-                if (this->resetStatus)
-                {
-                    if (Render::afterResetHandler)
-                        Render::afterResetHandler(Render::pDeviceInterface,
-                            &Render::deviceParameters);
-
-                    this->resetStatus = false;
-                }
-            }
-
-            return hResult;
-        }
-
-        HRESULT __stdcall GetBackBuffer(const UINT iSwapChain,
-                                        const UINT iBackBuffer,
-                                        const D3DBACKBUFFER_TYPE Type,
-                                        IDirect3DSurface9** const ppBackBuffer) noexcept override
-        {
-            return this->pOrigInterface->GetBackBuffer(iSwapChain, iBackBuffer, Type, ppBackBuffer);
-        }
-
-        HRESULT __stdcall GetRasterStatus(const UINT iSwapChain,
-                                          D3DRASTER_STATUS* const pRasterStatus) noexcept override
-        {
-            return this->pOrigInterface->GetRasterStatus(iSwapChain, pRasterStatus);
-        }
-
-        HRESULT __stdcall SetDialogBoxMode(const BOOL bEnableDialogs) noexcept override
-        {
-            return this->pOrigInterface->SetDialogBoxMode(bEnableDialogs);
-        }
-
-        VOID __stdcall SetGammaRamp(const UINT iSwapChain, const DWORD Flags,
-                                    CONST D3DGAMMARAMP* const pRamp) noexcept override
-        {
-            this->pOrigInterface->SetGammaRamp(iSwapChain, Flags, pRamp);
-        }
-
-        VOID __stdcall GetGammaRamp(const UINT iSwapChain, D3DGAMMARAMP* const pRamp) noexcept override
-        {
-            this->pOrigInterface->GetGammaRamp(iSwapChain, pRamp);
-        }
-
-        HRESULT __stdcall CreateTexture(const UINT Width, const UINT Height,
-                                        const UINT Levels, const DWORD Usage,
-                                        const D3DFORMAT Format, const D3DPOOL Pool,
-                                        IDirect3DTexture9** const ppTexture,
-                                        HANDLE* const pSharedHandle) noexcept override
-        {
-            return this->pOrigInterface->CreateTexture(Width, Height, Levels,
-                Usage, Format, Pool, ppTexture, pSharedHandle);
-        }
-
-        HRESULT __stdcall CreateVolumeTexture(const UINT Width, const UINT Height,
-                                              const UINT Depth, const UINT Levels, const DWORD Usage,
-                                              const D3DFORMAT Format, const D3DPOOL Pool,
-                                              IDirect3DVolumeTexture9** const ppVolumeTexture,
-                                              HANDLE* const pSharedHandle) noexcept override
-        {
-            return this->pOrigInterface->CreateVolumeTexture(Width, Height, Depth,
-                Levels, Usage, Format, Pool, ppVolumeTexture, pSharedHandle);
-        }
-
-        HRESULT __stdcall CreateCubeTexture(const UINT EdgeLength, const UINT Levels,
-                                            const DWORD Usage, const D3DFORMAT Format, const D3DPOOL Pool,
-                                            IDirect3DCubeTexture9** const ppCubeTexture,
-                                            HANDLE* const pSharedHandle) noexcept override
-        {
-            return this->pOrigInterface->CreateCubeTexture(EdgeLength, Levels,
-                Usage, Format, Pool, ppCubeTexture, pSharedHandle);
-        }
-
-        HRESULT __stdcall CreateVertexBuffer(const UINT Length, const DWORD Usage,
-                                             const DWORD FVF, const D3DPOOL Pool,
-                                             IDirect3DVertexBuffer9** const ppVertexBuffer,
-                                             HANDLE* const pSharedHandle) noexcept override
-        {
-            return this->pOrigInterface->CreateVertexBuffer(Length, Usage,
-                FVF, Pool, ppVertexBuffer, pSharedHandle);
-        }
-
-        HRESULT __stdcall CreateIndexBuffer(const UINT Length, const DWORD Usage,
-                                            const D3DFORMAT Format, const D3DPOOL Pool,
-                                            IDirect3DIndexBuffer9** const ppIndexBuffer,
-                                            HANDLE* const pSharedHandle) noexcept override
-        {
-            return this->pOrigInterface->CreateIndexBuffer(Length, Usage,
-                Format, Pool, ppIndexBuffer, pSharedHandle);
-        }
-
-        HRESULT __stdcall CreateRenderTarget(const UINT Width, const UINT Height,
-                                             const D3DFORMAT Format, const D3DMULTISAMPLE_TYPE MultiSample,
-                                             const DWORD MultisampleQuality, const BOOL Lockable,
-                                             IDirect3DSurface9** const ppSurface,
-                                             HANDLE* const pSharedHandle) noexcept override
-        {
-            return this->pOrigInterface->CreateRenderTarget(Width, Height,
-                Format, MultiSample, MultisampleQuality, Lockable, ppSurface, pSharedHandle);
-        }
-
-        HRESULT __stdcall CreateDepthStencilSurface(const UINT Width, const UINT Height,
-                                                    const D3DFORMAT Format, const D3DMULTISAMPLE_TYPE MultiSample,
-                                                    const DWORD MultisampleQuality, const BOOL Discard,
-                                                    IDirect3DSurface9** const ppSurface,
-                                                    HANDLE* const pSharedHandle) noexcept override
-        {
-            return this->pOrigInterface->CreateDepthStencilSurface(Width, Height,
-                Format, MultiSample, MultisampleQuality, Discard, ppSurface, pSharedHandle);
-        }
-
-        HRESULT __stdcall UpdateSurface(IDirect3DSurface9* const pSourceSurface,
-                                        CONST RECT* const pSourceRect,
-                                        IDirect3DSurface9* const pDestinationSurface,
-                                        CONST POINT* const pDestPoint) noexcept override
-        {
-            return this->pOrigInterface->UpdateSurface(pSourceSurface, pSourceRect,
-                pDestinationSurface, pDestPoint);
-        }
-
-        HRESULT __stdcall UpdateTexture(IDirect3DBaseTexture9* const pSourceTexture,
-                                        IDirect3DBaseTexture9* const pDestinationTexture) noexcept override
-        {
-            return this->pOrigInterface->UpdateTexture(pSourceTexture, pDestinationTexture);
-        }
-
-        HRESULT __stdcall GetRenderTargetData(IDirect3DSurface9* const pRenderTarget,
-                                              IDirect3DSurface9* const pDestSurface) noexcept override
-        {
-            return this->pOrigInterface->GetRenderTargetData(pRenderTarget, pDestSurface);
-        }
-
-        HRESULT __stdcall GetFrontBufferData(const UINT iSwapChain,
-                                             IDirect3DSurface9* const pDestSurface) noexcept override
-        {
-            return this->pOrigInterface->GetFrontBufferData(iSwapChain, pDestSurface);
-        }
-
-        HRESULT __stdcall StretchRect(IDirect3DSurface9* const pSourceSurface,
-                                      CONST RECT* const pSourceRect,
-                                      IDirect3DSurface9* const pDestSurface,
-                                      CONST RECT* const pDestRect,
-                                      const D3DTEXTUREFILTERTYPE Filter) noexcept override
-        {
-            return this->pOrigInterface->StretchRect(pSourceSurface, pSourceRect,
-                pDestSurface, pDestRect, Filter);
-        }
-
-        HRESULT __stdcall ColorFill(IDirect3DSurface9* const pSurface,
-                                    CONST RECT* const pRect, const D3DCOLOR color) noexcept override
-        {
-            return this->pOrigInterface->ColorFill(pSurface, pRect, color);
-        }
-
-        HRESULT __stdcall CreateOffscreenPlainSurface(const UINT Width, const UINT Height,
-                                                      const D3DFORMAT Format, const D3DPOOL Pool,
-                                                      IDirect3DSurface9** const ppSurface,
-                                                      HANDLE* const pSharedHandle) noexcept override
-        {
-            return this->pOrigInterface->CreateOffscreenPlainSurface(Width, Height,
-                Format, Pool, ppSurface, pSharedHandle);
-        }
-
-        HRESULT __stdcall SetRenderTarget(const DWORD RenderTargetIndex,
-                                          IDirect3DSurface9* const pRenderTarget) noexcept override
-        {
-            return this->pOrigInterface->SetRenderTarget(RenderTargetIndex, pRenderTarget);
-        }
-
-        HRESULT __stdcall GetRenderTarget(const DWORD RenderTargetIndex,
-                                          IDirect3DSurface9** const ppRenderTarget) noexcept override
-        {
-            return this->pOrigInterface->GetRenderTarget(RenderTargetIndex, ppRenderTarget);
-        }
-
-        HRESULT __stdcall SetDepthStencilSurface(IDirect3DSurface9* const pNewZStencil) noexcept override
-        {
-            return this->pOrigInterface->SetDepthStencilSurface(pNewZStencil);
-        }
-
-        HRESULT __stdcall GetDepthStencilSurface(IDirect3DSurface9** const ppZStencilSurface) noexcept override
-        {
-            return this->pOrigInterface->GetDepthStencilSurface(ppZStencilSurface);
-        }
-
-        HRESULT __stdcall BeginScene() noexcept override
-        {
-            const auto hResult = this->pOrigInterface->BeginScene();
-
-            if (this->pOrigInterface == Render::pDeviceInterface && SUCCEEDED(hResult) &&
-                !this->resetStatus && !this->sceneStatus)
-            {
-                if (Render::beginSceneHandler) Render::beginSceneHandler();
-
-                this->sceneStatus = true;
-            }
-
-            return hResult;
-        }
-
-        HRESULT __stdcall EndScene() noexcept override
-        {
-            if (this->pOrigInterface == Render::pDeviceInterface &&
-                !this->resetStatus && this->sceneStatus)
-            {
-                if (Render::endSceneHandler) Render::endSceneHandler();
-
-                this->sceneStatus = false;
-            }
-
-            return this->pOrigInterface->EndScene();
-        }
-
-        HRESULT __stdcall Clear(const DWORD Count, CONST D3DRECT* const pRects,
-                                const DWORD Flags, const D3DCOLOR Color,
-                                const float Z, const DWORD Stencil) noexcept override
-        {
-            return this->pOrigInterface->Clear(Count, pRects, Flags, Color, Z, Stencil);
-        }
-
-        HRESULT __stdcall SetTransform(const D3DTRANSFORMSTATETYPE State,
-                                       CONST D3DMATRIX* const mat) noexcept override
-        {
-            return this->pOrigInterface->SetTransform(State, mat);
-        }
-
-        HRESULT __stdcall GetTransform(const D3DTRANSFORMSTATETYPE State,
-                                       D3DMATRIX* const mat) noexcept override
-        {
-            return this->pOrigInterface->GetTransform(State, mat);
-        }
-
-        HRESULT __stdcall MultiplyTransform(const D3DTRANSFORMSTATETYPE State,
-                                            CONST D3DMATRIX* const mat) noexcept override
-        {
-            return this->pOrigInterface->MultiplyTransform(State, mat);
-        }
-
-        HRESULT __stdcall SetViewport(CONST D3DVIEWPORT9* const pViewport) noexcept override
-        {
-            return this->pOrigInterface->SetViewport(pViewport);
-        }
-
-        HRESULT __stdcall GetViewport(D3DVIEWPORT9* const pViewport) noexcept override
-        {
-            return this->pOrigInterface->GetViewport(pViewport);
-        }
-
-        HRESULT __stdcall SetMaterial(CONST D3DMATERIAL9* const pMaterial) noexcept override
-        {
-            return this->pOrigInterface->SetMaterial(pMaterial);
-        }
-
-        HRESULT __stdcall GetMaterial(D3DMATERIAL9* const pMaterial) noexcept override
-        {
-            return this->pOrigInterface->GetMaterial(pMaterial);
-        }
-
-        HRESULT __stdcall SetLight(const DWORD Index,
-                                   CONST D3DLIGHT9* const pLight) noexcept override
-        {
-            return this->pOrigInterface->SetLight(Index, pLight);
-        }
-
-        HRESULT __stdcall GetLight(const DWORD Index,
-                                   D3DLIGHT9* const pLight) noexcept override
-        {
-            return this->pOrigInterface->GetLight(Index, pLight);
-        }
-
-        HRESULT __stdcall LightEnable(const DWORD Index, const BOOL Enable) noexcept override
-        {
-            return this->pOrigInterface->LightEnable(Index, Enable);
-        }
-
-        HRESULT __stdcall GetLightEnable(const DWORD Index, BOOL* const pEnable) noexcept override
-        {
-            return this->pOrigInterface->GetLightEnable(Index, pEnable);
-        }
-
-        HRESULT __stdcall SetClipPlane(const DWORD Index,
-                                       CONST float* const pPlane) noexcept override
-        {
-            return this->pOrigInterface->SetClipPlane(Index, pPlane);
-        }
-
-        HRESULT __stdcall GetClipPlane(const DWORD Index, float* const pPlane) noexcept override
-        {
-            return this->pOrigInterface->GetClipPlane(Index, pPlane);
-        }
-
-        HRESULT __stdcall SetRenderState(const D3DRENDERSTATETYPE State,
-                                         const DWORD Value) noexcept override
-        {
-            return this->pOrigInterface->SetRenderState(State, Value);
-        }
-
-        HRESULT __stdcall GetRenderState(const D3DRENDERSTATETYPE State,
-                                         DWORD* const pValue) noexcept override
-        {
-            return this->pOrigInterface->GetRenderState(State, pValue);
-        }
-
-        HRESULT __stdcall CreateStateBlock(const D3DSTATEBLOCKTYPE Type,
-                                           IDirect3DStateBlock9** const ppSB) noexcept override
-        {
-            return this->pOrigInterface->CreateStateBlock(Type, ppSB);
-        }
-
-        HRESULT __stdcall BeginStateBlock() noexcept override
-        {
-            return this->pOrigInterface->BeginStateBlock();
-        }
-
-        HRESULT __stdcall EndStateBlock(IDirect3DStateBlock9** const ppSB) noexcept override
-        {
-            return this->pOrigInterface->EndStateBlock(ppSB);
-        }
-
-        HRESULT __stdcall SetClipStatus(CONST D3DCLIPSTATUS9* const pClipStatus) noexcept override
-        {
-            return this->pOrigInterface->SetClipStatus(pClipStatus);
-        }
-
-        HRESULT __stdcall GetClipStatus(D3DCLIPSTATUS9* const pClipStatus) noexcept override
-        {
-            return this->pOrigInterface->GetClipStatus(pClipStatus);
-        }
-
-        HRESULT __stdcall GetTexture(const DWORD Stage,
-                                     IDirect3DBaseTexture9** const ppTexture) noexcept override
-        {
-            return this->pOrigInterface->GetTexture(Stage, ppTexture);
-        }
-
-        HRESULT __stdcall SetTexture(const DWORD Stage,
-                                     IDirect3DBaseTexture9* const pTexture) noexcept override
-        {
-            return this->pOrigInterface->SetTexture(Stage, pTexture);
-        }
-
-        HRESULT __stdcall GetTextureStageState(const DWORD Stage,
-                                               const D3DTEXTURESTAGESTATETYPE Type,
-                                               DWORD* const pValue) noexcept override
-        {
-            return this->pOrigInterface->GetTextureStageState(Stage, Type, pValue);
-        }
-
-        HRESULT __stdcall SetTextureStageState(const DWORD Stage,
-                                               const D3DTEXTURESTAGESTATETYPE Type,
-                                               const DWORD Value) noexcept override
-        {
-            return this->pOrigInterface->SetTextureStageState(Stage, Type, Value);
-        }
-
-        HRESULT __stdcall GetSamplerState(const DWORD Sampler,
-                                          const D3DSAMPLERSTATETYPE Type,
-                                          DWORD* const pValue) noexcept override
-        {
-            return this->pOrigInterface->GetSamplerState(Sampler, Type, pValue);
-        }
-
-        HRESULT __stdcall SetSamplerState(const DWORD Sampler,
-                                          const D3DSAMPLERSTATETYPE Type,
-                                          const DWORD Value) noexcept override
-        {
-            return this->pOrigInterface->SetSamplerState(Sampler, Type, Value);
-        }
-
-        HRESULT __stdcall ValidateDevice(DWORD* const pNumPasses) noexcept override
-        {
-            return this->pOrigInterface->ValidateDevice(pNumPasses);
-        }
-
-        HRESULT __stdcall SetPaletteEntries(const UINT PaletteNumber,
-                                            CONST PALETTEENTRY* const pEntries) noexcept override
-        {
-            return this->pOrigInterface->SetPaletteEntries(PaletteNumber, pEntries);
-        }
-
-        HRESULT __stdcall GetPaletteEntries(const UINT PaletteNumber,
-                                            PALETTEENTRY* const pEntries) noexcept override
-        {
-            return this->pOrigInterface->GetPaletteEntries(PaletteNumber, pEntries);
-        }
-
-        HRESULT __stdcall SetCurrentTexturePalette(const UINT PaletteNumber) noexcept override
-        {
-            return this->pOrigInterface->SetCurrentTexturePalette(PaletteNumber);
-        }
-
-        HRESULT __stdcall GetCurrentTexturePalette(UINT* const PaletteNumber) noexcept override
-        {
-            return this->pOrigInterface->GetCurrentTexturePalette(PaletteNumber);
-        }
-
-        HRESULT __stdcall SetScissorRect(CONST RECT* const pRect) noexcept override
-        {
-            return this->pOrigInterface->SetScissorRect(pRect);
-        }
-
-        HRESULT __stdcall GetScissorRect(RECT* const pRect) noexcept override
-        {
-            return this->pOrigInterface->GetScissorRect(pRect);
-        }
-
-        HRESULT __stdcall SetSoftwareVertexProcessing(const BOOL bSoftware) noexcept override
-        {
-            return this->pOrigInterface->SetSoftwareVertexProcessing(bSoftware);
-        }
-
-        BOOL __stdcall GetSoftwareVertexProcessing() noexcept override
-        {
-            return this->pOrigInterface->GetSoftwareVertexProcessing();
-        }
-
-        HRESULT __stdcall SetNPatchMode(const float nSegments) noexcept override
-        {
-            return this->pOrigInterface->SetNPatchMode(nSegments);
-        }
-
-        FLOAT __stdcall GetNPatchMode() noexcept override
-        {
-            return this->pOrigInterface->GetNPatchMode();
-        }
-
-        HRESULT __stdcall DrawPrimitive(const D3DPRIMITIVETYPE PrimitiveType,
-                                        const UINT StartVertex,
-                                        const UINT PrimitiveCount) noexcept override
-        {
-            return this->pOrigInterface->DrawPrimitive(PrimitiveType, StartVertex, PrimitiveCount);
-        }
-
-        HRESULT __stdcall DrawIndexedPrimitive(const D3DPRIMITIVETYPE Type,
-                                               const INT BaseVertexIndex,
-                                               const UINT MinVertexIndex,
-                                               const UINT NumVertices,
-                                               const UINT startIndex,
-                                               const UINT primCount) noexcept override
-        {
-            return this->pOrigInterface->DrawIndexedPrimitive(Type, BaseVertexIndex,
-                MinVertexIndex, NumVertices, startIndex, primCount);
-        }
-
-        HRESULT __stdcall DrawPrimitiveUP(const D3DPRIMITIVETYPE PrimitiveType,
-                                          const UINT PrimitiveCount,
-                                          CONST void* const pVertexStreamZeroData,
-                                          const UINT VertexStreamZeroStride) noexcept override
-        {
-            return this->pOrigInterface->DrawPrimitiveUP(PrimitiveType,
-                PrimitiveCount, pVertexStreamZeroData, VertexStreamZeroStride);
-        }
-
-        HRESULT __stdcall DrawIndexedPrimitiveUP(const D3DPRIMITIVETYPE PrimitiveType,
-                                                 const UINT MinVertexIndex,
-                                                 const UINT NumVertices,
-                                                 const UINT PrimitiveCount,
-                                                 CONST void* const pIndexData,
-                                                 const D3DFORMAT IndexDataFormat,
-                                                 CONST void* const pVertexStreamZeroData,
-                                                 const UINT VertexStreamZeroStride) noexcept override
-        {
-            return this->pOrigInterface->DrawIndexedPrimitiveUP(PrimitiveType, MinVertexIndex,
-                NumVertices, PrimitiveCount, pIndexData, IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
-        }
-
-        HRESULT __stdcall ProcessVertices(const UINT SrcStartIndex, const UINT DestIndex,
-                                          const UINT VertexCount, IDirect3DVertexBuffer9* const pDestBuffer,
-                                          IDirect3DVertexDeclaration9* const pVertexDecl, const DWORD Flags) noexcept override
-        {
-            return this->pOrigInterface->ProcessVertices(SrcStartIndex, DestIndex, VertexCount, pDestBuffer, pVertexDecl, Flags);
-        }
-
-        HRESULT __stdcall CreateVertexDeclaration(CONST D3DVERTEXELEMENT9* const pVertexElements,
-                                                  IDirect3DVertexDeclaration9** const ppDecl) noexcept override
-        {
-            return this->pOrigInterface->CreateVertexDeclaration(pVertexElements, ppDecl);
-        }
-
-        HRESULT __stdcall SetVertexDeclaration(IDirect3DVertexDeclaration9* const pDecl) noexcept override
-        {
-            return this->pOrigInterface->SetVertexDeclaration(pDecl);
-        }
-
-        HRESULT __stdcall GetVertexDeclaration(IDirect3DVertexDeclaration9** const ppDecl) noexcept override
-        {
-            return this->pOrigInterface->GetVertexDeclaration(ppDecl);
-        }
-
-        HRESULT __stdcall SetFVF(const DWORD FVF) noexcept override
-        {
-            return this->pOrigInterface->SetFVF(FVF);
-        }
-
-        HRESULT __stdcall GetFVF(DWORD* const pFVF) noexcept override
-        {
-            return this->pOrigInterface->GetFVF(pFVF);
-        }
-
-        HRESULT __stdcall CreateVertexShader(CONST DWORD* const pFunction,
-                                             IDirect3DVertexShader9** const ppShader) noexcept override
-        {
-            return this->pOrigInterface->CreateVertexShader(pFunction, ppShader);
-        }
-
-        HRESULT __stdcall SetVertexShader(IDirect3DVertexShader9* const pShader) noexcept override
-        {
-            return this->pOrigInterface->SetVertexShader(pShader);
-        }
-
-        HRESULT __stdcall GetVertexShader(IDirect3DVertexShader9** const ppShader) noexcept override
-        {
-            return this->pOrigInterface->GetVertexShader(ppShader);
-        }
-
-        HRESULT __stdcall SetVertexShaderConstantF(const UINT StartRegister,
-                                                   CONST float* const pConstantData,
-                                                   const UINT Vector4fCount) noexcept override
-        {
-            return this->pOrigInterface->SetVertexShaderConstantF(StartRegister, pConstantData, Vector4fCount);
-        }
-
-        HRESULT __stdcall GetVertexShaderConstantF(const UINT StartRegister,
-                                                   float* const pConstantData,
-                                                   const UINT Vector4fCount) noexcept override
-        {
-            return this->pOrigInterface->GetVertexShaderConstantF(StartRegister, pConstantData, Vector4fCount);
-        }
-
-        HRESULT __stdcall SetVertexShaderConstantI(const UINT StartRegister,
-                                                   CONST int* const pConstantData,
-                                                   const UINT Vector4iCount) noexcept override
-        {
-            return this->pOrigInterface->SetVertexShaderConstantI(StartRegister, pConstantData, Vector4iCount);
-        }
-
-        HRESULT __stdcall GetVertexShaderConstantI(const UINT StartRegister,
-                                                   int* const pConstantData,
-                                                   const UINT Vector4iCount) noexcept override
-        {
-            return this->pOrigInterface->GetVertexShaderConstantI(StartRegister, pConstantData, Vector4iCount);
-        }
-
-        HRESULT __stdcall SetVertexShaderConstantB(const UINT StartRegister,
-                                                   CONST BOOL* const pConstantData,
-                                                   const UINT BoolCount) noexcept override
-        {
-            return this->pOrigInterface->SetVertexShaderConstantB(StartRegister, pConstantData, BoolCount);
-        }
-
-        HRESULT __stdcall GetVertexShaderConstantB(const UINT StartRegister,
-                                                   BOOL* const pConstantData,
-                                                   const UINT BoolCount) noexcept override
-        {
-            return this->pOrigInterface->GetVertexShaderConstantB(StartRegister, pConstantData, BoolCount);
-        }
-
-        HRESULT __stdcall SetStreamSource(const UINT StreamNumber,
-                                          IDirect3DVertexBuffer9* const pStreamData,
-                                          const UINT OffsetInBytes,
-                                          const UINT Stride) noexcept override
-        {
-            return this->pOrigInterface->SetStreamSource(StreamNumber, pStreamData, OffsetInBytes, Stride);
-        }
-
-        HRESULT __stdcall GetStreamSource(const UINT StreamNumber,
-                                          IDirect3DVertexBuffer9** const ppStreamData,
-                                          UINT* const OffsetInBytes,
-                                          UINT* const pStride) noexcept override
-        {
-            return this->pOrigInterface->GetStreamSource(StreamNumber, ppStreamData, OffsetInBytes, pStride);
-        }
-
-        HRESULT __stdcall SetStreamSourceFreq(const UINT StreamNumber,
-                                              const UINT Divider) noexcept override
-        {
-            return this->pOrigInterface->SetStreamSourceFreq(StreamNumber, Divider);
-        }
-
-        HRESULT __stdcall GetStreamSourceFreq(const UINT StreamNumber,
-                                              UINT* const Divider) noexcept override
-        {
-            return this->pOrigInterface->GetStreamSourceFreq(StreamNumber, Divider);
-        }
-
-        HRESULT __stdcall SetIndices(IDirect3DIndexBuffer9* const pIndexData) noexcept override
-        {
-            return this->pOrigInterface->SetIndices(pIndexData);
-        }
-
-        HRESULT __stdcall GetIndices(IDirect3DIndexBuffer9** const ppIndexData) noexcept override
-        {
-            return this->pOrigInterface->GetIndices(ppIndexData);
-        }
-
-        HRESULT __stdcall CreatePixelShader(CONST DWORD* const pFunction,
-                                            IDirect3DPixelShader9** const ppShader) noexcept override
-        {
-            return this->pOrigInterface->CreatePixelShader(pFunction, ppShader);
-        }
-
-        HRESULT __stdcall SetPixelShader(IDirect3DPixelShader9* const pShader) noexcept override
-        {
-            return this->pOrigInterface->SetPixelShader(pShader);
-        }
-
-        HRESULT __stdcall GetPixelShader(IDirect3DPixelShader9** const ppShader) noexcept override
-        {
-            return this->pOrigInterface->GetPixelShader(ppShader);
-        }
-
-        HRESULT __stdcall SetPixelShaderConstantF(const UINT StartRegister,
-                                                  CONST float* const pConstantData,
-                                                  const UINT Vector4fCount) noexcept override
-        {
-            return this->pOrigInterface->SetPixelShaderConstantF(StartRegister, pConstantData, Vector4fCount);
-        }
-
-        HRESULT __stdcall GetPixelShaderConstantF(const UINT StartRegister,
-                                                  float* const pConstantData,
-                                                  const UINT Vector4fCount) noexcept override
-        {
-            return this->pOrigInterface->GetPixelShaderConstantF(StartRegister, pConstantData, Vector4fCount);
-        }
-
-        HRESULT __stdcall SetPixelShaderConstantI(const UINT StartRegister,
-                                                  CONST int* const pConstantData,
-                                                  const UINT Vector4iCount) noexcept override
-        {
-            return this->pOrigInterface->SetPixelShaderConstantI(StartRegister, pConstantData, Vector4iCount);
-        }
-
-        HRESULT __stdcall GetPixelShaderConstantI(const UINT StartRegister,
-                                                  int* const pConstantData,
-                                                  const UINT Vector4iCount) noexcept override
-        {
-            return this->pOrigInterface->GetPixelShaderConstantI(StartRegister, pConstantData, Vector4iCount);
-        }
-
-        HRESULT __stdcall SetPixelShaderConstantB(const UINT StartRegister,
-                                                  CONST BOOL* const pConstantData,
-                                                  const UINT BoolCount) noexcept override
-        {
-            return this->pOrigInterface->SetPixelShaderConstantB(StartRegister, pConstantData, BoolCount);
-        }
-
-        HRESULT __stdcall GetPixelShaderConstantB(const UINT StartRegister,
-                                                  BOOL* const pConstantData,
-                                                  const UINT BoolCount) noexcept override
-        {
-            return this->pOrigInterface->GetPixelShaderConstantB(StartRegister, pConstantData, BoolCount);
-        }
-
-        HRESULT __stdcall DrawRectPatch(const UINT Handle, CONST float* const pNumSegs,
-                                        CONST D3DRECTPATCH_INFO* const pRectPatchInfo) noexcept override
-        {
-            return this->pOrigInterface->DrawRectPatch(Handle, pNumSegs, pRectPatchInfo);
-        }
-
-        HRESULT __stdcall DrawTriPatch(const UINT Handle, CONST float* const pNumSegs,
-                                       CONST D3DTRIPATCH_INFO* const pTriPatchInfo) noexcept override
-        {
-            return this->pOrigInterface->DrawTriPatch(Handle, pNumSegs, pTriPatchInfo);
-        }
-
-        HRESULT __stdcall DeletePatch(const UINT Handle) noexcept override
-        {
-            return this->pOrigInterface->DeletePatch(Handle);
-        }
-
-        HRESULT __stdcall CreateQuery(const D3DQUERYTYPE Type,
-                                      IDirect3DQuery9** const ppQuery) noexcept override
-        {
-            return this->pOrigInterface->CreateQuery(Type, ppQuery);
-        }
+        IDirect3DDevice9Hook() = delete;
+        IDirect3DDevice9Hook(const IDirect3DDevice9Hook&) = delete;
+        IDirect3DDevice9Hook(IDirect3DDevice9Hook&&) = delete;
+        IDirect3DDevice9Hook& operator=(const IDirect3DDevice9Hook&) = delete;
+        IDirect3DDevice9Hook& operator=(IDirect3DDevice9Hook&&) = delete;
+
+    public:
+
+        explicit IDirect3DDevice9Hook(IDirect3DDevice9* pOrigInterface) noexcept;
+
+        ~IDirect3DDevice9Hook() noexcept;
+
+    public:
+
+        HRESULT __stdcall Present(CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion) noexcept override;
+        HRESULT __stdcall QueryInterface(REFIID riid, VOID** ppvObj) noexcept override;
+        ULONG __stdcall AddRef() noexcept override;
+        ULONG __stdcall Release() noexcept override;
+        HRESULT __stdcall TestCooperativeLevel() noexcept override;
+        UINT __stdcall GetAvailableTextureMem() noexcept override;
+        HRESULT __stdcall EvictManagedResources() noexcept override;
+        HRESULT __stdcall GetDirect3D(IDirect3D9** ppD3D9) noexcept override;
+        HRESULT __stdcall GetDeviceCaps(D3DCAPS9* pCaps) noexcept override;        HRESULT __stdcall GetDisplayMode(UINT iSwapChain, D3DDISPLAYMODE* pMode) noexcept override;        HRESULT __stdcall GetCreationParameters(D3DDEVICE_CREATION_PARAMETERS* pParameters) noexcept override;        HRESULT __stdcall SetCursorProperties(UINT XHotSpot, UINT YHotSpot, IDirect3DSurface9* pCursorBitmap) noexcept override;        VOID __stdcall SetCursorPosition(INT X, INT Y, DWORD Flags) noexcept override;        BOOL __stdcall ShowCursor(BOOL bShow) noexcept override;        HRESULT __stdcall CreateAdditionalSwapChain(D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DSwapChain9** pSwapChain) noexcept override;        HRESULT __stdcall GetSwapChain(UINT iSwapChain, IDirect3DSwapChain9** pSwapChain) noexcept override;        UINT __stdcall GetNumberOfSwapChains() noexcept override;        HRESULT __stdcall Reset(D3DPRESENT_PARAMETERS* pPresentationParameters) noexcept override;        HRESULT __stdcall GetBackBuffer(UINT iSwapChain, UINT iBackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface9** ppBackBuffer) noexcept override;        HRESULT __stdcall GetRasterStatus(UINT iSwapChain, D3DRASTER_STATUS* pRasterStatus) noexcept override;        HRESULT __stdcall SetDialogBoxMode(BOOL bEnableDialogs) noexcept override;        VOID __stdcall SetGammaRamp(UINT iSwapChain, DWORD Flags, CONST D3DGAMMARAMP* pRamp) noexcept override;        VOID __stdcall GetGammaRamp(UINT iSwapChain, D3DGAMMARAMP* pRamp) noexcept override;        HRESULT __stdcall CreateTexture(UINT Width, UINT Height, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IDirect3DTexture9** ppTexture, HANDLE* pSharedHandle) noexcept override;        HRESULT __stdcall CreateVolumeTexture(UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IDirect3DVolumeTexture9** ppVolumeTexture, HANDLE* pSharedHandle) noexcept override;        HRESULT __stdcall CreateCubeTexture(UINT EdgeLength, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IDirect3DCubeTexture9** ppCubeTexture, HANDLE* pSharedHandle) noexcept override;        HRESULT __stdcall CreateVertexBuffer(UINT Length, DWORD Usage, DWORD FVF, D3DPOOL Pool, IDirect3DVertexBuffer9** ppVertexBuffer, HANDLE* pSharedHandle) noexcept override;        HRESULT __stdcall CreateIndexBuffer(UINT Length, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IDirect3DIndexBuffer9** ppIndexBuffer, HANDLE* pSharedHandle) noexcept override;        HRESULT __stdcall CreateRenderTarget(UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, BOOL Lockable, IDirect3DSurface9** ppSurface, HANDLE* pSharedHandle) noexcept override;        HRESULT __stdcall CreateDepthStencilSurface(UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, BOOL Discard, IDirect3DSurface9** ppSurface, HANDLE* pSharedHandle) noexcept override;        HRESULT __stdcall UpdateSurface(IDirect3DSurface9* pSourceSurface, CONST RECT* pSourceRect, IDirect3DSurface9* pDestinationSurface, CONST POINT* pDestPoint) noexcept override;        HRESULT __stdcall UpdateTexture(IDirect3DBaseTexture9* pSourceTexture, IDirect3DBaseTexture9* pDestinationTexture) noexcept override;        HRESULT __stdcall GetRenderTargetData(IDirect3DSurface9* pRenderTarget, IDirect3DSurface9* pDestSurface) noexcept override;        HRESULT __stdcall GetFrontBufferData(UINT iSwapChain, IDirect3DSurface9* pDestSurface) noexcept override;        HRESULT __stdcall StretchRect(IDirect3DSurface9* pSourceSurface, CONST RECT* pSourceRect, IDirect3DSurface9* pDestSurface, CONST RECT* pDestRect, D3DTEXTUREFILTERTYPE Filter) noexcept override;        HRESULT __stdcall ColorFill(IDirect3DSurface9* pSurface, CONST RECT* pRect, D3DCOLOR color) noexcept override;        HRESULT __stdcall CreateOffscreenPlainSurface(UINT Width, UINT Height, D3DFORMAT Format, D3DPOOL Pool, IDirect3DSurface9** ppSurface, HANDLE* pSharedHandle) noexcept override;        HRESULT __stdcall SetRenderTarget(DWORD RenderTargetIndex, IDirect3DSurface9* pRenderTarget) noexcept override;        HRESULT __stdcall GetRenderTarget(DWORD RenderTargetIndex, IDirect3DSurface9** ppRenderTarget) noexcept override;        HRESULT __stdcall SetDepthStencilSurface(IDirect3DSurface9* pNewZStencil) noexcept override;        HRESULT __stdcall GetDepthStencilSurface(IDirect3DSurface9** ppZStencilSurface) noexcept override;        HRESULT __stdcall BeginScene() noexcept override;        HRESULT __stdcall EndScene() noexcept override;
+        HRESULT __stdcall Clear(DWORD Count, CONST D3DRECT* pRects, DWORD Flags, D3DCOLOR Color, FLOAT Z, DWORD Stencil) noexcept override;        HRESULT __stdcall SetTransform(D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* mat) noexcept override;        HRESULT __stdcall GetTransform(D3DTRANSFORMSTATETYPE State, D3DMATRIX* mat) noexcept override;        HRESULT __stdcall MultiplyTransform(D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* mat) noexcept override;        HRESULT __stdcall SetViewport(CONST D3DVIEWPORT9* pViewport) noexcept override;        HRESULT __stdcall GetViewport(D3DVIEWPORT9* pViewport) noexcept override;        HRESULT __stdcall SetMaterial(CONST D3DMATERIAL9* pMaterial) noexcept override;        HRESULT __stdcall GetMaterial(D3DMATERIAL9* pMaterial) noexcept override;        HRESULT __stdcall SetLight(DWORD Index, CONST D3DLIGHT9* pLight) noexcept override;        HRESULT __stdcall GetLight(DWORD Index, D3DLIGHT9* pLight) noexcept override;        HRESULT __stdcall LightEnable(DWORD Index, BOOL Enable) noexcept override;        HRESULT __stdcall GetLightEnable(DWORD Index, BOOL* pEnable) noexcept override;        HRESULT __stdcall SetClipPlane(DWORD Index, CONST FLOAT* pPlane) noexcept override;        HRESULT __stdcall GetClipPlane(DWORD Index, FLOAT* pPlane) noexcept override;        HRESULT __stdcall SetRenderState(D3DRENDERSTATETYPE State, DWORD Value) noexcept override;        HRESULT __stdcall GetRenderState(D3DRENDERSTATETYPE State, DWORD* pValue) noexcept override;        HRESULT __stdcall CreateStateBlock(D3DSTATEBLOCKTYPE Type, IDirect3DStateBlock9** ppSB) noexcept override;        HRESULT __stdcall BeginStateBlock() noexcept override;        HRESULT __stdcall EndStateBlock(IDirect3DStateBlock9** ppSB) noexcept override;        HRESULT __stdcall SetClipStatus(CONST D3DCLIPSTATUS9* pClipStatus) noexcept override;        HRESULT __stdcall GetClipStatus(D3DCLIPSTATUS9* pClipStatus) noexcept override;        HRESULT __stdcall GetTexture(DWORD Stage, IDirect3DBaseTexture9** ppTexture) noexcept override;        HRESULT __stdcall SetTexture(DWORD Stage, IDirect3DBaseTexture9* pTexture) noexcept override;        HRESULT __stdcall GetTextureStageState(DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD* pValue) noexcept override;        HRESULT __stdcall SetTextureStageState(DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD Value) noexcept override;        HRESULT __stdcall GetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD* pValue) noexcept override;        HRESULT __stdcall SetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value) noexcept override;        HRESULT __stdcall ValidateDevice(DWORD* pNumPasses) noexcept override;
+        HRESULT __stdcall SetPaletteEntries(UINT PaletteNumber, CONST PALETTEENTRY* pEntries) noexcept override;        HRESULT __stdcall GetPaletteEntries(UINT PaletteNumber, PALETTEENTRY* pEntries) noexcept override;        HRESULT __stdcall SetCurrentTexturePalette(UINT PaletteNumber) noexcept override;        HRESULT __stdcall GetCurrentTexturePalette(UINT* PaletteNumber) noexcept override;        HRESULT __stdcall SetScissorRect(CONST RECT* pRect) noexcept override;        HRESULT __stdcall GetScissorRect(RECT* pRect) noexcept override;        HRESULT __stdcall SetSoftwareVertexProcessing(BOOL bSoftware) noexcept override;        BOOL __stdcall GetSoftwareVertexProcessing() noexcept override;        HRESULT __stdcall SetNPatchMode(FLOAT nSegments) noexcept override;        FLOAT __stdcall GetNPatchMode() noexcept override;        HRESULT __stdcall DrawPrimitive(D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount) noexcept override;        HRESULT __stdcall DrawIndexedPrimitive(D3DPRIMITIVETYPE Type, INT BaseVertexIndex, UINT MinVertexIndex, UINT NumVertices, UINT startIndex, UINT primCount) noexcept override;        HRESULT __stdcall DrawPrimitiveUP(D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, CONST VOID* pVertexStreamZeroData, UINT VertexStreamZeroStride) noexcept override;        HRESULT __stdcall DrawIndexedPrimitiveUP(D3DPRIMITIVETYPE PrimitiveType, UINT MinVertexIndex, UINT NumVertices, UINT PrimitiveCount, CONST VOID* pIndexData, D3DFORMAT IndexDataFormat, CONST VOID* pVertexStreamZeroData, UINT VertexStreamZeroStride) noexcept override;        HRESULT __stdcall ProcessVertices(UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, IDirect3DVertexBuffer9* pDestBuffer, IDirect3DVertexDeclaration9* pVertexDecl, DWORD Flags) noexcept override;        HRESULT __stdcall CreateVertexDeclaration(CONST D3DVERTEXELEMENT9* pVertexElements, IDirect3DVertexDeclaration9** ppDecl) noexcept override;        HRESULT __stdcall SetVertexDeclaration(IDirect3DVertexDeclaration9* pDecl) noexcept override;        HRESULT __stdcall GetVertexDeclaration(IDirect3DVertexDeclaration9** ppDecl) noexcept override;        HRESULT __stdcall SetFVF(DWORD FVF) noexcept override;        HRESULT __stdcall GetFVF(DWORD* pFVF) noexcept override;        HRESULT __stdcall CreateVertexShader(CONST DWORD* pFunction, IDirect3DVertexShader9** ppShader) noexcept override;        HRESULT __stdcall SetVertexShader(IDirect3DVertexShader9* pShader) noexcept override;        HRESULT __stdcall GetVertexShader(IDirect3DVertexShader9** ppShader) noexcept override;        HRESULT __stdcall SetVertexShaderConstantF(UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount) noexcept override;        HRESULT __stdcall GetVertexShaderConstantF(UINT StartRegister, FLOAT* pConstantData, UINT Vector4fCount) noexcept override;        HRESULT __stdcall SetVertexShaderConstantI(UINT StartRegister, CONST INT* pConstantData, UINT Vector4iCount) noexcept override;        HRESULT __stdcall GetVertexShaderConstantI(UINT StartRegister, INT* pConstantData, UINT Vector4iCount) noexcept override;        HRESULT __stdcall SetVertexShaderConstantB(UINT StartRegister, CONST BOOL* pConstantData, UINT BoolCount) noexcept override;        HRESULT __stdcall GetVertexShaderConstantB(UINT StartRegister, BOOL* pConstantData, UINT BoolCount) noexcept override;        HRESULT __stdcall SetStreamSource(UINT StreamNumber, IDirect3DVertexBuffer9* pStreamData, UINT OffsetInBytes, UINT Stride) noexcept override;        HRESULT __stdcall GetStreamSource(UINT StreamNumber, IDirect3DVertexBuffer9** ppStreamData, UINT* OffsetInBytes, UINT* pStride) noexcept override;        HRESULT __stdcall SetStreamSourceFreq(UINT StreamNumber, UINT Divider) noexcept override;        HRESULT __stdcall GetStreamSourceFreq(UINT StreamNumber, UINT* Divider) noexcept override;        HRESULT __stdcall SetIndices(IDirect3DIndexBuffer9* pIndexData) noexcept override;        HRESULT __stdcall GetIndices(IDirect3DIndexBuffer9** ppIndexData) noexcept override;        HRESULT __stdcall CreatePixelShader(CONST DWORD* pFunction, IDirect3DPixelShader9** ppShader) noexcept override;        HRESULT __stdcall SetPixelShader(IDirect3DPixelShader9* pShader) noexcept override;        HRESULT __stdcall GetPixelShader(IDirect3DPixelShader9** ppShader) noexcept override;        HRESULT __stdcall SetPixelShaderConstantF(UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount) noexcept override;        HRESULT __stdcall GetPixelShaderConstantF(UINT StartRegister, FLOAT* pConstantData, UINT Vector4fCount) noexcept override;        HRESULT __stdcall SetPixelShaderConstantI(UINT StartRegister, CONST INT* pConstantData, UINT Vector4iCount) noexcept override;        HRESULT __stdcall GetPixelShaderConstantI(UINT StartRegister, INT* pConstantData, UINT Vector4iCount) noexcept override;        HRESULT __stdcall SetPixelShaderConstantB(UINT StartRegister, CONST BOOL* pConstantData, UINT BoolCount) noexcept override;        HRESULT __stdcall GetPixelShaderConstantB(UINT StartRegister, BOOL* pConstantData, UINT BoolCount) noexcept override;        HRESULT __stdcall DrawRectPatch(UINT Handle, CONST FLOAT* pNumSegs, CONST D3DRECTPATCH_INFO* pRectPatchInfo) noexcept override;        HRESULT __stdcall DrawTriPatch(UINT Handle, CONST FLOAT* pNumSegs, CONST D3DTRIPATCH_INFO* pTriPatchInfo) noexcept override;        HRESULT __stdcall DeletePatch(UINT Handle) noexcept override;        HRESULT __stdcall CreateQuery(D3DQUERYTYPE Type, IDirect3DQuery9** ppQuery) noexcept override;
 
     private:
 
-        IDirect3DDevice9* pOrigInterface { nullptr };
+        IDirect3DDevice9* const pOrigInterface;
 
         bool resetStatus { false };
         bool sceneStatus { false };
@@ -903,209 +114,64 @@ private:
 
     interface IDirect3D9Hook : public IDirect3D9 {
 
-        explicit IDirect3D9Hook(IDirect3D9* const pOrigInterface) noexcept
-            : pOrigInterface(pOrigInterface) { this->pOrigInterface->AddRef(); }
+        IDirect3D9Hook() = delete;
+        IDirect3D9Hook(const IDirect3D9Hook&) = delete;
+        IDirect3D9Hook(IDirect3D9Hook&&) = delete;
+        IDirect3D9Hook& operator=(const IDirect3D9Hook&) = delete;
+        IDirect3D9Hook& operator=(IDirect3D9Hook&&) = delete;
 
-        ~IDirect3D9Hook() noexcept { this->pOrigInterface->Release(); }
+    public:
 
-        // IDirect3D9 Interface methods...
-        // ------------------------------------------------
+        explicit IDirect3D9Hook(IDirect3D9* pOrigInterface) noexcept;
 
-        HRESULT __stdcall QueryInterface(THIS_ REFIID const riid,
-                                         VOID** const ppvObj) noexcept override
-        {
-            *ppvObj = nullptr;
+        ~IDirect3D9Hook() noexcept;
 
-            const auto hResult = this->pOrigInterface->QueryInterface(riid, ppvObj);
-
-            if (SUCCEEDED(hResult)) *ppvObj = this;
-
-            return hResult;
-        }
-
-        ULONG __stdcall AddRef() noexcept override
-        {
-            return this->pOrigInterface->AddRef();
-        }
-
-        ULONG __stdcall Release() noexcept override
-        {
-            const auto count = this->pOrigInterface->Release();
-
-            if (count <= 1)
-            {
-                delete this;
-                return 0;
-            }
-
-            return count;
-        }
-
-        HRESULT __stdcall RegisterSoftwareDevice(THIS_ void* const pInitializeFunction) noexcept override
-        {
-            return this->pOrigInterface->RegisterSoftwareDevice(pInitializeFunction);
-        }
-
-        UINT __stdcall GetAdapterCount() noexcept override
-        {
-            return this->pOrigInterface->GetAdapterCount();
-        }
-
-        HRESULT __stdcall GetAdapterIdentifier(const THIS_ UINT Adapter, const DWORD Flags,
-                                               D3DADAPTER_IDENTIFIER9* const pIdentifier) noexcept override
-        {
-            return this->pOrigInterface->GetAdapterIdentifier(Adapter, Flags, pIdentifier);
-        }
-
-        UINT __stdcall GetAdapterModeCount(const THIS_ UINT Adapter, const D3DFORMAT Format) noexcept override
-        {
-            return this->pOrigInterface->GetAdapterModeCount(Adapter, Format);
-        }
-
-        HRESULT __stdcall EnumAdapterModes(const THIS_ UINT Adapter, const D3DFORMAT Format,
-                                           const UINT Mode, D3DDISPLAYMODE* const pMode) noexcept override
-        {
-            return this->pOrigInterface->EnumAdapterModes(Adapter, Format, Mode, pMode);
-        }
-
-        HRESULT __stdcall GetAdapterDisplayMode(const THIS_ UINT Adapter,
-                                                D3DDISPLAYMODE* const pMode) noexcept override
-        {
-            return this->pOrigInterface->GetAdapterDisplayMode(Adapter, pMode);
-        }
-
-        HRESULT __stdcall CheckDeviceType(const THIS_ UINT Adapter, const D3DDEVTYPE DevType,
-                                          const D3DFORMAT AdapterFormat, const D3DFORMAT BackBufferFormat,
-                                          const BOOL bWindowed) noexcept override
-        {
-            return this->pOrigInterface->CheckDeviceType(Adapter, DevType,
-                AdapterFormat, BackBufferFormat, bWindowed);
-        }
-
-        HRESULT __stdcall CheckDeviceFormat(const THIS_ UINT Adapter, const D3DDEVTYPE DeviceType,
-                                            const D3DFORMAT AdapterFormat, const DWORD Usage,
-                                            const D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) noexcept override
-        {
-            return this->pOrigInterface->CheckDeviceFormat(Adapter, DeviceType,
-                AdapterFormat, Usage, RType, CheckFormat);
-        }
-
-        HRESULT __stdcall CheckDeviceMultiSampleType(const THIS_ UINT Adapter, const D3DDEVTYPE DeviceType,
-                                                     const D3DFORMAT SurfaceFormat, const BOOL Windowed,
-                                                     const D3DMULTISAMPLE_TYPE MultiSampleType,
-                                                     DWORD* const pQualityLevels) noexcept override
-        {
-            return this->pOrigInterface->CheckDeviceMultiSampleType(Adapter, DeviceType,
-                SurfaceFormat, Windowed, MultiSampleType, pQualityLevels);
-        }
-
-        HRESULT __stdcall CheckDepthStencilMatch(const THIS_ UINT Adapter, const D3DDEVTYPE DeviceType,
-                                                 const D3DFORMAT AdapterFormat, const D3DFORMAT RenderTargetFormat,
-                                                 const D3DFORMAT DepthStencilFormat) noexcept override
-        {
-            return this->pOrigInterface->CheckDepthStencilMatch(Adapter, DeviceType,
-                AdapterFormat, RenderTargetFormat, DepthStencilFormat);
-        }
-
-        HRESULT __stdcall CheckDeviceFormatConversion(const THIS_ UINT Adapter, const D3DDEVTYPE DeviceType,
-                                                      const D3DFORMAT SourceFormat, const D3DFORMAT TargetFormat) noexcept override
-        {
-            return this->pOrigInterface->CheckDeviceFormatConversion(Adapter, DeviceType, SourceFormat, TargetFormat);
-        }
-
-        HRESULT __stdcall GetDeviceCaps(const THIS_ UINT Adapter, const D3DDEVTYPE DeviceType,
-                                        D3DCAPS9* const pCaps) noexcept override
-        {
-            return this->pOrigInterface->GetDeviceCaps(Adapter, DeviceType, pCaps);
-        }
-
-        HMONITOR __stdcall GetAdapterMonitor(const THIS_ UINT Adapter) noexcept override
-        {
-            return this->pOrigInterface->GetAdapterMonitor(Adapter);
-        }
-
-        HRESULT __stdcall CreateDevice(const THIS_ UINT Adapter, const D3DDEVTYPE DeviceType,
-                                       const HWND hFocusWindow, const DWORD BehaviorFlags,
-                                       D3DPRESENT_PARAMETERS* const pPresentationParameters,
-                                       IDirect3DDevice9** const ppReturnedDeviceInterface) noexcept override
-        {
-            const auto hResult = this->pOrigInterface->CreateDevice(
-                Adapter, DeviceType, hFocusWindow,
-                BehaviorFlags, pPresentationParameters,
-                ppReturnedDeviceInterface
-            );
-
-            if (FAILED(hResult) || (this != GtaDirectPointer) ||
-                (ppReturnedDeviceInterface != &GtaDevicePointer)) return hResult;
-
-            Logger::LogToFile(
-                "[dbg:render:direct_%p] : device interface (ptr:%p) success created with hwnd (value:%u)"
-                " windowed (value:%d) screenwidth (value:%u) screenheight (value:%u)",
-                this, *ppReturnedDeviceInterface, hFocusWindow, pPresentationParameters->Windowed,
-                pPresentationParameters->BackBufferWidth, pPresentationParameters->BackBufferHeight
-            );
-
-            IDirect3DDevice9Hook* pHookDevice;
-
-            if (!(pHookDevice = new IDirect3DDevice9Hook(*ppReturnedDeviceInterface)))
-            {
-                Logger::LogToFile("[err:render:direct_%p] : failed to allocate memory for hook interface", this);
-                return hResult;
-            }
-
-            Logger::LogToFile(
-                "[dbg:render:direct_%p] : pointer successfully replaced from orig (ptr:%p) to hook (ptr:%p)",
-                this, *ppReturnedDeviceInterface, pHookDevice
-            );
-
-            if (Render::pDirectInterface && Render::deviceFreeHandler)
-                Render::deviceFreeHandler();
-
-            Render::deviceMutex.lock();
-            Render::pDirectInterface = this->pOrigInterface;
-            Render::pDeviceInterface = *ppReturnedDeviceInterface;
-            Render::deviceParameters = *pPresentationParameters;
-            Render::deviceMutex.unlock();
-
-            if (Render::deviceInitHandler) Render::deviceInitHandler(
-                Render::pDirectInterface, Render::pDeviceInterface,
-                &Render::deviceParameters
-            );
-
-            *ppReturnedDeviceInterface = pHookDevice;
-
-            Logger::LogToFile("[dbg:render:direct_%p] : hook success created", this);
-
-            return hResult;
-        }
+    public:
+        
+        HRESULT __stdcall QueryInterface(REFIID riid, VOID** ppvObj) noexcept;
+        ULONG __stdcall AddRef() noexcept;
+        ULONG __stdcall Release() noexcept;
+        HRESULT __stdcall RegisterSoftwareDevice(VOID* pInitializeFunction) noexcept;
+        UINT __stdcall GetAdapterCount() noexcept;
+        HRESULT __stdcall GetAdapterIdentifier(UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER9* pIdentifier) noexcept;
+        UINT __stdcall GetAdapterModeCount(UINT Adapter, D3DFORMAT Format) noexcept;
+        HRESULT __stdcall EnumAdapterModes(UINT Adapter, D3DFORMAT Format, UINT Mode, D3DDISPLAYMODE* pMode) noexcept;
+        HRESULT __stdcall GetAdapterDisplayMode(UINT Adapter, D3DDISPLAYMODE* pMode) noexcept;
+        HRESULT __stdcall CheckDeviceType(UINT Adapter, D3DDEVTYPE DevType, D3DFORMAT AdapterFormat, D3DFORMAT BackBufferFormat, BOOL bWindowed) noexcept;
+        HRESULT __stdcall CheckDeviceFormat(UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat, DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) noexcept;
+        HRESULT __stdcall CheckDeviceMultiSampleType(UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat, BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType, DWORD* pQualityLevels) noexcept;
+        HRESULT __stdcall CheckDepthStencilMatch(UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat, D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) noexcept;
+        HRESULT __stdcall CheckDeviceFormatConversion(UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SourceFormat, D3DFORMAT TargetFormat) noexcept;
+        HRESULT __stdcall GetDeviceCaps(UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS9* pCaps) noexcept;
+        HMONITOR __stdcall GetAdapterMonitor(UINT Adapter) noexcept;
+        HRESULT __stdcall CreateDevice(UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DDevice9** ppReturnedDeviceInterface) noexcept;
 
     private:
 
-        IDirect3D9* pOrigInterface { nullptr };
+        IDirect3D9* const pOrigInterface;
 
     };
 
 private:
 
-    static IDirect3D9* CALLBACK HookFuncDirect3DCreate9(UINT SDKVersion) noexcept;
+    static IDirect3D9* CALLBACK HookDirect3DCreate9(UINT SDKVersion) noexcept;
 
 private:
 
     static bool initStatus;
 
     static std::mutex deviceMutex;
-
     static IDirect3D9* pDirectInterface;
     static IDirect3DDevice9* pDeviceInterface;
     static D3DPRESENT_PARAMETERS deviceParameters;
 
-    static DeviceInitHandlerType deviceInitHandler;
-    static BeforeResetHandlerType beforeResetHandler;
-    static BeginSceneHandlerType beginSceneHandler;
-    static RenderHandlerType renderHandler;
-    static EndSceneHandlerType endSceneHandler;
-    static AfterResetHandlerType afterResetHandler;
-    static DeviceFreeHandlerType deviceFreeHandler;
+    static std::vector<DeviceInitCallback> deviceInitCallbacks;
+    static std::vector<BeforeResetCallback> beforeResetCallbacks;
+    static std::vector<BeginSceneCallback> beginSceneCallbacks;
+    static std::vector<RenderCallback> renderCallbacks;
+    static std::vector<EndSceneCallback> endSceneCallbacks;
+    static std::vector<AfterResetCallback> afterResetCallbacks;
+    static std::vector<DeviceFreeCallback> deviceFreeCallbacks;
 
     static Memory::JumpHookPtr hookDirect3DCreate9;
 

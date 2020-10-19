@@ -28,6 +28,7 @@
 
 #include <SPSCQueue.h>
 #include <util/raknet.h>
+#include <util/timer.h>
 
 #include "ControlPacket.h"
 #include "VoicePacket.h"
@@ -35,38 +36,52 @@
 
 class Network {
 
-    using ConnectHandlerType = std::function<void(uint16_t, const SV::ConnectPacket&)>;
-    using PlayerInitHandlerType = std::function<void(uint16_t, SV::PluginInitPacket&)>;
-    using DisconnectHandlerType = std::function<void(uint16_t)>;
+    Network() = delete;
+    ~Network() = delete;
+    Network(const Network&) = delete;
+    Network(Network&&) = delete;
+    Network& operator=(const Network&) = delete;
+    Network& operator=(Network&&) = delete;
 
-    static constexpr uint8_t RaknetPacketId = 222;
-    static constexpr uint32_t MaxVoicePacketSize = 1400;
-    static constexpr uint32_t MaxVoiceDataSize = MaxVoicePacketSize - sizeof(VoicePacket);
-    static constexpr uint32_t SendBufferSize = 16 * 1024 * 1024;
-    static constexpr uint32_t RecvBufferSize = 32 * 1024 * 1024;
-    static constexpr int64_t KeepAliveInterval = 10000;
+private:
+
+    static constexpr uint8_t kRaknetPacketId = 222;
+    static constexpr uint32_t kMaxVoicePacketSize = 1400;
+    static constexpr uint32_t kMaxVoiceDataSize = kMaxVoicePacketSize - sizeof(VoicePacket);
+    static constexpr uint32_t kSendBufferSize = 16 * 1024 * 1024;
+    static constexpr uint32_t kRecvBufferSize = 32 * 1024 * 1024;
+    static constexpr Timer::time_t kKeepAliveInterval = 10000;
+
+private:
+
+    using ConnectCallback = std::function<void(uint16_t, const SV::ConnectPacket&)>;
+    using PlayerInitCallback = std::function<void(uint16_t, SV::PluginInitPacket&)>;
+    using DisconnectCallback = std::function<void(uint16_t)>;
 
 public:
 
-    static bool Init(const void* serverBaseAddress,
-                     ConnectHandlerType connectHandler,
-                     PlayerInitHandlerType playerInitHandler,
-                     DisconnectHandlerType disconnectHandler);
-    static void Free();
+    static bool Init(const void* serverBaseAddress) noexcept;
+    static void Free() noexcept;
 
     static bool Bind() noexcept;
-
-    static void Process(int64_t curTime) noexcept;
+    static void Process() noexcept;
 
     static bool SendControlPacket(uint16_t playerId, const ControlPacket& controlPacket);
     static bool SendVoicePacket(uint16_t playerId, const VoicePacket& voicePacket);
     static ControlPacketContainerPtr ReceiveControlPacket(uint16_t& sender) noexcept;
     static VoicePacketContainerPtr ReceiveVoicePacket();
 
+    static std::size_t AddConnectCallback(ConnectCallback callback) noexcept;
+    static std::size_t AddPlayerInitCallback(PlayerInitCallback callback) noexcept;
+    static std::size_t AddDisconnectCallback(DisconnectCallback callback) noexcept;
+    static void RemoveConnectCallback(std::size_t callback) noexcept;
+    static void RemovePlayerInitCallback(std::size_t callback) noexcept;
+    static void RemoveDisconnectCallback(std::size_t callback) noexcept;
+
 private:
 
-    static bool ConnectHandler(uint16_t playerId, RPCParameters* rpc);
-    static bool PacketHandler(uint16_t playerId, Packet* packet);
+    static bool ConnectHandler(uint16_t playerId, RPCParameters& rpc);
+    static bool PacketHandler(uint16_t playerId, Packet& packet);
     static void DisconnectHandler(uint16_t playerId);
 
 private:
@@ -77,9 +92,9 @@ private:
     static SOCKET socketHandle;
     static uint16_t serverPort;
 
-    static ConnectHandlerType connectHandler;
-    static PlayerInitHandlerType playerInitHandler;
-    static DisconnectHandlerType disconnectHandler;
+    static std::vector<ConnectCallback> connectCallbacks;
+    static std::vector<PlayerInitCallback> playerInitCallbacks;
+    static std::vector<DisconnectCallback> disconnectCallbacks;
 
     static std::array<std::atomic_bool, MAX_PLAYERS> playerStatusTable;
     static std::array<std::shared_ptr<sockaddr_in>, MAX_PLAYERS> playerAddrTable;
@@ -104,7 +119,7 @@ private:
 
     public:
 
-        explicit ControlPacketInfo(PacketPtr&& packet, uint16_t sender) noexcept
+        explicit ControlPacketInfo(PacketPtr packet, uint16_t sender) noexcept
             : packet(std::move(packet)), sender(sender) {}
 
         ~ControlPacketInfo() noexcept = default;

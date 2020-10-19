@@ -17,9 +17,9 @@
 
 struct ControlPacket
 {
-    WORD packet;
-    WORD length;
-    BYTE data[];
+    UINT16 packet;
+    UINT16 length;
+    UINT8 data[];
 
     DWORD GetFullSize() const noexcept;
 };

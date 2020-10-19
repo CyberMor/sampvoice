@@ -56,6 +56,12 @@
     <Filter Include="Исходные файлы\include\samp">
       <UniqueIdentifier>{7bbaf636-90b7-4230-be43-bbf50c10ea75}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Исходные файлы\source\audio\streams\parameters">
+      <UniqueIdentifier>{40b42566-b5fd-44b8-9992-0b70d5a5c82d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\source\audio\streams\effects">
+      <UniqueIdentifier>{9b04a4dd-398b-4a8b-b361-9c0dadc1c13a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\audio\bass.h">
@@ -1471,47 +1477,62 @@
     <ClInclude Include="Network.h">
       <Filter>Исходные файлы\source\network</Filter>
     </ClInclude>
-    <ClInclude Include="include\util\Resource.h">
-      <Filter>Исходные файлы\include\util</Filter>
+    <ClInclude Include="LocalStream.h">
+      <Filter>Исходные файлы\source\audio\streams</Filter>
     </ClInclude>
-    <ClInclude Include="include\util\Path.h">
-      <Filter>Исходные файлы\include\util</Filter>
+    <ClInclude Include="Effect.h">
+      <Filter>Исходные файлы\source\audio\streams\effects</Filter>
     </ClInclude>
-    <ClInclude Include="include\util\Logger.h">
-      <Filter>Исходные файлы\include\util</Filter>
+    <ClInclude Include="Parameter.h">
+      <Filter>Исходные файлы\source\audio\streams\parameters</Filter>
     </ClInclude>
-    <ClInclude Include="include\util\KeyFilter.h">
+    <ClInclude Include="SetController.h">
+      <Filter>Исходные файлы\source\audio\streams\parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="SlideController.h">
+      <Filter>Исходные файлы\source\audio\streams\parameters</Filter>
+    </ClInclude>
+    <ClInclude Include="include\util\Timer.h">
       <Filter>Исходные файлы\include\util</Filter>
     </ClInclude>
     <ClInclude Include="include\util\AddressesBase.h">
       <Filter>Исходные файлы\include\util</Filter>
     </ClInclude>
-    <ClInclude Include="include\util\GameUtil.h">
-      <Filter>Исходные файлы\include\util</Filter>
-    </ClInclude>
-    <ClInclude Include="include\util\Memory.hpp">
-      <Filter>Исходные файлы\include\util</Filter>
-    </ClInclude>
-    <ClInclude Include="include\util\Samp.h">
-      <Filter>Исходные файлы\include\util</Filter>
-    </ClInclude>
-    <ClInclude Include="include\util\RakNet.h">
-      <Filter>Исходные файлы\include\util</Filter>
-    </ClInclude>
     <ClInclude Include="include\util\BlurEffect.h">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\util\GameUtil.h">
       <Filter>Исходные файлы\include\util</Filter>
     </ClInclude>
     <ClInclude Include="include\util\ImGuiUtil.h">
       <Filter>Исходные файлы\include\util</Filter>
     </ClInclude>
+    <ClInclude Include="include\util\KeyFilter.h">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\util\Logger.h">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\util\Memory.hpp">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\util\Path.h">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\util\RakNet.h">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClInclude>
     <ClInclude Include="include\util\Render.h">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\util\Resource.h">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\util\Samp.h">
       <Filter>Исходные файлы\include\util</Filter>
     </ClInclude>
     <ClInclude Include="include\util\Texture.h">
       <Filter>Исходные файлы\include\util</Filter>
-    </ClInclude>
-    <ClInclude Include="LocalStream.h">
-      <Filter>Исходные файлы\source\audio\streams</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2555,44 +2576,86 @@
     <ClCompile Include="Network.cpp">
       <Filter>Исходные файлы\source\network</Filter>
     </ClCompile>
-    <ClCompile Include="include\util\Resource.cpp">
-      <Filter>Исходные файлы\include\util</Filter>
+    <ClCompile Include="ControlPacket.cpp">
+      <Filter>Исходные файлы\source\network</Filter>
     </ClCompile>
-    <ClCompile Include="include\util\Path.cpp">
-      <Filter>Исходные файлы\include\util</Filter>
-    </ClCompile>
-    <ClCompile Include="include\util\Logger.cpp">
-      <Filter>Исходные файлы\include\util</Filter>
-    </ClCompile>
-    <ClCompile Include="include\util\KeyFilter.cpp">
-      <Filter>Исходные файлы\include\util</Filter>
-    </ClCompile>
-    <ClCompile Include="include\util\GameUtil.cpp">
-      <Filter>Исходные файлы\include\util</Filter>
-    </ClCompile>
-    <ClCompile Include="include\util\Samp.cpp">
-      <Filter>Исходные файлы\include\util</Filter>
-    </ClCompile>
-    <ClCompile Include="include\util\RakNet.cpp">
+    <ClCompile Include="include\util\AddressesBase.cpp">
       <Filter>Исходные файлы\include\util</Filter>
     </ClCompile>
     <ClCompile Include="include\util\BlurEffect.cpp">
       <Filter>Исходные файлы\include\util</Filter>
     </ClCompile>
+    <ClCompile Include="include\util\GameUtil.cpp">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClCompile>
     <ClCompile Include="include\util\ImGuiUtil.cpp">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClCompile>
+    <ClCompile Include="include\util\KeyFilter.cpp">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClCompile>
+    <ClCompile Include="include\util\Logger.cpp">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClCompile>
+    <ClCompile Include="include\util\Path.cpp">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClCompile>
+    <ClCompile Include="include\util\RakNet.cpp">
       <Filter>Исходные файлы\include\util</Filter>
     </ClCompile>
     <ClCompile Include="include\util\Render.cpp">
       <Filter>Исходные файлы\include\util</Filter>
     </ClCompile>
+    <ClCompile Include="include\util\Resource.cpp">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClCompile>
+    <ClCompile Include="include\util\Samp.cpp">
+      <Filter>Исходные файлы\include\util</Filter>
+    </ClCompile>
     <ClCompile Include="include\util\Texture.cpp">
       <Filter>Исходные файлы\include\util</Filter>
     </ClCompile>
-    <ClCompile Include="include\util\AddressesBase.cpp">
+    <ClCompile Include="include\util\Timer.cpp">
       <Filter>Исходные файлы\include\util</Filter>
     </ClCompile>
-    <ClCompile Include="ControlPacket.cpp">
-      <Filter>Исходные файлы\source\network</Filter>
+    <ClCompile Include="Channel.cpp">
+      <Filter>Исходные файлы\source\audio\streams\core</Filter>
+    </ClCompile>
+    <ClCompile Include="StreamInfo.cpp">
+      <Filter>Исходные файлы\source\audio\streams\core</Filter>
+    </ClCompile>
+    <ClCompile Include="Stream.cpp">
+      <Filter>Исходные файлы\source\audio\streams\core</Filter>
+    </ClCompile>
+    <ClCompile Include="Effect.cpp">
+      <Filter>Исходные файлы\source\audio\streams\effects</Filter>
+    </ClCompile>
+    <ClCompile Include="Parameter.cpp">
+      <Filter>Исходные файлы\source\audio\streams\parameters</Filter>
+    </ClCompile>
+    <ClCompile Include="SetController.cpp">
+      <Filter>Исходные файлы\source\audio\streams\parameters</Filter>
+    </ClCompile>
+    <ClCompile Include="SlideController.cpp">
+      <Filter>Исходные файлы\source\audio\streams\parameters</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalStream.cpp">
+      <Filter>Исходные файлы\source\audio\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="LocalStream.cpp">
+      <Filter>Исходные файлы\source\audio\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="StreamAtObject.cpp">
+      <Filter>Исходные файлы\source\audio\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="StreamAtPlayer.cpp">
+      <Filter>Исходные файлы\source\audio\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="StreamAtPoint.cpp">
+      <Filter>Исходные файлы\source\audio\streams</Filter>
+    </ClCompile>
+    <ClCompile Include="StreamAtVehicle.cpp">
+      <Filter>Исходные файлы\source\audio\streams</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

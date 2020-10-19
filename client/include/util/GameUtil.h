@@ -26,7 +26,7 @@ class GameUtil {
 
 public:
 
-    static bool IsKeyDown(BYTE keyId) noexcept;
+    static bool IsKeyPressed(int keyId) noexcept;
     static bool IsMenuActive() noexcept;
     static bool IsWindowActive() noexcept;
     static bool IsGameActive() noexcept;

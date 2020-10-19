@@ -17,19 +17,19 @@ void PlayerStore::AddPlayerToStore(const uint16_t playerId, const uint8_t versio
 {
     assert(playerId >= 0 && playerId < MAX_PLAYERS);
 
-    if (const auto pPlayerInfo = new PlayerInfo(version, microStatus))
+    if (const auto pPlayerInfo = new (std::nothrow) PlayerInfo(version, microStatus))
     {
         PlayerStore::playerMutex[playerId].lock();
         const auto pOldPlayerInfo = PlayerStore::playerInfo[playerId].exchange(pPlayerInfo, std::memory_order_acq_rel);
         PlayerStore::playerMutex[playerId].unlock();
 
-        if (pOldPlayerInfo)
+        if (pOldPlayerInfo != nullptr)
         {
-            for (const auto pStream : pOldPlayerInfo->listenerStreams)
-                pStream->DetachListener(playerId);
+            for (const auto stream : pOldPlayerInfo->listenerStreams)
+                stream->DetachListener(playerId);
 
-            for (const auto pStream : pOldPlayerInfo->speakerStreams)
-                pStream->DetachSpeaker(playerId);
+            for (const auto stream : pOldPlayerInfo->speakerStreams)
+                stream->DetachSpeaker(playerId);
 
             delete pOldPlayerInfo;
         }
@@ -44,13 +44,13 @@ void PlayerStore::RemovePlayerFromStore(const uint16_t playerId)
     const auto pPlayerInfo = PlayerStore::playerInfo[playerId].exchange(nullptr, std::memory_order_acq_rel);
     PlayerStore::playerMutex[playerId].unlock();
 
-    if (pPlayerInfo)
+    if (pPlayerInfo != nullptr)
     {
-        for (const auto pStream : pPlayerInfo->listenerStreams)
-            pStream->DetachListener(playerId);
+        for (const auto stream : pPlayerInfo->listenerStreams)
+            stream->DetachListener(playerId);
 
-        for (const auto pStream : pPlayerInfo->speakerStreams)
-            pStream->DetachSpeaker(playerId);
+        for (const auto stream : pPlayerInfo->speakerStreams)
+            stream->DetachSpeaker(playerId);
 
         delete pPlayerInfo;
     }
@@ -58,14 +58,14 @@ void PlayerStore::RemovePlayerFromStore(const uint16_t playerId)
 
 void PlayerStore::ClearStore()
 {
-    for (uint16_t playerId = 0; playerId < MAX_PLAYERS; ++playerId)
+    for (uint16_t playerId { 0 }; playerId < MAX_PLAYERS; ++playerId)
         PlayerStore::RemovePlayerFromStore(playerId);
 }
 
 bool PlayerStore::IsPlayerConnected(const uint16_t playerId) noexcept
 {
-    assert(pNetGame);
-    assert(pNetGame->pPlayerPool);
+    assert(pNetGame != nullptr);
+    assert(pNetGame->pPlayerPool != nullptr);
 
     assert(playerId >= 0 && playerId < MAX_PLAYERS);
 

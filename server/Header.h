@@ -15,8 +15,6 @@
 
 #include <ysf/utils/cvector.h>
 
-#define GetTimestamp() (std::chrono::duration_cast<std::chrono::milliseconds> \
-                       (std::chrono::system_clock::now().time_since_epoch()).count())
 #define SleepForMilliseconds(mscount) (std::this_thread::sleep_for(std::chrono::milliseconds(mscount)))
 
 namespace SV
@@ -24,14 +22,15 @@ namespace SV
     // Constants
     // --------------------------------------------
 
-    constexpr const char*   LogFileName         = "svlog.txt";
-    constexpr uint16_t      NonePlayer          = 0xffff;
-    constexpr uint32_t      VoiceThreadsCount   = 8;
-    constexpr uint32_t      DefaultBitrate      = 24000;
-    constexpr uint8_t       Version             = 10;
-    constexpr uint32_t      Signature           = 0xDeadBeef;
-    constexpr const char*   SignaturePattern    = "\xef\xbe\xad\xde";
-    constexpr const char*   SignatureMask       = "xxxx";
+    constexpr const char* kLogFileName       = "svlog.txt";
+    constexpr uint32_t    kFrequency         = 48000;
+    constexpr uint16_t    kNonePlayer        = 0xffff;
+    constexpr uint32_t    kVoiceThreadsCount = 8;
+    constexpr uint32_t    kDefaultBitrate    = 24000;
+    constexpr uint8_t     kVersion           = 11;
+    constexpr uint32_t    kSignature         = 0xDeadBeef;
+    constexpr const char* kSignaturePattern  = "\xef\xbe\xad\xde";
+    constexpr const char* kSignatureMask     = "xxxx";
 
     // Types
     // --------------------------------------------
@@ -40,6 +39,9 @@ namespace SV
     {
         enum : uint8_t
         {
+            // v3.0
+            // ---------------------
+
             serverInfo,
             pluginInit,
 
@@ -55,12 +57,20 @@ namespace SV
             createLStreamAtVehicle,
             createLStreamAtPlayer,
             createLStreamAtObject,
-            updateLPStreamDistance,
+            updateLStreamDistance,
             updateLPStreamPosition,
             deleteStream,
 
             pressKey,
-            releaseKey
+            releaseKey,
+
+            // v3.1 added
+            // ---------------------
+
+            setStreamParameter,
+            slideStreamParameter,
+            createEffect,
+            deleteEffect
         };
     };
 
@@ -73,10 +83,41 @@ namespace SV
         };
     };
 
+    struct ParameterType
+    {
+        enum : uint8_t
+        {
+            frequency = 1,
+            volume    = 2,
+            panning   = 3,
+            eaxmix    = 4,
+            src       = 8
+        };
+    };
+
+    struct EffectType
+    {
+        enum : uint8_t
+        {
+            chorus,
+            compressor,
+            distortion,
+            echo,
+            flanger,
+            gargle,
+            i3dl2reverb,
+            parameq,
+            reverb
+        };
+    };
+
     // Packets
     // --------------------------------------------
 
 #pragma pack(push, 1)
+
+    // v3.0
+    // -----------------------------------
 
     struct ConnectPacket
     {
@@ -127,12 +168,12 @@ namespace SV
     {
         uint32_t stream;
         float distance;
-        uint16_t target;
+        uint32_t target;
         uint32_t color;
         char name[];
     };
 
-    struct UpdateLPStreamDistancePacket
+    struct UpdateLStreamDistancePacket
     {
         uint32_t stream;
         float distance;
@@ -157,6 +198,40 @@ namespace SV
     struct ReleaseKeyPacket
     {
         uint8_t keyId;
+    };
+
+    // v3.1 added
+    // -----------------------------------
+
+    struct SetStreamParameterPacket
+    {
+        uint32_t stream;
+        uint32_t parameter;
+        float value;
+    };
+
+    struct SlideStreamParameterPacket
+    {
+        uint32_t stream;
+        uint32_t parameter;
+        float startvalue;
+        float endvalue;
+        uint32_t time;
+    };
+
+    struct CreateEffectPacket
+    {
+        uint32_t stream;
+        uint32_t effect;
+        uint32_t number;
+        int32_t priority;
+        uint8_t params[];
+    };
+
+    struct DeleteEffectPacket
+    {
+        uint32_t stream;
+        uint32_t effect;
     };
 
 #pragma pack(pop)

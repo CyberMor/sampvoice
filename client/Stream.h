@@ -9,17 +9,17 @@
 
 #pragma once
 
-#include <vector>
-#include <functional>
 #include <memory>
-
-#include <audio/bass.h>
-
-#include <util/Logger.h>
+#include <cstdint>
+#include <functional>
+#include <vector>
+#include <map>
 
 #include "StreamInfo.h"
 #include "VoicePacket.h"
+#include "Parameter.h"
 #include "Channel.h"
+#include "Effect.h"
 
 class Stream {
 
@@ -29,140 +29,63 @@ class Stream {
     Stream& operator=(const Stream&) = delete;
     Stream& operator=(Stream&&) = delete;
 
+private:
+
+    using PlayCallback = std::function<void(const Stream&, WORD)>;
+    using StopCallback = std::function<void(const Stream&, WORD)>;
+
 protected:
 
-    using PlayHandlerType = std::function<void(const Stream&, const WORD)>;
-    using StopHandlerType = std::function<void(const Stream&, const WORD)>;
+    explicit Stream(DWORD streamFlags, StreamType type,
+                    D3DCOLOR color, std::string name) noexcept;
 
 public:
-
-    explicit Stream(
-        const DWORD streamFlags,
-        PlayHandlerType&& playHandler,
-        StopHandlerType&& stopHandler,
-        const StreamType type,
-        const std::string& name,
-        const D3DCOLOR color
-    ) :
-        streamFlags(streamFlags),
-        streamInfo(MakeStreamInfo(type, name, color)),
-        playHandler(std::move(playHandler)),
-        stopHandler(std::move(stopHandler))
-    {}
 
     virtual ~Stream() noexcept = default;
 
 public:
 
-    const StreamInfoPtr& GetInfo() const noexcept
-    {
-        return this->streamInfo;
-    }
+    const StreamInfo& GetInfo() const noexcept;
 
-    virtual void Tick() noexcept
-    {
-        for (const auto& iChan : this->channels)
-        {
-            if (iChan->speaker != SV::kNonePlayer && !iChan->IsActive())
-            {
-                iChan->Reset();
-            }
-        }
-    }
+    virtual void Tick() noexcept;
+    void Push(const VoicePacket& packet);
+    void Reset() noexcept;
+    void SetParameter(BYTE parameter, float value);
+    void SlideParameter(BYTE parameter, float startValue, float endValue, DWORD time);
+    void EffectCreate(DWORD effect, DWORD number, int priority, const void* paramPtr, DWORD paramSize);
+    void EffectDelete(DWORD effect);
 
-    void Push(const VoicePacket& packet)
-    {
-        ChannelPtr channel { nullptr };
-
-        for (const auto& iChan : this->channels)
-        {
-            if (iChan->speaker == packet.sender)
-            {
-                channel = iChan;
-                break;
-            }
-        }
-
-        if (!channel) for (const auto& iChan : this->channels)
-        {
-            if (iChan->speaker == SV::kNonePlayer)
-            {
-                Logger::LogToFile(
-                    "[sv:dbg:stream_%p:push] : channel %p was occupied by player %hu",
-                    this, iChan.get(), packet.sender);
-
-                iChan->speaker = packet.sender;
-
-                channel = iChan;
-                break;
-            }
-        }
-
-        if (!channel)
-        {
-            channel = MakeChannel(this->streamFlags,
-                std::bind(&Stream::OnPlayChannel, this, std::placeholders::_1),
-                std::bind(&Stream::OnStopChannel, this, std::placeholders::_1),
-                packet.sender);
-
-            Logger::LogToFile(
-                "[sv:dbg:stream_%p:push] : channel %p for player %hu created",
-                this, channel.get(), packet.sender);
-
-            this->ChannelCreationHandler(*channel);
-            channel->Push(packet.packid, packet.data, packet.length);
-            this->channels.emplace_back(std::move(channel));
-
-            return;
-        }
-
-        channel->Push(packet.packid, packet.data, packet.length);
-    }
-
-    void Reset() noexcept
-    {
-        Logger::LogToFile("[sv:dbg:stream_%p:reset] : resetting stream...", this);
-
-        for (const auto& iChan : this->channels)
-        {
-            iChan->Reset();
-        }
-    }
+    std::size_t AddPlayCallback(PlayCallback playCallback);
+    std::size_t AddStopCallback(StopCallback stopCallback);
+    void RemovePlayCallback(std::size_t callback) noexcept;
+    void RemoveStopCallback(std::size_t callback) noexcept;
 
 protected:
 
-    virtual void ChannelCreationHandler(const Channel& channel) noexcept
-    {
-        BASS_ChannelSetAttribute(channel.handle, BASS_ATTRIB_VOL, 4.f);
-    }
+    virtual void OnChannelCreate(const Channel& channel);
+
+private:
+
+    void OnChannelPlay(const Channel& channel) noexcept;
+    void OnChannelStop(const Channel& channel) noexcept;
 
 protected:
+
+    const std::vector<ChannelPtr>& GetChannels() const noexcept;
+
+private:
+
+    const DWORD streamFlags;
+    const StreamInfo streamInfo;
 
     std::vector<ChannelPtr> channels;
 
-private:
+    std::vector<PlayCallback> playCallbacks;
+    std::vector<StopCallback> stopCallbacks;
 
-    void OnPlayChannel(const Channel& channel) noexcept
-    {
-        if (channel.speaker != SV::kNonePlayer && this->playHandler)
-            this->playHandler(*this, channel.speaker);
-    }
-
-    void OnStopChannel(const Channel& channel) noexcept
-    {
-        if (channel.speaker != SV::kNonePlayer && this->stopHandler)
-            this->stopHandler(*this, channel.speaker);
-    }
-
-private:
-
-    const DWORD streamFlags { NULL };
-    const StreamInfoPtr streamInfo { nullptr };
-
-    const PlayHandlerType playHandler { nullptr };
-    const StopHandlerType stopHandler { nullptr };
+    std::map<BYTE, ParameterPtr> parameters;
+    std::map<DWORD, EffectPtr> effects;
 
 };
 
-using StreamPtr = std::shared_ptr<Stream>;
-#define MakeStream std::make_shared<Stream>
+using StreamPtr = std::unique_ptr<Stream>;

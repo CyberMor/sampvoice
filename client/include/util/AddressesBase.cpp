@@ -20,26 +20,26 @@ AddressesBase::AddressesBase(const DWORD baseAddr) noexcept
     , bassSetConfigAddr                 (baseAddr + 0x6290F)
     , sampInitAddr                      (baseAddr + 0x2565E2)
     , sampDestructAddr                  (baseAddr + 0x9380)
-    , sampOpenChatFunc                  (baseAddr + 0x657E0)
-    , sampSwitchModeFunc                (baseAddr + 0x5D7B0)
-    , sampOpenScoreboardFunc            (baseAddr + 0x6AD30)
-    , sampCreatePlayerInPoolFunc        (baseAddr + 0x10D50)
-    , sampDeletePlayerFromPoolFunc      (baseAddr + 0x10B90)
-    , sampSpawnLocalPlayerFunc          (baseAddr + 0x3AD0)
-    , sampDrawLabelFunc                 (baseAddr + 0x686C0)
+    , openChatFunc                      (baseAddr + 0x657E0)
+    , switchModeFunc                    (baseAddr + 0x5D7B0)
+    , openScoreboardFunc                (baseAddr + 0x6AD30)
+    , createPlayerInPoolFunc            (baseAddr + 0x10D50)
+    , deletePlayerFromPoolFunc          (baseAddr + 0x10B90)
+    , spawnLocalPlayerFunc              (baseAddr + 0x3AD0)
+    , drawLabelFunc                     (baseAddr + 0x686C0)
 #elif defined(SAMP_R3)
     , rcInitAddr                        (baseAddr + 0xB658)
     , bassInitCallAddr                  (baseAddr + 0x65D2F)
     , bassSetConfigAddr                 (baseAddr + 0x65D5F)
     , sampInitAddr                      (baseAddr + 0xC57E2)
     , sampDestructAddr                  (baseAddr + 0x9510)
-    , sampOpenChatFunc                  (baseAddr + 0x68D10)
-    , sampSwitchModeFunc                (baseAddr + 0x60B50)
-    , sampOpenScoreboardFunc            (baseAddr + 0x6EC80)
-    , sampCreatePlayerInPoolFunc        (baseAddr + 0x13E80)
-    , sampDeletePlayerFromPoolFunc      (baseAddr + 0x13CB0)
-    , sampSpawnLocalPlayerFunc          (baseAddr + 0x3AD0)
-    , sampDrawLabelFunc                 (baseAddr + 0x6C630)
+    , openChatFunc                      (baseAddr + 0x68D10)
+    , switchModeFunc                    (baseAddr + 0x60B50)
+    , openScoreboardFunc                (baseAddr + 0x6EC80)
+    , createPlayerInPoolFunc            (baseAddr + 0x13E80)
+    , deletePlayerFromPoolFunc          (baseAddr + 0x13CB0)
+    , spawnLocalPlayerFunc              (baseAddr + 0x3AD0)
+    , drawLabelFunc                     (baseAddr + 0x6C630)
 #endif
 
 {}
@@ -74,37 +74,37 @@ DWORD AddressesBase::GetSampDestructAddr() const noexcept
     return this->sampDestructAddr;
 }
 
-DWORD AddressesBase::GetSampOpenChatFunc() const noexcept
+DWORD AddressesBase::GetOpenChatFunc() const noexcept
 {
-    return this->sampOpenChatFunc;
+    return this->openChatFunc;
 }
 
-DWORD AddressesBase::GetSampSwitchModeFunc() const noexcept
+DWORD AddressesBase::GetSwitchModeFunc() const noexcept
 {
-    return this->sampSwitchModeFunc;
+    return this->switchModeFunc;
 }
 
-DWORD AddressesBase::GetSampOpenScoreboardFunc() const noexcept
+DWORD AddressesBase::GetOpenScoreboardFunc() const noexcept
 {
-    return this->sampOpenScoreboardFunc;
+    return this->openScoreboardFunc;
 }
 
-DWORD AddressesBase::GetSampCreatePlayerInPoolFunc() const noexcept
+DWORD AddressesBase::GetCreatePlayerInPoolFunc() const noexcept
 {
-    return this->sampCreatePlayerInPoolFunc;
+    return this->createPlayerInPoolFunc;
 }
 
-DWORD AddressesBase::GetSampDeletePlayerFromPoolFunc() const noexcept
+DWORD AddressesBase::GetDeletePlayerFromPoolFunc() const noexcept
 {
-    return this->sampDeletePlayerFromPoolFunc;
+    return this->deletePlayerFromPoolFunc;
 }
 
-DWORD AddressesBase::GetSampSpawnLocalPlayerFunc() const noexcept
+DWORD AddressesBase::GetSpawnLocalPlayerFunc() const noexcept
 {
-    return this->sampSpawnLocalPlayerFunc;
+    return this->spawnLocalPlayerFunc;
 }
 
-DWORD AddressesBase::GetSampDrawLabelFunc() const noexcept
+DWORD AddressesBase::GetDrawLabelFunc() const noexcept
 {
-    return this->sampDrawLabelFunc;
+    return this->drawLabelFunc;
 }

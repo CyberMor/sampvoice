@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <array>
+
 #include <Windows.h>
 #include <d3d9.h>
 
@@ -63,45 +65,43 @@ private:
     static constexpr auto kTab3Desc2PlayerListText         = "Игроки на сервере";
     static constexpr auto kTab3Desc3BlackListText          = "Заблокированные игроки";
 
-    static constexpr float kBaseMenuWidth             = 0.6f * Render::BaseWidth;
-    static constexpr float kBaseMenuHeight            = 0.7f * Render::BaseHeight;
-    static constexpr float kBaseMenuPaddingX          = 20.f;
-    static constexpr float kBaseMenuPaddingY          = 10.f;
-    static constexpr float kBaseMenuFramePaddingX     = 10.f;
-    static constexpr float kBaseMenuFramePaddingY     = 0.5f;
-    static constexpr float kBaseMenuItemSpacingX      = 20.f;
-    static constexpr float kBaseMenuItemSpacingY      = 2.f;
-    static constexpr float kBaseMenuItemInnerSpacingX = 10.f;
-    static constexpr float kBaseMenuItemInnerSpacingY = 10.f;
-    static constexpr float kBaseMenuRounding          = 10.f;
-    static constexpr float kBaseFontTitleSize         = 20.f;
-    static constexpr float kBaseFontTabSize           = 14.f;
-    static constexpr float kBaseFontDescSize          = 12.f;
-    static constexpr float kBaseFontSize              = 10.f;
-    static constexpr int   kTabsCount                 = 3;
-    static constexpr float kBaseTabPadding            = 4.f;
-    static constexpr float kBaseTabWidth              = (kBaseMenuWidth - (2 * kBaseMenuPaddingX +
-                                                        (kTabsCount - 1) * kBaseTabPadding)) / kTabsCount;
-    static constexpr float kBaseTabHeight             = kBaseTabWidth / 6.f;
-    static constexpr float kBlurLevelIncrement        = 5.f;
-    static constexpr float kBlurLevelDecrement        = -5.f;
+    static constexpr float kBaseMenuWidth                  = 0.6f * Render::kBaseWidth;
+    static constexpr float kBaseMenuHeight                 = 0.7f * Render::kBaseHeight;
+    static constexpr float kBaseMenuPaddingX               = 20.f;
+    static constexpr float kBaseMenuPaddingY               = 10.f;
+    static constexpr float kBaseMenuFramePaddingX          = 10.f;
+    static constexpr float kBaseMenuFramePaddingY          = 0.5f;
+    static constexpr float kBaseMenuItemSpacingX           = 20.f;
+    static constexpr float kBaseMenuItemSpacingY           = 2.f;
+    static constexpr float kBaseMenuItemInnerSpacingX      = 10.f;
+    static constexpr float kBaseMenuItemInnerSpacingY      = 10.f;
+    static constexpr float kBaseMenuRounding               = 10.f;
+    static constexpr float kBaseFontTitleSize              = 20.f;
+    static constexpr float kBaseFontTabSize                = 14.f;
+    static constexpr float kBaseFontDescSize               = 12.f;
+    static constexpr float kBaseFontSize                   = 10.f;
+    static constexpr int   kTabsCount                      = 3;
+    static constexpr float kBaseTabPadding                 = 4.f;
+    static constexpr float kBaseTabWidth                   = (kBaseMenuWidth - (2 * kBaseMenuPaddingX +
+                                                             (kTabsCount - 1) * kBaseTabPadding)) / kTabsCount;
+    static constexpr float kBaseTabHeight                  = kBaseTabWidth / 6.f;
+    static constexpr float kBlurLevelIncrement             = 5.f;
+    static constexpr float kBlurLevelDecrement             = -5.f;
 
 public:
 
-    static bool Init(IDirect3DDevice9* pDevice, D3DPRESENT_PARAMETERS* pParameters,
-                     const AddressesBase& addrBase, const Resource& rShader,
-                     const Resource& rLogo, const Resource& rFont) noexcept;
+    static bool Init(IDirect3DDevice9* pDevice, const AddressesBase& addrBase,
+        const Resource& rShader, const Resource& rLogo, const Resource& rFont) noexcept;
     static void Free() noexcept;
-
-    static void Render() noexcept;
-    static void Update() noexcept;
 
     static bool Show() noexcept;
     static bool IsShowed() noexcept;
     static void Hide() noexcept;
 
-    static LRESULT OnWndMessage(HWND hWnd, UINT uMsg,
-                                WPARAM wParam, LPARAM lParam) noexcept;
+    static void Render() noexcept;
+    static void Update() noexcept;
+
+    static LRESULT WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) noexcept;
 
 private:
 
@@ -110,7 +110,6 @@ private:
 private:
 
     static bool initStatus;
-
     static bool showStatus;
 
     static float blurLevel;
@@ -158,6 +157,6 @@ private:
     static int iSelectedMenu;
     static bool bCheckDevice;
     static bool bMicroMovement;
-    static char nBuffer[64];
+    static std::array<char, 64> nBuffer;
 
 };

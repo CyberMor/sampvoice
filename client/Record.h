@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <array>
 #include <vector>
 #include <string>
 
@@ -28,18 +29,21 @@ class Record {
 
 public:
 
-    static bool Init(DWORD bitrate);
+    static bool Init(DWORD bitrate) noexcept;
     static void Free() noexcept;
 
     static void Tick() noexcept;
-
-    static DWORD GetFrame(BYTE* bufferPtr, DWORD bufferSize) noexcept;
-
     static bool HasMicro() noexcept;
 
     static bool StartRecording() noexcept;
     static bool IsRecording() noexcept;
     static void StopRecording() noexcept;
+
+    static bool StartChecking() noexcept;
+    static bool IsChecking() noexcept;
+    static void StopChecking() noexcept;
+
+    static DWORD GetFrame(BYTE* bufferPtr, DWORD bufferSize) noexcept;
 
     static bool GetMicroEnable() noexcept;
     static int GetMicroVolume() noexcept;
@@ -55,21 +59,16 @@ public:
     static const std::vector<std::string>& GetDeviceNamesList() noexcept;
     static const std::vector<int>& GetDeviceNumbersList() noexcept;
 
-    static bool StartChecking() noexcept;
-    static bool IsChecking() noexcept;
-    static void StopChecking() noexcept;
-
 private:
 
     static bool initStatus;
+
     static bool checkStatus;
     static bool recordStatus;
 
     static HRECORD recordChannel;
     static OpusEncoder* encoder;
-
-    static opus_int16 encBuffer[SV::kFrameSizeInSamples];
-
+    static std::array<opus_int16, SV::kFrameSizeInSamples> encBuffer;
     static HSTREAM checkChannel;
 
     static int usedDeviceIndex;
