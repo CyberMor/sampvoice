@@ -104,12 +104,12 @@ namespace Memory
 
         const addr_t GetData() const noexcept
         {
-            return static_cast<const addr_t>(this->bytes.data());
+            return reinterpret_cast<const addr_t>(this->bytes.data());
         }
 
         addr_t GetData() noexcept
         {
-            return static_cast<addr_t>(this->bytes.data());
+            return reinterpret_cast<addr_t>(this->bytes.data());
         }
 
         size_t GetSize() const noexcept

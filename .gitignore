@@ -3,3 +3,5 @@ bin/
 client/temp/
 server/temp/
 *.lck
+*.gch
+*.so
