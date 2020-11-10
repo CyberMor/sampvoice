@@ -737,7 +737,7 @@ BOOL WINAPI WinExitHandler(DWORD) noexcept
 }
 #endif
 
-PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData) noexcept
+PLUGIN_EXPORT bool PLUGIN_CALL Load(void** const ppData) noexcept
 {
 #ifdef _WIN32
     SetConsoleCtrlHandler(&WinExitHandler, TRUE);

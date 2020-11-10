@@ -14,7 +14,6 @@
 Resource::Resource(const HMODULE hModule, const DWORD rId, const LPCSTR rType)
 {
     const auto hRsrc = FindResource(hModule, MAKEINTRESOURCE(rId), rType);
-
     if (hRsrc == nullptr)
     {
         Logger::LogToFile("[err:resource] : failed to find resource (code:%u)", GetLastError());
@@ -22,7 +21,6 @@ Resource::Resource(const HMODULE hModule, const DWORD rId, const LPCSTR rType)
     }
 
     const auto hGlobal = LoadResource(hModule, hRsrc);
-
     if (hGlobal == nullptr)
     {
         Logger::LogToFile("[err:resource] : failed to load resource (code:%u)", GetLastError());
@@ -30,7 +28,6 @@ Resource::Resource(const HMODULE hModule, const DWORD rId, const LPCSTR rType)
     }
 
     this->dataPtr = LockResource(hGlobal);
-
     if (this->dataPtr == nullptr)
     {
         Logger::LogToFile("[err:resource] : failed to get data pointer (code:%u)", GetLastError());
@@ -38,7 +35,6 @@ Resource::Resource(const HMODULE hModule, const DWORD rId, const LPCSTR rType)
     }
 
     this->dataSize = SizeofResource(hModule, hRsrc);
-
     if (this->dataSize == 0)
     {
         Logger::LogToFile("[err:resource] : failed to get data size (code:%u)", GetLastError());

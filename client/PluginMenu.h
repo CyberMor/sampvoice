@@ -22,6 +22,10 @@
 #include <util/Texture.h>
 #include <util/Render.h>
 
+#if !defined(SAMP_RU) && !defined(SAMP_EN)
+#define SAMP_RU
+#endif
+
 class PluginMenu {
 
     PluginMenu() = delete;
@@ -33,6 +37,7 @@ class PluginMenu {
 
 private:
 
+#if defined(SAMP_RU)
     static constexpr auto kTitleText                       = "Настройки голосового чата";
     static constexpr auto kTab1TitleText                   = "Общие";
     static constexpr auto kTab1Desc1TitleText              = "Звук";
@@ -64,6 +69,39 @@ private:
     static constexpr auto kTab3Desc1InputPlaceholderText   = "Введите ID или Nickname игрока...";
     static constexpr auto kTab3Desc2PlayerListText         = "Игроки на сервере";
     static constexpr auto kTab3Desc3BlackListText          = "Заблокированные игроки";
+#elif defined(SAMP_EN)
+    static constexpr auto kTitleText                       = "Voice chat settings";
+    static constexpr auto kTab1TitleText                   = "General";
+    static constexpr auto kTab1Desc1TitleText              = "Sound";
+    static constexpr auto kTab1Desc1EnableSoundText        = "Turn on sound";
+    static constexpr auto kTab1Desc1VolumeSoundText        = "Sound volume";
+    static constexpr auto kTab1Desc2TitleText              = "Effects";
+    static constexpr auto kTab1Desc2BalancerText           = "Volume smoothing";
+    static constexpr auto kTab1Desc2FilterText             = "High pass filter";
+    static constexpr auto kTab1Desc3TitleText              = "Icon above players";
+    static constexpr auto kTab1Desc3SpeakerIconScaleText   = "Scale";
+    static constexpr auto kTab1Desc3SpeakerIconOffsetXText = "Offset by X";
+    static constexpr auto kTab1Desc3SpeakerIconOffsetYText = "Offset by Y";
+    static constexpr auto kTab1Desc4TitleText              = "Reset";
+    static constexpr auto kTab1Desc4ConfigResetText        = "Reset all settings";
+    static constexpr auto kTab2TitleText                   = "Microphone";
+    static constexpr auto kTab2Desc1TitleText              = "Device";
+    static constexpr auto kTab2Desc1EnableMicroText        = "Turn on microphone";
+    static constexpr auto kTab2Desc1MicroVolumeText        = "Microphone volume";
+    static constexpr auto kTab2Desc1DeviceNameText         = "Input device";
+    static constexpr auto kTab2Desc1CheckDeviceText        = "Check device";
+    static constexpr auto kTab2Desc2TitleText              = "Microphone icon";
+    static constexpr auto kTab2Desc2MicroIconScaleText     = "Scale";
+    static constexpr auto kTab2Desc2MicroIconPositionXText = "Position by X";
+    static constexpr auto kTab2Desc2MicroIconPositionYText = "Position by Y";
+    static constexpr auto kTab2Desc2MicroIconMoveText      = "Move";
+    static constexpr auto kTab2Desc3MicroNotFoundText      = "No microphones available";
+    static constexpr auto kTab3TitleText                   = "Black list";
+    static constexpr auto kTab3Desc1TitleText              = "Filter";
+    static constexpr auto kTab3Desc1InputPlaceholderText   = "Enter Player ID or Nickname...";
+    static constexpr auto kTab3Desc2PlayerListText         = "Players online";
+    static constexpr auto kTab3Desc3BlackListText          = "Blocked players";
+#endif
 
     static constexpr float kBaseMenuWidth                  = 0.6f * Render::kBaseWidth;
     static constexpr float kBaseMenuHeight                 = 0.7f * Render::kBaseHeight;
