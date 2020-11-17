@@ -109,7 +109,7 @@ public OnPlayerConnect(playerid)
     }
     // Create a local stream with an audibility distance of 40.0, an unlimited number of listeners
     // and the name 'Local' (the name 'Local' will be displayed in red in the players' speakerlist)
-    else if (lstream[playerid] = SvCreateDLStreamAtPlayer(40.0, SV_INFINITY, playerid, 0xff0000ff, "Local"))
+    else if ((lstream[playerid] = SvCreateDLStreamAtPlayer(40.0, SV_INFINITY, playerid, 0xff0000ff, "Local")))
     {
         SendClientMessage(playerid, -1, "Press Z to talk to global chat and B to talk to local chat.");
 
