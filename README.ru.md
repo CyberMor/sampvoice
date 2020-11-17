@@ -109,7 +109,7 @@ public OnPlayerConnect(playerid)
     }
     // Создаём локальный поток с дистанцией слышимости 40.0, неограниченным количеством слушателей
     // и именем 'Local' (имя 'Local' будет отображено красным цветом в speakerlist'е у игроков)
-    else if (lstream[playerid] = SvCreateDLStreamAtPlayer(40.0, SV_INFINITY, playerid, 0xff0000ff, "Local"))
+    else if ((lstream[playerid] = SvCreateDLStreamAtPlayer(40.0, SV_INFINITY, playerid, 0xff0000ff, "Local")))
     {
         SendClientMessage(playerid, -1, "Нажмите Z, чтобы говорить в глобальный чат и B, чтобы говорить в локальный чат.");
 
