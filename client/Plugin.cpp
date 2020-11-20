@@ -478,7 +478,11 @@ void Plugin::ControlPacketHandler(const ControlPacket& controlPacket)
             if (controlPacket.length != sizeof(stData)) break;
 
             Logger::LogToFile("[sv:dbg:plugin:deletestream] : stream(%p)", stData.stream);
-
+            
+            const auto iter = Plugin::streamTable.find(stData.stream);
+            if (iter == Plugin::streamTable.end()) break;
+            for (WORD playerId{ 0 }; playerId < MAX_PLAYERS; ++playerId) SpeakerList::OnSpeakerStop(*(iter->second), playerId);
+            
             Plugin::streamTable.erase(stData.stream);
         } break;
         case SV::ControlPacketType::setStreamParameter:
