@@ -662,7 +662,7 @@ void PluginMenu::Render() noexcept
                         {
                             for (WORD playerId { 0 }; playerId < MAX_PLAYERS; ++playerId)
                             {
-                                if (pPlayerPool->IsConnected(playerId) == FALSE)
+                                if (pPlayerPool->IsConnected(playerId) == FALSE || playerId == pPlayerPool->m_nLocalId)
                                     continue;
 
                                 if (const auto playerName = pPlayerPool->GetName(playerId); playerName != nullptr)
@@ -734,7 +734,7 @@ void PluginMenu::Render() noexcept
                     {
                         if (!(PluginMenu::nBuffer[0] == '\0' || (iPlayerId != SV::kNonePlayer ? playerInfo.playerId == iPlayerId :
                             static_cast<bool>(std::strstr(playerInfo.playerName.c_str(), PluginMenu::nBuffer.data()))))) continue;
-
+                       
                         const ImVec2 oldCurPos = ImGui::GetCursorPos();
                         const ImVec2 oldCurScreenPos = ImGui::GetCursorScreenPos();
 
@@ -744,10 +744,11 @@ void PluginMenu::Render() noexcept
                         {
                             // Remove player from black list
                             BlackList::UnlockPlayer(playerInfo.playerName);
+                            break; // fix the crash
                         }
 
                         ImGui::PopID();
-
+                        
                         ImGui::SetCursorPos({ oldCurPos.x + 5.f, oldCurPos.y + 1.f });
 
                         if (playerInfo.playerId != SV::kNonePlayer)
@@ -759,9 +760,9 @@ void PluginMenu::Render() noexcept
                         }
                         else ImGui::TextDisabled("%s", playerInfo.playerName.c_str());
 
-                        const ImVec2 cPos { (oldCurScreenPos.x + listWidth) - (ImGui::GetFontSize() / 2.f + 2.f +
+                        const ImVec2 cPos{ (oldCurScreenPos.x + listWidth) - (ImGui::GetFontSize() / 2.f + 2.f +
                             ImGui::GetStyle().ScrollbarSize), oldCurScreenPos.y + (ImGui::GetFontSize() / 2.f + 1.f) };
-
+                        
                         if (playerInfo.playerId != SV::kNonePlayer)
                             ImGui::GetWindowDrawList()->AddCircleFilled(cPos, ImGui::GetFontSize() / 4.f, 0xff7dfe3f);
                         else ImGui::GetWindowDrawList()->AddCircle(cPos, ImGui::GetFontSize() / 4.f, 0xff808080);

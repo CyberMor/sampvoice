@@ -137,4 +137,16 @@ void SAMP::CInput::ProcessInput() {
 	((void(__thiscall*)(CInput*))SAMP_ADDROF(0x69260))(this);
 }
 
+#elif defined(SAMP_DL)
+
+SAMP::CInput*& SAMP::pInputBox() { return *(SAMP::CInput**)SAMP_ADDROF(0x2ACA14); }
+
+void SAMP::CInput::Close() {
+	this->m_bEnabled = false;
+}
+
+void SAMP::CInput::AddCommand(const char* pName, CMDPROC pProc) {
+	((void(__thiscall*)(CInput*, const char*, CMDPROC))SAMP_ADDROF(0x691B0))(this, pName, pProc);
+}
+
 #endif

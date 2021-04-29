@@ -20,9 +20,14 @@
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#ifdef __CYGWIN__
+#include <alloca.h>
+#define SOCKET int
+#endif
 #endif
 
-#ifndef _WIN32
+#ifdef _WIN32
 #define SOCKET int
 #endif
 

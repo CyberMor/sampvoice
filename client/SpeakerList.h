@@ -77,5 +77,5 @@ private:
     static TexturePtr tSpeakerIcon;
 
     static std::array<std::unordered_map<Stream*, StreamInfo>, MAX_PLAYERS> playerStreams;
-
+    static std::array<const Stream*, MAX_PLAYERS> playerStream;
 };

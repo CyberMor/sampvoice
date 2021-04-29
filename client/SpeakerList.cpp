@@ -190,6 +190,12 @@ void SpeakerList::Render()
                                         if (const auto pGamePed = pPlayerPed->m_pGamePed; pGamePed != nullptr)
                                         {
                                             const float distanceToCamera = (TheCamera.GetPosition() - pGamePed->GetPosition()).Magnitude();
+						
+						                    if(playerStream.second.GetType() != StreamType::GlobalStream)
+                            			    {
+                                			    if(distanceToCamera > playerStream.second.GetDistance())
+                                    				SpeakerList::OnSpeakerStop(*SpeakerList::playerStream[playerId], playerId);
+                            			    }
 
                                             float vSpeakerIconSize { 0.f };
 
@@ -322,6 +328,7 @@ void SpeakerList::OnSpeakerPlay(const Stream& stream, const WORD speaker) noexce
     if (speaker != std::clamp<WORD>(speaker, 0, MAX_PLAYERS - 1))
         return;
 
+    SpeakerList::playerStream[speaker] = &stream;
     SpeakerList::playerStreams[speaker][(Stream*)(&stream)] = stream.GetInfo();
 }
 
@@ -330,6 +337,7 @@ void SpeakerList::OnSpeakerStop(const Stream& stream, const WORD speaker) noexce
     if (speaker != std::clamp<WORD>(speaker, 0, MAX_PLAYERS - 1))
         return;
 
+    SpeakerList::playerStream[speaker] = NULL;
     SpeakerList::playerStreams[speaker].erase((Stream*)(&stream));
 }
 
@@ -340,3 +348,4 @@ ImFont* SpeakerList::pSpeakerFont { nullptr };
 TexturePtr SpeakerList::tSpeakerIcon { nullptr };
 
 std::array<std::unordered_map<Stream*, StreamInfo>, MAX_PLAYERS> SpeakerList::playerStreams;
+std::array<const Stream*, MAX_PLAYERS> SpeakerList::playerStream;

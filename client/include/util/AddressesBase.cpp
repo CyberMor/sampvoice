@@ -40,6 +40,19 @@ AddressesBase::AddressesBase(const DWORD baseAddr) noexcept
     , deletePlayerFromPoolFunc          (baseAddr + 0x13CB0)
     , spawnLocalPlayerFunc              (baseAddr + 0x3AD0)
     , drawLabelFunc                     (baseAddr + 0x6C630)
+#elif defined(SAMP_DL)
+    , rcInitAddr                        (baseAddr + 0xB678)
+    , bassInitCallAddr                  (baseAddr + 0x65F1F)
+    , bassSetConfigAddr                 (baseAddr + 0x65F4F)
+    , sampInitAddr                      (baseAddr + 0xC6614)
+    , sampDestructAddr                  (baseAddr + 0x9570)
+    , openChatFunc                      (baseAddr + 0x68EC0)
+    , switchModeFunc                    (baseAddr + 0x60D40)
+    , openScoreboardFunc                (baseAddr + 0x6EE10)
+    , createPlayerInPoolFunc            (baseAddr + 0x14100)
+    , deletePlayerFromPoolFunc          (baseAddr + 0x13F40)
+    , spawnLocalPlayerFunc              (baseAddr + 0x3B20)
+    , drawLabelFunc                     (baseAddr + 0x6C7E0)
 #endif
 
 {}

@@ -19,7 +19,7 @@
   #define PLUGIN_EXTERN_C 
 #endif
 
-#if defined __linux__ || defined __FreeBSD__ || defined __OpenBSD__
+#if defined __CYGWIN__ || __linux__ || defined __FreeBSD__ || defined __OpenBSD__
   #ifndef __GNUC__
     #pragma message "Warning: Not using a GNU compiler."
   #endif

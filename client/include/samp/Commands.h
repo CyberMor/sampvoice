@@ -101,4 +101,16 @@ namespace Commands {
 
 SAMP_END
 
+#elif defined(SAMP_DL)
+
+SAMP_BEGIN
+
+typedef void(__cdecl* CMDPROC)(const char*);
+
+namespace Commands {
+	// ~
+}
+
+SAMP_END
+
 #endif

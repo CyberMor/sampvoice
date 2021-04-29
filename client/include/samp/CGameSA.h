@@ -300,5 +300,18 @@ public:
 CGameSA*& pGame();
 
 SAMP_END
+#elif defined(SAMP_DL)
+
+SAMP_BEGIN
+
+class SAMP_API CGameSA {
+public:
+	void SetCursorMode(int nMode, BOOL bImmediatelyHideCursor);
+	void ProcessInputEnabling();
+};
+
+CGameSA*& pGame();
+
+SAMP_END
 
 #endif

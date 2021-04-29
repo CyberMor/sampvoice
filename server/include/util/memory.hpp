@@ -28,6 +28,20 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+	#ifdef __CYGWIN__
+	typedef struct dl_info {
+    		const char  *dli_fname;
+    		void        *dli_fbase;
+    		const char  *dli_sname;
+    		void        *dli_saddr;
+	} Dl_info;
+	
+	static inline int dladdr(void *addr, Dl_info *info)
+	{
+    		fprintf(stderr, "dladdr() not implemented\n");
+    		return 0;
+	}
+	#endif
 #endif
 
 #ifdef _WIN32

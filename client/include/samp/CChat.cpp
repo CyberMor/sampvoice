@@ -189,4 +189,8 @@ int SAMP::CChat::GetMode() {
 	return ((int(__thiscall*)(CChat*))SAMP_ADDROF(0x60B40))(this);
 }
 
+#elif defined(SAMP_DL)
+
+SAMP::CChat*& SAMP::pChat() { return *(SAMP::CChat**)SAMP_ADDROF(0x2ACA10); }
+
 #endif

@@ -11,11 +11,11 @@
 
 #include <random>
 
-#ifndef _WIN32
-#include <unistd.h>
+#ifdef _WIN32
+#include <WinSock2.h>
+#else
 #include <sys/socket.h>
-#include <arpa/inet.h>
-#include <errno.h>
+#include <netinet/in.h>
 #endif
 
 #ifdef _WIN32

@@ -7,8 +7,10 @@
 #include "utils/cvector.h"
 #include "utils/cvector2d.h"
 
+#include "../../common/common.h"
+
 #if !defined PAD
-	#define PAD(a, b) char a[b]
+#define PAD(a, b) char a[b]
 #endif
 
 #define MAX_PLAYER_NAME (24)
@@ -20,7 +22,11 @@
 #define INVALID_VEHICLE_ID (0xFFFF)
 #define INVALID_ACTOR_ID (0xFFFF)
 #define NO_TEAM (255)
+#ifndef SAMP_DL
 #define MAX_OBJECTS (1000)
+#else
+#define MAX_OBJECTS (2000)
+#endif
 #define INVALID_OBJECT_ID (0xFFFF)
 #define MAX_GANG_ZONES (1024)
 #define MAX_TEXT_DRAWS (2048)
@@ -190,7 +196,11 @@ struct RemoteSystemStruct {
 	unsigned long dword898;
 	unsigned char gap89C[16];
 	unsigned char byte8AC;
+#ifdef _WIN32
 	unsigned char gap8AD[1023];
+#else
+	unsigned char gap8AD[945];
+#endif
 	unsigned int connectionTime;
 	enum ConnectMode {
 		NO_ACTION,
@@ -207,9 +217,13 @@ struct RemoteSystemStruct {
 	unsigned char byteAuthType;
 	unsigned char byteIsLogon;
 };
+#ifdef _WIN32
 static_assert(sizeof(RemoteSystemStruct) == 3255, "Invalid RemoteSystemStruct size");
+#else
+static_assert(sizeof(RemoteSystemStruct) == 3177, "Invalid RemoteSystemStruct size");
+#endif
 
-typedef struct _MATRIX4X4  {
+typedef struct _MATRIX4X4 {
 	CVector right;
 	unsigned long  flags;
 	CVector up;
@@ -218,13 +232,13 @@ typedef struct _MATRIX4X4  {
 	float  pad_a;
 	CVector pos;
 	float  pad_p;
-} MATRIX4X4, *PMATRIX4X4;
+} MATRIX4X4, * PMATRIX4X4;
 static_assert(sizeof(_MATRIX4X4) == 64, "Invalid _MATRIX4X4 size");
 
 struct ConsoleVariable_s {
 	CON_VARTYPE		VarType;
 	unsigned long			VarFlags;
-	void*			VarPtr;
+	void* VarPtr;
 	VARCHANGEFUNC	VarChangeFunc;
 };
 static_assert(sizeof(ConsoleVariable_s) == 16, "Invalid ConsoleVariable_s size");
@@ -242,7 +256,7 @@ struct CAimSyncData {
 	CVector					vecPosition;
 	float					fZAim;
 	unsigned char			byteCameraZoom : 6;
-	unsigned char			byteWeaponState  : 2;
+	unsigned char			byteWeaponState : 2;
 	unsigned char			byteAspectRatio;
 };
 static_assert(sizeof(CAimSyncData) == 31, "Invalid CAimSyncData size");
@@ -263,10 +277,10 @@ struct CVehicleSyncData {
 	unsigned char			byteSirenState;
 	unsigned char			byteGearState;
 	unsigned short			wTrailerID;
-    union {
-		unsigned short		wHydraReactorAngle[2];                       
+	union {
+		unsigned short		wHydraReactorAngle[2];
 		float				fTrainSpeed;
-    };
+	};
 };
 static_assert(sizeof(CVehicleSyncData) == 63, "Invalid CVehicleSyncData size");
 
@@ -342,7 +356,7 @@ typedef struct CTextdraw {
 		unsigned char byteFlags;
 		struct {
 			unsigned char byteBox : 1;
-			unsigned char byteLeft : 1; 
+			unsigned char byteLeft : 1;
 			unsigned char byteRight : 1;
 			unsigned char byteCenter : 1;
 			unsigned char byteProportional : 1;
@@ -369,14 +383,14 @@ static_assert(sizeof(CTextdraw) == 63, "Invalid CTextdraw size");
 
 struct CPlayerTextDraw {
 	int						bSlotState[MAX_PLAYER_TEXT_DRAWS];
-	CTextdraw				*TextDraw[MAX_PLAYER_TEXT_DRAWS];
-	char					*szFontText[MAX_PLAYER_TEXT_DRAWS];
+	CTextdraw* TextDraw[MAX_PLAYER_TEXT_DRAWS];
+	char* szFontText[MAX_PLAYER_TEXT_DRAWS];
 	bool					bHasText[MAX_PLAYER_TEXT_DRAWS];
 };
 static_assert(sizeof(CPlayerTextDraw) == 2048 + 1024 + 256, "Invalid CPlayerTextDraw size");
 
 struct C3DText {
-	char*					szText;
+	char* szText;
 	unsigned long			dwColor;
 	CVector					vecPos;
 	float					fDrawDistance;
@@ -396,26 +410,34 @@ struct CPlayerText3DLabels {
 static_assert(sizeof(CPlayerText3DLabels) == 38914, "Invalid CPlayerText3DLabels size");
 
 struct CAttachedObject {
-    int						iModelID;
-    int						iBoneiD;
-    CVector					vecPos;
-    CVector					vecRot;
-    CVector					vecScale;
+	int						iModelID;
+	int						iBoneiD;
+	CVector					vecPos;
+	CVector					vecRot;
+	CVector					vecScale;
 	unsigned long			dwMaterialColor1;
 	unsigned long			dwMaterialColor2;
 };
 static_assert(sizeof(CAttachedObject) == 52, "Invalid CAttachedObject size");
 
-struct CPlayerSpawnInfo {
-	unsigned char			byteTeam;
-	int						iSkin;
-	unsigned char			unk;
-	CVector					vecPos;
-	float					fRotation;
-	int						iSpawnWeapons[3];
-	int						iSpawnWeaponsAmmo[3];
+struct CPlayerSpawnInfo
+{
+	unsigned char	byteTeam;
+	int				iSkin;
+#ifdef SAMP_DL
+	unsigned long	dwCustomSkin;
+#endif
+	unsigned char	unk;
+	CVector			vecPos;
+	float			fRotation;
+	int				iSpawnWeapons[3];
+	int				iSpawnWeaponsAmmo[3];
 };
+#ifndef SAMP_DL
 static_assert(sizeof(CPlayerSpawnInfo) == 46, "Invalid CPlayerSpawnInfo size");
+#else
+static_assert(sizeof(CPlayerSpawnInfo) == 50, "Invalid CPlayerSpawnInfo size");
+#endif
 
 struct CBulletSyncData {
 	unsigned char			byteHitType;
@@ -424,23 +446,23 @@ struct CBulletSyncData {
 	CVector					vecHitTarget;
 	CVector					vecCenterOfHit;
 	unsigned char			byteWeaponID;
-}; 
+};
 static_assert(sizeof(CBulletSyncData) == 40, "Invalid CBulletSyncData size");
 
 struct CPVar {
-    char					szVarName[MAX_PVAR_NAME + 1];
-    int						bIsReadOnly;
-    int						iVarType;
-    int						iValue;
-    float					fValue;
-    char*					szValue;
+	char					szVarName[MAX_PVAR_NAME + 1];
+	int						bIsReadOnly;
+	int						iVarType;
+	int						iValue;
+	float					fValue;
+	char* szValue;
 };
 static_assert(sizeof(CPVar) == 61, "Invalid CPVar size");
 
 struct CPlayerVar {
-    CPVar					Vars[MAX_PVARS];
+	CPVar					Vars[MAX_PVARS];
 	int						bIsPVarActive[MAX_PVARS];
-    int						iUpperIndex;
+	int						iUpperIndex;
 };
 static_assert(sizeof(CPlayerVar) == 48800 + 3200 + 4, "Invalid CPlayerVar size");
 
@@ -461,6 +483,9 @@ struct CPlayer {
 	unsigned char			byteStreamedIn[MAX_PLAYERS];
 	unsigned char			byteVehicleStreamedIn[MAX_VEHICLES];
 	unsigned char			byteSomethingUnused[1000];
+#ifdef SAMP_DL
+	unsigned char			byteSomethingUnused2[1000];
+#endif
 	unsigned char			byte3DTextLabelStreamedIn[1024];
 	unsigned char			bPickupStreamedIn[MAX_PICKUPS];
 	unsigned char			byteActorStreamedIn[MAX_PLAYERS];
@@ -486,11 +511,14 @@ struct CPlayer {
 	unsigned short			wUDAnalog;
 	unsigned long			dwKeys;
 	unsigned long			dwOldKeys;
+#ifdef SAMP_DL
+	unsigned long			dwUnknown1;
+#endif
 	int						bEditObject;
 	int						bEditAttachedObject;
 	unsigned short			wDialogID;
-	CPlayerTextDraw*		pTextdraw;
-	CPlayerText3DLabels*	p3DText;
+	CPlayerTextDraw* pTextdraw;
+	CPlayerText3DLabels* p3DText;
 	unsigned short			wPlayerId;
 	int						iUpdateState;
 	CAttachedObject			attachedObject[MAX_PLAYER_ATTACHED_OBJECTS];
@@ -535,17 +563,30 @@ struct CPlayer {
 	unsigned char			byteSpectateType;
 	unsigned long			wSpectateID;
 	unsigned long			dwLastStreaming;
+#ifdef SAMP_DL
+	unsigned char			bUnknown2;
+#endif
 	unsigned long			dwNPCRecordingType;
-	FILE					*pRecordingFile;
+	FILE* pRecordingFile;
 	unsigned long			dwFirstNPCWritingTime;
 	PAD(unused, 9);
 	CPlayerVar*				pPlayerVars;
+#ifdef SAMP_DL
+	unsigned long			dwUnknown3;
+#endif
 };
+#ifndef SAMP_DL
 static_assert(sizeof(CPlayer) == 11486, "Invalid CPlayer size");
+#else
+static_assert(sizeof(CPlayer) == 12499, "Invalid CPlayer size");
+#endif
 
 struct CPlayerPool {
 	unsigned long			dwVirtualWorld[MAX_PLAYERS];
 	unsigned long			dwPlayersCount;
+#ifdef SAMP_DL
+	PAD(pad1, 1000);
+#endif
 	unsigned long			dwlastMarkerUpdate;
 	float					fUpdatePlayerGameTimers;
 	unsigned long			dwScore[MAX_PLAYERS];
@@ -554,9 +595,9 @@ struct CPlayerPool {
 	unsigned long			dwLastScoreUpdate[MAX_PLAYERS];
 	char					szSerial[MAX_PLAYERS][101];
 	char					szVersion[MAX_PLAYERS][25];
-	RemoteSystemStruct		*pRemoteSystem[MAX_PLAYERS];
+	RemoteSystemStruct* pRemoteSystem[MAX_PLAYERS];
 	int						bIsPlayerConnected[MAX_PLAYERS];
-	CPlayer					*pPlayer[MAX_PLAYERS];
+	CPlayer* pPlayer[MAX_PLAYERS];
 	char					szName[MAX_PLAYERS][MAX_PLAYER_NAME + 1];
 	int						bIsAnAdmin[MAX_PLAYERS];
 	int						bIsNPC[MAX_PLAYERS];
@@ -565,24 +606,28 @@ struct CPlayerPool {
 	unsigned long			dwPlayerPoolSize;
 	unsigned long			dwUnk;
 };
+#ifndef SAMP_DL
 static_assert(sizeof(CPlayerPool) == 199024, "Invalid CPlayerPool size");
+#else
+static_assert(sizeof(CPlayerPool) == 200024, "Invalid CPlayerPool size");
+#endif
 
 struct CVehicleSpawn {
 	int						iModelID;
-    CVector					vecPos;
-    float					fRot;
-    int						iColor1;
-    int						iColor2;
-    int						iRespawnTime;
-    int						iInterior;
+	CVector					vecPos;
+	float					fRot;
+	int						iColor1;
+	int						iColor2;
+	int						iRespawnTime;
+	int						iInterior;
 };
 static_assert(sizeof(CVehicleSpawn) == 36, "Invalid CVehicleSpawn size");
 
 struct CVehicleModInfo {
 	unsigned char			byteModSlots[14];
-    unsigned char			bytePaintJob;
-    int						iColor1;
-    int						iColor2;
+	unsigned char			bytePaintJob;
+	int						iColor1;
+	int						iColor2;
 };
 static_assert(sizeof(CVehicleModInfo) == 23, "Invalid CVehicleModInfo size");
 
@@ -629,10 +674,10 @@ struct CVehicle {
 	CVehicleModInfo			vehModInfo;
 	char					szNumberplate[32 + 1];
 	CVehicleParams			vehParamEx;
-    unsigned char			bDeathNotification;
-    unsigned char			bOccupied;
-    unsigned long			vehOccupiedTick;
-    unsigned long			vehRespawnTick;
+	unsigned char			bDeathNotification;
+	unsigned char			bOccupied;
+	unsigned long			vehOccupiedTick;
+	unsigned long			vehRespawnTick;
 	unsigned char			byteSirenEnabled;
 	unsigned char			byteNewSirenState;
 };
@@ -642,7 +687,7 @@ struct CVehiclePool {
 	unsigned char			byteVehicleModelsUsed[212];
 	int						iVirtualWorld[MAX_VEHICLES];
 	int						bVehicleSlotState[MAX_VEHICLES];
-	CVehicle				*pVehicle[MAX_VEHICLES];
+	CVehicle* pVehicle[MAX_VEHICLES];
 	unsigned long			dwVehiclePoolSize;
 };
 static_assert(sizeof(CVehiclePool) == 24216, "Invalid CVehiclePool size");
@@ -696,24 +741,29 @@ struct CObject {
 	unsigned char			byteSyncRot;
 	unsigned long			dwMaterialCount;
 	CObjectMaterial			Material[MAX_OBJECT_MATERIAL];
-	char					*szMaterialText[MAX_OBJECT_MATERIAL];
+	char* szMaterialText[MAX_OBJECT_MATERIAL];
 };
 static_assert(sizeof(CObject) == 3701, "Invalid CObject size");
 
 struct CObjectPool {
 	int						bPlayerObjectSlotState[MAX_PLAYERS][MAX_OBJECTS];
 	int						bPlayersObject[MAX_OBJECTS];
-	CObject					*pPlayerObjects[MAX_PLAYERS][MAX_OBJECTS];
+	CObject* pPlayerObjects[MAX_PLAYERS][MAX_OBJECTS];
 	int						bObjectSlotState[MAX_OBJECTS];
-	CObject					*pObjects[MAX_OBJECTS];
+	CObject* pObjects[MAX_OBJECTS];
 };
+#ifndef SAMP_DL
+static_assert(sizeof(CObjectPool) == 8012000, "Invalid CObjectPool size");
+#else
+static_assert(sizeof(CObjectPool) == 16024000, "Invalid CObjectPool size");
+#endif
 
 struct MenuInteraction {
 	int						Menu;
 	int						Row[MAX_ITEMS];
 	char					unknown[12];
 };
-	
+
 struct CMenu {
 	unsigned char			menuID;
 	char					szTitle[MAX_MENU_TEXT_SIZE];
@@ -729,15 +779,15 @@ struct CMenu {
 };
 
 struct CMenuPool {
-	CMenu*					pMenu[MAX_MENUS];
+	CMenu* pMenu[MAX_MENUS];
 	int						bIsCreated[MAX_MENUS];
 	int						bPlayerMenu[MAX_PLAYERS];
 };
 
 struct CTextDrawPool {
 	int						bSlotState[MAX_TEXT_DRAWS];
-	CTextdraw*				TextDraw[MAX_TEXT_DRAWS];
-	char*					szFontText[MAX_TEXT_DRAWS];
+	CTextdraw* TextDraw[MAX_TEXT_DRAWS];
+	char* szFontText[MAX_TEXT_DRAWS];
 	bool					bHasText[MAX_TEXT_DRAWS][MAX_PLAYERS];
 };
 
@@ -765,27 +815,27 @@ struct CActorAnim {
 static_assert(sizeof(CActorAnim) == 142, "Invalid CActorAnim size");
 
 struct CActor {
-	unsigned char			pad0;				
-	int						iSkinID;			
-	CVector					vecSpawnPos;	
-	float					fSpawnAngle;		
-	unsigned long			pad4;				
-	unsigned long			pad5;				
-	unsigned char			byteLoopAnim;		
+	unsigned char			pad0;
+	int						iSkinID;
+	CVector					vecSpawnPos;
+	float					fSpawnAngle;
+	unsigned long			pad4;
+	unsigned long			pad5;
+	unsigned char			byteLoopAnim;
 	CActorAnim				anim;
-	float					fHealth;			
-	unsigned long			pad;				
-	float					fAngle;			
-	CVector					vecPos;	
-	unsigned char			pad8[12];			
-	unsigned char			byteInvulnerable;	
-	unsigned short			wActorID;			
+	float					fHealth;
+	unsigned long			pad;
+	float					fAngle;
+	CVector					vecPos;
+	unsigned char			pad8[12];
+	unsigned char			byteInvulnerable;
+	unsigned short			wActorID;
 };
 
 struct CActorPool {
 	int						iActorVirtualWorld[MAX_ACTORS];
 	int						bValidActor[MAX_ACTORS];
-	CActor*					pActor[MAX_ACTORS];
+	CActor* pActor[MAX_ACTORS];
 	unsigned long			dwActorPoolSize;
 };
 
@@ -797,7 +847,7 @@ struct CGameMode {
 };
 
 struct CFilterScripts {
-	AMX*					pFilterScripts[MAX_FILTER_SCRIPTS];
+	AMX* pFilterScripts[MAX_FILTER_SCRIPTS];
 	char					szFilterScriptName[MAX_FILTER_SCRIPTS][255];
 	int						iFilterScriptCount;
 };
@@ -808,9 +858,9 @@ struct ScriptTimer_s {
 	int						iRemainingTime;
 	int						bRepeating;
 	int						bKilled;
-	AMX*					pAMX;
+	AMX* pAMX;
 	int						iParamCount;
-	void*					cellParams;
+	void* cellParams;
 };
 
 typedef std::map<unsigned long, ScriptTimer_s*> DwordTimerMap;
@@ -822,28 +872,28 @@ public:
 };
 
 struct CNetGame {
-	CGameMode				*pGameModePool;
-	CFilterScripts			*pFilterScriptPool;
-	CPlayerPool				*pPlayerPool;
-	CVehiclePool			*pVehiclePool;
-	CPickupPool				*pPickupPool;
-	CObjectPool				*pObjectPool;
-	CMenuPool				*pMenuPool;
-	CTextDrawPool			*pTextDrawPool;
-	C3DTextPool				*p3DTextPool;
-	CSAMPGangZonePool		*pGangZonePool;
-	CActorPool				*pActorPool;
+	CGameMode*				pGameModePool;
+	CFilterScripts*			pFilterScriptPool;
+	CPlayerPool*			pPlayerPool;
+	CVehiclePool*			pVehiclePool;
+	CPickupPool*			pPickupPool;
+	CObjectPool*			pObjectPool;
+	CMenuPool*				pMenuPool;
+	CTextDrawPool*			pTextDrawPool;
+	C3DTextPool*			p3DTextPool;
+	CSAMPGangZonePool*		pGangZonePool;
+	CActorPool*				pActorPool;
 	int						iCurrentGameModeIndex;
 	int						iCurrentGameModeRepeat;
-	int						bFirstGameModeLoaded;
-	void					*pHttpClient;
-	CScriptTimers			*pScriptTimers;
-	void					*pRak;
+	bool					bFirstGameModeLoaded;
+	void*					pHttpClient;
+	CScriptTimers*			pScriptTimers;
+	void*					pRak;
 	unsigned long			dwSomethingTick;
 	unsigned long			dwUnk;
 	unsigned long			dwUnk1;
-	int						bLanMode;
-	int						bShowPlayerMarkers;
+	bool					bLanMode;
+	bool					bShowPlayerMarkers;
 	unsigned char			byteShowNameTags;
 	unsigned char			byteWorldTimeHour;
 	unsigned char			byteAllowWeapons;
@@ -864,12 +914,69 @@ struct CNetGame {
 	unsigned char			bManulVehicleEngineAndLights;
 	unsigned char			bLimitPlayerMarkers;
 	float					fPlayerMarkesLimit;
-	int						bVehicleFriendlyFire;
+	bool					bVehicleFriendlyFire;
+#ifdef SAMP_DL
+	unsigned long			dwUnk3;
+#endif
 #ifndef _WIN32
 	double					dElapsedTime;
 #endif
 	int						iSpawnsAvailable;
 	CPlayerSpawnInfo		AvailableSpawns[319];
 };
+/* pls fix it :(
+#ifdef _WIN32
+	#ifndef SAMP_DL
+		static_assert(sizeof(CNetGame) == 14808, "Invalid CNetGame size");
+	#else
+		static_assert(sizeof(CNetGame) == 16088, "Invalid CNetGame size");
+	#endif
+#else
+	#ifndef SAMP_DL
+		static_assert(sizeof(CNetGame) == 14816, "Invalid CNetGame size");
+	#else
+		static_assert(sizeof(CNetGame) == 16096, "Invalid CNetGame size");
+	#endif
+#endif
+*/
+
+#ifdef SAMP_DL
+#define MAX_PATH 260
+
+enum MODEL_TYPE : unsigned char { MODEL_TYPE_CHAR = 1, MODEL_TYPE_SIMPLE = 2 };
+static_assert(sizeof(MODEL_TYPE) == 1, "Invalid MODEL_TYPE size");
+
+struct CModelInfo
+{
+	MODEL_TYPE bType;
+	unsigned long dwVirtualWorld;
+	unsigned long dwBaseId;
+	unsigned long dwNewId;
+	char szDffName[MAX_PATH + 1];
+	char szTxdName[MAX_PATH + 1];
+	unsigned long dwDffCrc;
+	unsigned long dwTxdCrc;
+	unsigned long dwDffLength;
+	unsigned long dwTxdLength;
+	unsigned char bTimeOn;
+	unsigned char bTimeOff;
+};
+static_assert(sizeof(CModelInfo) == 553, "Invalid CModelInfo size");
+
+struct CArtList
+{
+	CModelInfo** pModelList;
+	unsigned long dwCapacity;
+};
+static_assert(sizeof(CArtList) == 8, "Invalid CArtList size");
+
+struct CArtInfo
+{
+	char szArtPath[MAX_PATH];
+	unsigned char bUnknown;
+	CArtList artList;
+};
+static_assert(sizeof(CArtInfo) == 269, "Invalid CArtInfo size");
+#endif
 
 #pragma pack(pop)

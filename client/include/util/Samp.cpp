@@ -108,7 +108,7 @@ void Samp::AddClientCommand(const char* const cmdName, const SAMP::CMDPROC cmdHa
         pInputBox->AddCommand(cmdName, cmdHandler);
     }
 }
-
+/*
 void Samp::AddMessageToChat(const D3DCOLOR color, const char* const message) noexcept
 {
     if (message == nullptr || *message == '\0')
@@ -120,10 +120,10 @@ void Samp::AddMessageToChat(const D3DCOLOR color, const char* const message) noe
     if (const auto pChat = SAMP::pChat(); pChat != nullptr)
     {
         pChat->AddEntry(SAMP::ChatEntry::CHAT_TYPE_DEBUG,
-                        message, nullptr, color, NULL);
+                       message, nullptr, color, NULL);
     }
 }
-
+*/
 void Samp::ToggleSampCursor(const int mode) noexcept
 {
     if (!Samp::loadStatus)
@@ -138,7 +138,7 @@ void Samp::ToggleSampCursor(const int mode) noexcept
         return;
 
     if (const auto pGame = SAMP::pGame();
-        pGame != nullptr && pGame->IsMenuVisible() == FALSE)
+        pGame != nullptr/* && pGame->IsMenuVisible() == FALSE*/)
     {
         pGame->SetCursorMode(mode, mode == 0 ? TRUE : FALSE);
         if (mode == 0) pGame->ProcessInputEnabling();

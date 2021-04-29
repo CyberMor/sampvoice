@@ -87,4 +87,19 @@ CScoreboard*& pScoreboard();
 
 SAMP_END
 
+#elif defined(SAMP_DL)
+
+SAMP_BEGIN
+
+class SAMP_API CScoreboard {
+public:
+	BOOL				m_bIsEnabled;
+
+	void Close(bool bHideCursor);
+};
+
+CScoreboard*& pScoreboard();
+
+SAMP_END
+
 #endif

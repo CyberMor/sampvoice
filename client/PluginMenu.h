@@ -22,6 +22,8 @@
 #include <util/Texture.h>
 #include <util/Render.h>
 
+#include "../common/common.h"
+
 #if !defined(SAMP_RU) && !defined(SAMP_EN)
 #define SAMP_RU
 #endif

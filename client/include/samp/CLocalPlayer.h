@@ -470,4 +470,22 @@ public:
 
 SAMP_END
 
+
+#elif defined(SAMP_DL)
+
+#include "CPedSA.h"
+
+SAMP_BEGIN
+
+class SAMP_API CLocalPlayer {
+public:
+
+	CPedSA*					m_pPed;
+	char					_pad0[249];
+	BOOL					m_bIsActive;
+};
+
+SAMP_END
+
+
 #endif

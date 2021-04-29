@@ -4,7 +4,7 @@
 
 LocalStream::LocalStream(const StreamType type, const D3DCOLOR color,
                          std::string name, const float distance) noexcept
-    : Stream(BASS_SAMPLE_3D | BASS_SAMPLE_MUTEMAX, type, color, std::move(name))
+    : Stream(BASS_SAMPLE_3D | BASS_SAMPLE_MUTEMAX, type, color, std::move(name), distance)
     , distance(distance)
 {}
 

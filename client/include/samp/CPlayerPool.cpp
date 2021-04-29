@@ -215,4 +215,49 @@ SAMP::CObjectSA* SAMP::CPlayerPool::FindAccessory(::CObject* pGameObject) {
 	return ((CObjectSA * (__thiscall*)(CPlayerPool*, ::CObject*))SAMP_ADDROF(0x137F0))(this, pGameObject);
 }
 
+#elif defined(SAMP_DL)
+
+const char* SAMP::CPlayerPool::GetName(ID nId) {
+	if (nId < 0 || nId > MAX_PLAYERS)
+		return nullptr;
+
+	if (nId == this->m_nLocalId)
+		return this->m_szLocalName.c_str();
+
+	if (this->m_pObject[nId] == nullptr)
+		return nullptr;
+
+	return this->m_pObject[nId]->m_szNick.c_str();
+}
+
+SAMP::CRemotePlayer* SAMP::CPlayerPool::GetPlayer(ID nId) {
+	if (nId < 0 || nId > MAX_PLAYERS)
+		return nullptr;
+
+	if (nId == this->m_nLocalId)
+		return nullptr;
+
+	if (this->m_pObject[nId] == nullptr)
+		return nullptr;
+
+	if (this->m_pObject[nId]->m_pPlayer == nullptr)
+		return nullptr;
+
+	return this->m_pObject[nId]->m_pPlayer;
+}
+
+BOOL SAMP::CPlayerPool::IsConnected(ID nId) {
+	if (nId < 0 || nId > MAX_PLAYERS)
+		return false;
+
+	if (nId == this->m_nLocalId)
+		return true;
+
+	return this->m_bNotEmpty[nId];
+}
+
+SAMP::CLocalPlayer* SAMP::CPlayerPool::GetLocalPlayer() {
+	return this->m_pLocalObject;
+}
+
 #endif

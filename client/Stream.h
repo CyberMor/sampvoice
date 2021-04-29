@@ -37,7 +37,7 @@ private:
 protected:
 
     explicit Stream(DWORD streamFlags, StreamType type,
-                    D3DCOLOR color, std::string name) noexcept;
+                    D3DCOLOR color, std::string name, float distance) noexcept;
 
 public:
 
