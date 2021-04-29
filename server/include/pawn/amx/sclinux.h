@@ -30,7 +30,7 @@
  * (and defines) the macros BYTE_ORDER and BIG_ENDIAN.
  * For Linux, we must overrule these settings with those defined in glibc.
  */
-#if !defined __BYTE_ORDER__
+#if !defined __BYTE_ORDER
 # include <stdlib.h>
 #endif
 
@@ -40,8 +40,8 @@
 # define __BIG_ENDIAN    BIG_ENDIAN
 #endif
 
-#if !defined __BYTE_ORDER__
-# error	"Can't figure computer byte order (__BYTE_ORDER__ macro not found)"
+#if !defined __BYTE_ORDER
+# error	"Can't figure computer byte order (__BYTE_ORDER macro not found)"
 #endif
 
 #endif /* SCLINUX_H */

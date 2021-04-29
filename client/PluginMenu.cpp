@@ -740,7 +740,7 @@ void PluginMenu::Render() noexcept
 
                         ImGui::PushID(&playerInfo);
 
-                        if (ImGui::Button("##label", { listWidth, ImGui::GetFontSize() + 2.f }))
+                        if (playerInfo.playerId != SV::kNonePlayer && ImGui::Button("##label", { listWidth, ImGui::GetFontSize() + 2.f }))
                         {
                             // Remove player from black list
                             BlackList::UnlockPlayer(playerInfo.playerName);
