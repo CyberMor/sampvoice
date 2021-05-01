@@ -132,18 +132,15 @@ SAMP_END
 
 #elif defined(SAMP_DL)
 
-#include "CVectorSA.h"
-#include "CMatrixSA.h"
-
 class CEntity;
 
 SAMP_BEGIN
 
 class SAMP_API CEntitySA {
 public:
-	char		pad_4[60];
-	::CEntity*	m_pGameEntity;
-	GTAREF		m_handle;
+	char		_pad0[64];		// 0 - 64
+	::CEntity*	m_pGameEntity;	// 64 - 68
+	GTAREF		m_handle;		// 68 - 72
 };
 
 SAMP_END

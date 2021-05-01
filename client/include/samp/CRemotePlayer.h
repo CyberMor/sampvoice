@@ -303,21 +303,15 @@ SAMP_END
 
 #elif defined(SAMP_DL)
 
-#include "CVehicleSA.h"
-#include "Packets.h"
 #include "CPedSA.h"
-#include "Animation.h"
-#include "SpecialAction.h"
-#include "CVectorSA.h"
-#include "CMatrixSA.h"
 
 SAMP_BEGIN
 
 class SAMP_API CRemotePlayer {
 public:
-	ID			sPlayerID;
-	ID			sVehicleID;
-	CPedSA*		m_pPed;
+	ID			m_nId;		// 0 - 2
+	char		_pad0[2];	// 2 - 4
+	CPedSA*		m_pPed;		// 4 - 8
 
 	D3DCOLOR GetColorAsRGBA();
 };

@@ -395,9 +395,7 @@ SAMP_END
 
 #elif defined(SAMP_DL)
 
-#include "AimStuff.h"
 #include "CEntitySA.h"
-#include "CVectorSA.h"
 
 class CPed;
 
@@ -405,9 +403,9 @@ SAMP_BEGIN
 
 class SAMP_API CPedSA : public CEntitySA {
 public:
-	bool					m_bUsingCellphone;
-	char					_pad0[600];
-	::CPed*					m_pGamePed;
+	BOOL		m_bUsingCellphone;	// 72 - 76
+	char		_pad1[600];			// 76 - 676
+	::CPed*		m_pGamePed;			// 676 - 680
 };
 
 SAMP_END

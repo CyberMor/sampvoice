@@ -167,11 +167,13 @@ void SpeakerList::Render()
         ImGui::SetColumnOffset(1, vWindowPadding.x + vIconWidth + vFramePadding.x);
         ImGui::SetColumnOffset(2, vWindowPadding.x + vIconWidth + vFramePadding.x + vNickWidth + vFramePadding.x);
 
-        int curTextLine { 0 };
+        int curTextLine{ 0 };
 
         for (WORD playerId { 0 }; playerId < MAX_PLAYERS; ++playerId)
         {
             if (curTextLine >= kBaseLinesCount) break;
+
+            bool dontRenderText{ false };
 
             if (const auto playerName = pPlayerPool->GetName(playerId); playerName != nullptr)
             {
@@ -191,10 +193,13 @@ void SpeakerList::Render()
                                         {
                                             const float distanceToCamera = (TheCamera.GetPosition() - pGamePed->GetPosition()).Magnitude();
 						
-						                    if(playerStream.second.GetType() != StreamType::GlobalStream)
+						                    if (playerStream.second.GetType() != StreamType::GlobalStream)
                             			    {
-                                			    if(distanceToCamera > playerStream.second.GetDistance())
-                                    				SpeakerList::OnSpeakerStop(*SpeakerList::playerStream[playerId], playerId);
+                                                if (distanceToCamera > playerStream.second.GetDistance())
+                                                {
+                                                    dontRenderText = true;
+                                                    continue;
+                                                }
                             			    }
 
                                             float vSpeakerIconSize { 0.f };
@@ -230,6 +235,8 @@ void SpeakerList::Render()
                             break;
                         }
                     }
+
+                    if (dontRenderText == true) continue;
 
                     ImGui::PushID(playerId);
 
