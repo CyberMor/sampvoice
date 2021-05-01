@@ -207,13 +207,13 @@ void SpeakerList::Render()
                                             if (Render::ConvertBaseYValueToScreenYValue(kBaseIconSize, vSpeakerIconSize))
                                             {
                                                 vSpeakerIconSize *= PluginConfig::GetSpeakerIconScale();
-                                                vSpeakerIconSize *= 5.f / distanceToCamera;
+                                                vSpeakerIconSize *= 8.f / distanceToCamera;
 
                                                 float width, height;
                                                 RwV3d playerPos, screenPos;
 
                                                 pGamePed->GetBonePosition(playerPos, 1, false);
-                                                playerPos.z += 1.f;
+                                                playerPos.z += 2.f;
 
                                                 if (CSprite::CalcScreenCoors(playerPos, &screenPos, &width, &height, true, true))
                                                 {
@@ -335,7 +335,6 @@ void SpeakerList::OnSpeakerPlay(const Stream& stream, const WORD speaker) noexce
     if (speaker != std::clamp<WORD>(speaker, 0, MAX_PLAYERS - 1))
         return;
 
-    SpeakerList::playerStream[speaker] = &stream;
     SpeakerList::playerStreams[speaker][(Stream*)(&stream)] = stream.GetInfo();
 }
 
@@ -344,7 +343,6 @@ void SpeakerList::OnSpeakerStop(const Stream& stream, const WORD speaker) noexce
     if (speaker != std::clamp<WORD>(speaker, 0, MAX_PLAYERS - 1))
         return;
 
-    SpeakerList::playerStream[speaker] = NULL;
     SpeakerList::playerStreams[speaker].erase((Stream*)(&stream));
 }
 
@@ -355,4 +353,3 @@ ImFont* SpeakerList::pSpeakerFont { nullptr };
 TexturePtr SpeakerList::tSpeakerIcon { nullptr };
 
 std::array<std::unordered_map<Stream*, StreamInfo>, MAX_PLAYERS> SpeakerList::playerStreams;
-std::array<const Stream*, MAX_PLAYERS> SpeakerList::playerStream;

@@ -59,7 +59,7 @@ private:
     static constexpr auto kTab2Desc1EnableMicroText        = "Включить микрофон";
     static constexpr auto kTab2Desc1MicroVolumeText        = "Громкость микрофона";
     static constexpr auto kTab2Desc1DeviceNameText         = "Устройство ввода";
-    static constexpr auto kTab2Desc1CheckDeviceText        = "Проверить устройство";
+    static constexpr auto kTab2Desc1CheckDeviceText        = "Проверить устройство (будет повторное эхо)";
     static constexpr auto kTab2Desc2TitleText              = "Иконка микрофона";
     static constexpr auto kTab2Desc2MicroIconScaleText     = "Масштаб";
     static constexpr auto kTab2Desc2MicroIconPositionXText = "Позиция по X";
@@ -91,7 +91,7 @@ private:
     static constexpr auto kTab2Desc1EnableMicroText        = "Turn on microphone";
     static constexpr auto kTab2Desc1MicroVolumeText        = "Microphone volume";
     static constexpr auto kTab2Desc1DeviceNameText         = "Input device";
-    static constexpr auto kTab2Desc1CheckDeviceText        = "Check device";
+    static constexpr auto kTab2Desc1CheckDeviceText        = "Check device (will be lopped echo)";
     static constexpr auto kTab2Desc2TitleText              = "Microphone icon";
     static constexpr auto kTab2Desc2MicroIconScaleText     = "Scale";
     static constexpr auto kTab2Desc2MicroIconPositionXText = "Position by X";
