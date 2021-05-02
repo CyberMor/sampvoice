@@ -344,11 +344,11 @@ BOOL SAMP::CRemotePlayer::DoesExist() {
 #elif defined(SAMP_DL)
 
 D3DCOLOR SAMP::CRemotePlayer::GetColorAsRGBA() {
-	if (nId < 0 || nId >= 1000)
+	if (m_nId < 0 || m_nId >= 1000)
 		return 0x999999FF;
 
 	D3DCOLOR* color_table = (D3DCOLOR*)(SAMP_ADDROF(0x18F6C0));
-	return color_table[sPlayerID];
+	return color_table[m_nId];
 }
 
 #endif
