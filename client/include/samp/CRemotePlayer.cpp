@@ -344,7 +344,7 @@ BOOL SAMP::CRemotePlayer::DoesExist() {
 #elif defined(SAMP_DL)
 
 D3DCOLOR SAMP::CRemotePlayer::GetColorAsRGBA() {
-	if (sPlayerID < 0 || sPlayerID >= 1000)
+	if (nId < 0 || nId >= 1000)
 		return 0x999999FF;
 
 	D3DCOLOR* color_table = (D3DCOLOR*)(SAMP_ADDROF(0x18F6C0));
