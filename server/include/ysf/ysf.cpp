@@ -580,12 +580,12 @@ void CAddress::Initialize(void *logprintf_addr) {
 		FUNC_CGameMode__OnPlayerStreamOut = 0x080AEE90;
 		FUNC_CGameMode__OnDialogResponse = 0x080AF110;
 
-		FUNC_AddSimpleModel = 0x080B98C0;
-		FUNC_DynamicListInsert = 0x080BA2D0;
+		// FUNC_AddSimpleModel = 0x080B98C0;
+		// FUNC_DynamicListInsert = 0x080BA2D0;
 
-		ADDR_WrongPacketIDBranch = 0x0807D9AC;
+		// ADDR_WrongPacketIDBranch = 0x0807D9AC;
 
-		FUNC_ReplaceBadChars = 0x080E1460;
+		// FUNC_ReplaceBadChars = 0x080E1460;
 	#endif
 #endif
 

@@ -25,7 +25,7 @@
   #define __FreeBSD__
 #endif
 #if defined __linux__ || defined __FreeBSD__ || defined __OpenBSD__
-  #include <sclinux.h>
+  #include "sclinux.h"
 #endif
 
 #ifndef AMX_H_INCLUDED

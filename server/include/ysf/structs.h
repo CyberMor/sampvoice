@@ -567,7 +567,7 @@ struct CPlayer {
 	unsigned char			bUnknown2;
 #endif
 	unsigned long			dwNPCRecordingType;
-	FILE* pRecordingFile;
+	void*                   pRecordingFile;
 	unsigned long			dwFirstNPCWritingTime;
 	PAD(unused, 9);
 	CPlayerVar*				pPlayerVars;
