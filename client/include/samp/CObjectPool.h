@@ -94,4 +94,21 @@ public:
 
 SAMP_END
 
+#elif defined(SAMP_DL)
+
+#include "CObjectSA.h"
+#include "CVectorSA.h"
+
+#define MAX_OBJECTS 2100
+
+SAMP_BEGIN
+
+class SAMP_API CObjectPool {
+public:
+	char		_pad0[8404];			// 0 - 8404
+	CObjectSA*	m_pObject[MAX_OBJECTS];	// 8404 - 16804
+};
+
+SAMP_END
+
 #endif

@@ -6,6 +6,7 @@ enum class SAMPVersion {
 	VERSION_UNKNOWN,
 	VERSION_037,
 	VERSION_037_R2,
+	VERSION_037_DL
 };
 
 class CAddress {
@@ -18,6 +19,7 @@ public:
 	static constexpr unsigned long FUNC_Logprintf_03ZR4		= 0x004875F0;
 	static constexpr unsigned long FUNC_Logprintf_037		= 0x0048A0B0;
 	static constexpr unsigned long FUNC_Logprintf_037_R2_1	= 0x0048C8D0;
+	static constexpr unsigned long FUNC_Logprintf_03DL_R1	= 0x00491FA0;
 #else
 	static constexpr unsigned long FUNC_Logprintf_03Z		= 0x080A7440;
 	static constexpr unsigned long FUNC_Logprintf_03ZR2_2	= 0x080A77D0;
@@ -25,6 +27,7 @@ public:
 	static constexpr unsigned long FUNC_Logprintf_03ZR4		= 0x80A7A90;
 	static constexpr unsigned long FUNC_Logprintf_037		= 0x080A9000;
 	static constexpr unsigned long FUNC_Logprintf_037_R2_1	= 0x080A91D0;
+	static constexpr unsigned long FUNC_Logprintf_03DL_R1	= 0x080B1CA0;
 #endif
 
 	static unsigned long			VAR_pRestartWaitTime;

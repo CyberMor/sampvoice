@@ -87,7 +87,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{658FA649-71EA-4E35-BDF6-71AD941F8761}</ProjectGuid>
     <RootNamespace>server</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">

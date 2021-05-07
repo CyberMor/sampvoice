@@ -413,4 +413,20 @@ __int64 SAMP::CNetGame::GetCounter() {
 	return ((__int64(__thiscall*)(CNetGame*))SAMP_ADDROF(0x8570))(this);
 }
 
+#elif defined(SAMP_DL)
+
+SAMP::CNetGame*& SAMP::pNetGame() { return *(SAMP::CNetGame**)SAMP_ADDROF(0x2ACA24); }
+
+SAMP::CPlayerPool* SAMP::CNetGame::GetPlayerPool() {
+	return (CPlayerPool *)(this->m_pPools->m_pPlayerPool);
+}
+
+SAMP::CObjectPool* SAMP::CNetGame::GetObjectPool() {
+	return (CObjectPool *)(this->m_pPools->m_pObjectPool);
+}
+
+SAMP::CVehiclePool* SAMP::CNetGame::GetVehiclePool() {
+	return (CVehiclePool *)(this->m_pPools->m_pVehiclePool);
+}
+
 #endif

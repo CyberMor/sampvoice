@@ -393,4 +393,21 @@ public:
 
 SAMP_END
 
+#elif defined(SAMP_DL)
+
+#include "CEntitySA.h"
+
+class CPed;
+
+SAMP_BEGIN
+
+class SAMP_API CPedSA : public CEntitySA {
+public:
+	BOOL		m_bUsingCellphone;	// 72 - 76
+	char		_pad1[600];			// 76 - 676
+	::CPed*		m_pGamePed;			// 676 - 680
+};
+
+SAMP_END
+
 #endif

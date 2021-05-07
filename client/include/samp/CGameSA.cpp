@@ -597,4 +597,16 @@ void SAMP::CGameSA::ProcessFrameLimiter() {
 	((void(__thiscall*)(CGameSA*))SAMP_ADDROF(0xA14E0))(this);
 }
 
+#elif defined(SAMP_DL)
+
+SAMP::CGameSA*& SAMP::pGame() { return *(SAMP::CGameSA**)SAMP_ADDROF(0x2ACA3C); }
+
+void SAMP::CGameSA::SetCursorMode(int nMode, BOOL bImmediatelyHideCursor) {
+	((void(__thiscall*)(CGameSA*, int, BOOL))SAMP_ADDROF(0xA0530))(this, nMode, bImmediatelyHideCursor);
+}
+
+void SAMP::CGameSA::ProcessInputEnabling() {
+	((void(__thiscall*)(CGameSA*))SAMP_ADDROF(0xA0410))(this);
+}
+
 #endif

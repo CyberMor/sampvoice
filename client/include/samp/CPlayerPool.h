@@ -147,4 +147,32 @@ public:
 
 SAMP_END
 
+#elif defined(SAMP_DL)
+
+#include "CPlayerInfo.h"
+#include "CLocalPlayer.h"
+#include <string>
+
+#define MAX_PLAYERS 1004
+
+SAMP_BEGIN
+
+class SAMP_API CPlayerPool {
+public:
+	ID					m_nLocalId;						// 0 - 2
+	void*				unk;							// 2 - 6
+	std::string			m_szLocalName;					// 6 - 30
+	CLocalPlayer*		m_pLocalObject;					// 30 - 34
+	int					m_nLargestId;					// 34 - 38
+	CPlayerInfo*		m_pObject[MAX_PLAYERS];			// 38 - 4054
+	BOOL				m_bNotEmpty[MAX_PLAYERS];		// 4054 - 8070
+
+	const char* GetName(ID nId);
+	CRemotePlayer* GetPlayer(ID nId);
+	BOOL IsConnected(ID nId);
+	CLocalPlayer* GetLocalPlayer();
+};
+
+SAMP_END
+
 #endif

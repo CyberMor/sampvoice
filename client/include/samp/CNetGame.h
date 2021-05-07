@@ -94,7 +94,7 @@ public:
 
 	};
 	
-	char pad_0[32];
+	char					pad_0[32];
 	char					m_szHostAddress[257];
 	char					m_szHostname[257];
 	bool					m_bDisableCollision; // turns off interacting with any player in a vehicle
@@ -253,7 +253,7 @@ public:
 
 	enum { WaitJoin = 0x6, WaitConnect = 0x1, Connecting = 0x2, Connected = 0x5, Restarting = 0xB };
 
-	char pad_0[44];
+	char				pad_0[44];
 	RakClientInterface*	m_pRakClient;
 	char				m_szHostAddress[257];
 	char				m_szHostname[257];
@@ -266,7 +266,7 @@ public:
 	int					m_nGameState;
 	TICK				m_lastConnectAttempt;
 	Settings*			m_pSettings;
-	char pad_2[5];
+	char				pad_1[5];
 	Pools*				m_pPools;
 
 	static TICK&		lastPlayersUpdateRequest();
@@ -327,6 +327,36 @@ public:
 	RakClientInterface* GetRakClient();
 	__int64 GetCounter();
 
+};
+
+CNetGame*& pNetGame();
+
+SAMP_END
+
+#elif defined(SAMP_DL)
+
+#include "CPlayerPool.h"
+#include "CVehiclePool.h"
+#include "CObjectPool.h"
+
+SAMP_BEGIN
+
+class SAMP_API CNetGame {
+public:
+	struct SAMP_API Pools {
+		char 				_pad0[8];			// 0 - 8
+		CPlayerPool*		m_pPlayerPool;		// 8 - 12
+		CVehiclePool*		m_pVehiclePool;		// 12 - 16
+		char 				_pad1[4];			// 16 - 20
+		CObjectPool*		m_pObjectPool;		// 20 - 24
+	};
+
+	char 					_pad0[990];			// 0 - 990
+	Pools*					m_pPools;			// 990 - 994
+
+	CPlayerPool* GetPlayerPool();
+	CObjectPool* GetObjectPool();
+	CVehiclePool* GetVehiclePool();
 };
 
 CNetGame*& pNetGame();

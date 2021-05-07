@@ -171,4 +171,20 @@ public:
 
 SAMP_END
 
+#elif defined(SAMP_DL)
+
+#define MAX_VEHICLES 2000
+
+class CVehicle;
+
+SAMP_BEGIN
+
+class SAMP_API CVehiclePool {
+public:
+	char					_pad0[20404];					// 0 - 20404
+	::CVehicle*				m_pGameObject[MAX_VEHICLES];	// 20404 - 28404
+};
+
+SAMP_END
+
 #endif

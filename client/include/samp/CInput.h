@@ -111,4 +111,38 @@ CInput*& pInputBox();
 
 SAMP_END
 
+#elif defined(SAMP_DL)
+
+#include "CRectSA.h"
+#include "Commands.h"
+
+#define MAX_CLIENT_CMDS 144
+#define MAX_CMD_LENGTH 32
+
+SAMP_BEGIN
+
+class SAMP_API CInput {
+public:
+	IDirect3DDevice9*	m_pDevice;
+	CDXUTDialog*		m_pGameUI;
+	CDXUTEditBox*		m_pEditbox;
+	CMDPROC				m_commandProc[MAX_CLIENT_CMDS];
+	char				m_szCommandName[MAX_CLIENT_CMDS][MAX_CMD_LENGTH + 1];
+	int					m_nCommandCount;
+	BOOL				m_bEnabled;
+	char				m_szInput[129];
+	char				m_szRecallBufffer[10][129];
+	char				m_szCurrentBuffer[129];
+	int					m_nCurrentRecall;
+	int					m_nTotalRecall;
+	CMDPROC				m_defaultCommand;
+
+	void Close();
+	void AddCommand(const char* szName, CMDPROC handler);
+};
+
+CInput*& pInputBox();
+
+SAMP_END
+
 #endif

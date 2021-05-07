@@ -257,4 +257,10 @@ void SAMP::CEntitySA::SetCollisionProcessed(BOOL bProcessed) {
 	((void(__thiscall*)(CEntitySA*, BOOL))SAMP_ADDROF(0x9EF70))(this, bProcessed);
 }
 
+#elif defined(SAMP_DL)
+/*
+void SAMP::CEntitySA::GetMatrix(CMatrixSA* pMatrix) {
+	((void(__thiscall*)(CEntitySA*, CMatrixSA*))SAMP_ADDROF(0x9E950))(this, pMatrix);
+}
+*/
 #endif

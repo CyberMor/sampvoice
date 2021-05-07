@@ -9,7 +9,7 @@
 
 #include "ControlPacket.h"
 
-DWORD ControlPacket::GetFullSize() const noexcept
+DWORD ControlPacket::GetFullSize() const noexcept 
 {
     return sizeof(*this) + this->length;
 }

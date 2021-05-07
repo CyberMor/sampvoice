@@ -167,11 +167,13 @@ void SpeakerList::Render()
         ImGui::SetColumnOffset(1, vWindowPadding.x + vIconWidth + vFramePadding.x);
         ImGui::SetColumnOffset(2, vWindowPadding.x + vIconWidth + vFramePadding.x + vNickWidth + vFramePadding.x);
 
-        int curTextLine { 0 };
+        int curTextLine{ 0 };
 
         for (WORD playerId { 0 }; playerId < MAX_PLAYERS; ++playerId)
         {
             if (curTextLine >= kBaseLinesCount) break;
+
+            bool dontRenderText{ false };
 
             if (const auto playerName = pPlayerPool->GetName(playerId); playerName != nullptr)
             {
@@ -190,19 +192,28 @@ void SpeakerList::Render()
                                         if (const auto pGamePed = pPlayerPed->m_pGamePed; pGamePed != nullptr)
                                         {
                                             const float distanceToCamera = (TheCamera.GetPosition() - pGamePed->GetPosition()).Magnitude();
+						
+						                    if (playerStream.second.GetType() != StreamType::GlobalStream)
+                            			    {
+                                                if (distanceToCamera > playerStream.second.GetDistance())
+                                                {
+                                                    dontRenderText = true;
+                                                    continue;
+                                                }
+                            			    }
 
                                             float vSpeakerIconSize { 0.f };
 
                                             if (Render::ConvertBaseYValueToScreenYValue(kBaseIconSize, vSpeakerIconSize))
                                             {
                                                 vSpeakerIconSize *= PluginConfig::GetSpeakerIconScale();
-                                                vSpeakerIconSize *= 5.f / distanceToCamera;
+                                                vSpeakerIconSize *= 8.f / distanceToCamera;
 
                                                 float width, height;
                                                 RwV3d playerPos, screenPos;
 
                                                 pGamePed->GetBonePosition(playerPos, 1, false);
-                                                playerPos.z += 1.f;
+                                                playerPos.z += 2.f;
 
                                                 if (CSprite::CalcScreenCoors(playerPos, &screenPos, &width, &height, true, true))
                                                 {
@@ -224,6 +235,8 @@ void SpeakerList::Render()
                             break;
                         }
                     }
+
+                    if (dontRenderText == true) continue;
 
                     ImGui::PushID(playerId);
 

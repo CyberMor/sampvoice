@@ -7,8 +7,8 @@ English | [Русский](https://github.com/CyberMor/sampvoice/blob/master/REA
 
 #### Version support
 ----------------------------------
-* Client: SA:MP 0.3.7 (R1, R3)
-* Server: SA:MP 0.3.7 (R2)
+* Client: SA:MP 0.3.7 (R1, R3), SA:MP 0.3DL (R1)
+* Server: SA:MP 0.3.7 (R2), SA:MP 0.3DL (R1)
 
 ## Features
 ---------------------------------

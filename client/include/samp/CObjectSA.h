@@ -276,4 +276,19 @@ public:
 
 SAMP_END
 
+#elif defined(SAMP_DL)
+
+#include "CEntitySA.h"
+#include "CVehicleSA.h"
+#include "CVectorSA.h"
+#include "CMatrixSA.h"
+
+SAMP_BEGIN
+
+class SAMP_API CObjectSA : public CEntitySA {
+	// ~
+};
+
+SAMP_END
+
 #endif

@@ -42,7 +42,7 @@ public:
     static void Free() noexcept;
 
     static void AddClientCommand(const char* cmdName, SAMP::CMDPROC cmdHandler) noexcept;
-    static void AddMessageToChat(D3DCOLOR color, const char* message) noexcept;
+    // static void AddMessageToChat(D3DCOLOR color, const char* message) noexcept;
     static void ToggleSampCursor(int mode) noexcept;
 
 public:

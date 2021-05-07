@@ -6,6 +6,8 @@
 
 #include "StreamInfo.h"
 
+#include <util/Logger.h>
+
 StreamAtPlayer::StreamAtPlayer(const D3DCOLOR color, std::string name,
                                const float distance, const WORD playerId) noexcept
     : LocalStream(StreamType::LocalStreamAtPlayer, color, std::move(name), distance)

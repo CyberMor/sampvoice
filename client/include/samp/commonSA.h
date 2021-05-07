@@ -23,7 +23,9 @@
 
 #define SAMP_VIRTUAL {}
 
-#if !defined(SAMP_R1) && !defined(SAMP_R3)
+#include "../../common/common.h"
+
+#if !defined(SAMP_R1) && !defined(SAMP_R3) && !defined(SAMP_DL)
 #define SAMP_R1
 #endif
 

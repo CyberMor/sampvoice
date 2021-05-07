@@ -89,4 +89,12 @@ void SAMP::CScoreboard::Enable() {
 	((void(__thiscall*)(CScoreboard*))SAMP_ADDROF(0x6EC80))(this);
 }
 
+#elif defined(SAMP_DL)
+
+SAMP::CScoreboard*& SAMP::pScoreboard() { return *(SAMP::CScoreboard**)SAMP_ADDROF(0x2AC9DC); }
+
+void SAMP::CScoreboard::Close(bool bHideCursor) {
+	((void(__thiscall*)(CScoreboard*, bool))SAMP_ADDROF(0x6E410))(this, bHideCursor);
+}
+
 #endif

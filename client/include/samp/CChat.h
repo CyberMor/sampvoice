@@ -208,4 +208,33 @@ CChat*& pChat();
 
 SAMP_END
 
+#elif defined(SAMP_DL)
+
+SAMP_BEGIN
+
+enum ChatEntry {
+
+	CHAT_TYPE_NONE = 0,
+	CHAT_TYPE_CHAT = 1 << 1,
+	CHAT_TYPE_INFO = 1 << 2,
+	CHAT_TYPE_DEBUG = 1 << 3
+
+};
+
+class SAMP_API CChat {
+public:
+	unsigned int			m_nPageSize;
+	char*					m_szLastMessage;
+	int						m_nMode;
+
+	enum { Off, NoShadow, Normal };
+
+	void AddEntry(int nType, const char* szText, const char* szPrefix, D3DCOLOR textColor, D3DCOLOR prefixColor);
+
+};
+
+CChat*& pChat();
+
+SAMP_END
+
 #endif

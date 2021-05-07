@@ -188,7 +188,7 @@ void Plugin::MainLoop()
     }
 
     for (const auto& stream : Plugin::streamTable)
-        stream.second->Tick();
+       stream.second->Tick();
 
     Playback::Tick();
     Record::Tick();
