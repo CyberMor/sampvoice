@@ -70,15 +70,21 @@ public:
     static inline void Log(const char* const message, const ARGS... args) noexcept
     {
         Logger::LogToFile(message, args...);
-        Logger::LogToConsole(message, args...);
+        if (Logger::canLogToConsole)
+        {
+            Logger::LogToConsole(message, args...);
+        }
     }
 
 private:
+    
+    static void LoadLogToConsoleConfig();
 
     static FILE* logFile;
     static logprintf_t logFunc;
 
     static std::mutex logFileMutex;
     static std::mutex logConsoleMutex;
+    static bool canLogToConsole;
 
 };

@@ -8,12 +8,40 @@
 */
 
 #include "logger.h"
+#include <fstream>
+#include "string"
+
+void Logger::LoadLogToConsoleConfig()
+{
+    try
+    {
+        std::ifstream file("server.cfg");
+        if (file.is_open())
+        {
+            std::string line;
+            while (std::getline(file, line))
+            {
+                if (line.find("sv_log_to_console ") == 0)
+                {
+                    if (line.substr(18) == "false")
+                    {
+                        Logger::canLogToConsole = false;
+                    }
+                }
+            }
+            file.close();
+        }
+    }
+    catch (...)
+    { }
+}
 
 bool Logger::Init(const char* const logFile, const logprintf_t logFunc) noexcept
 {
     if (logFile == nullptr || *logFile == '\0' || logFunc == nullptr)
         return false;
 
+    Logger::LoadLogToConsoleConfig();
     const std::lock_guard<std::mutex> lockFile { Logger::logFileMutex };
     const std::lock_guard<std::mutex> lockConsole { Logger::logConsoleMutex };
 
@@ -40,3 +68,5 @@ logprintf_t Logger::logFunc { nullptr };
 
 std::mutex Logger::logFileMutex;
 std::mutex Logger::logConsoleMutex;
+
+bool Logger::canLogToConsole = true;
