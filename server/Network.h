@@ -83,6 +83,7 @@ private:
     static bool ConnectHandler(uint16_t playerId, RPCParameters& rpc);
     static bool PacketHandler(uint16_t playerId, Packet& packet);
     static void DisconnectHandler(uint16_t playerId);
+    static uint16_t GetConfigPort();
 
 private:
 

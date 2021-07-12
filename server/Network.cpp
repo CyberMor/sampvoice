@@ -10,6 +10,8 @@
 #include "Network.h"
 
 #include <random>
+#include <fstream>
+#include "string"
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -42,6 +44,32 @@ static inline uint64_t MakeQword(uint32_t ldword, uint32_t rdword) noexcept
 static inline uint32_t MakeBytesFromBits(uint32_t bits) noexcept
 {
     return (bits >> 3) + (bits & 7 ? 1 : 0);
+}
+
+uint16_t Network::GetConfigPort()
+{
+    uint16_t port = NULL;
+    try
+    {
+        std::ifstream file("server.cfg");
+        if (file.is_open()) 
+        {
+            std::string line;
+            while (std::getline(file, line)) 
+            {
+                if (line.find("sv_port ") == 0)
+                {
+                    port = atoi(line.substr(8).c_str());
+                }
+            }
+            file.close();
+        }
+    }
+    catch(...)
+    {
+        port = NULL;
+    }
+    return port;
 }
 
 bool Network::Init(const void* const serverBaseAddress) noexcept
@@ -151,11 +179,20 @@ bool Network::Bind() noexcept
     }
 
     {
+        uint16_t port_to_bind = Network::GetConfigPort();
         sockaddr_in bindAddr {};
 
         bindAddr.sin_family = AF_INET;
         bindAddr.sin_addr.s_addr = INADDR_ANY;
-        bindAddr.sin_port = NULL;
+        if (port_to_bind == NULL)
+        {
+            bindAddr.sin_port = NULL;
+            
+        }
+        else
+        {
+            bindAddr.sin_port = htons(port_to_bind);
+        }
 
         if (bind(Network::socketHandle, (sockaddr*)(&bindAddr), sizeof(bindAddr)) == SOCKET_ERROR)
         {
