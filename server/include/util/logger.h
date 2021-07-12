@@ -43,7 +43,8 @@ public:
         if (timeOfDay == nullptr)
             return false;
 
-        std::fprintf(Logger::logFile, "[%.2d:%.2d:%.2d] : ",
+        std::fprintf(Logger::logFile, "[%d/%.2d/%.2d %.2d:%.2d:%.2d] : ", 
+            timeOfDay->tm_year + 1900, timeOfDay->tm_mon + 1, timeOfDay->tm_mday,
             timeOfDay->tm_hour, timeOfDay->tm_min, timeOfDay->tm_sec);
         std::fprintf(Logger::logFile, message, args...);
         std::fputc('\n', Logger::logFile);
@@ -69,15 +70,21 @@ public:
     static inline void Log(const char* const message, const ARGS... args) noexcept
     {
         Logger::LogToFile(message, args...);
-        Logger::LogToConsole(message, args...);
+        if (Logger::canLogToConsole)
+        {
+            Logger::LogToConsole(message, args...);
+        }
     }
 
 private:
+    
+    static void LoadLogToConsoleConfig();
 
     static FILE* logFile;
     static logprintf_t logFunc;
 
     static std::mutex logFileMutex;
     static std::mutex logConsoleMutex;
+    static bool canLogToConsole;
 
 };
