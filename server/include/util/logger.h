@@ -43,7 +43,8 @@ public:
         if (timeOfDay == nullptr)
             return false;
 
-        std::fprintf(Logger::logFile, "[%.2d:%.2d:%.2d] : ",
+        std::fprintf(Logger::logFile, "[%d/%.2d/%.2d %.2d:%.2d:%.2d] : ", 
+            timeOfDay->tm_year + 1900, timeOfDay->tm_mon + 1, timeOfDay->tm_mday,
             timeOfDay->tm_hour, timeOfDay->tm_min, timeOfDay->tm_sec);
         std::fprintf(Logger::logFile, message, args...);
         std::fputc('\n', Logger::logFile);
