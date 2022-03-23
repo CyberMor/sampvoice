@@ -167,6 +167,7 @@ To compile the client side of the plugin, you need the *DirectX SDK*. By default
 ---------------------------------
 To build the server part of the plugin for the *Linux x86* platform, follow these instructions:
 ```sh
+apt-get install gcc-9 g++-9 gcc-9-multilib g++-9-multilib
 cd server
 make
 ```
