@@ -25,6 +25,8 @@
 #include <util/logger.h>
 #include <util/memory.hpp>
 
+#include "Config.h"
+
 #ifdef _WIN32
 #define GetNetError() WSAGetLastError()
 #else
@@ -155,7 +157,7 @@ bool Network::Bind() noexcept
 
         bindAddr.sin_family = AF_INET;
         bindAddr.sin_addr.s_addr = INADDR_ANY;
-        bindAddr.sin_port = NULL;
+        bindAddr.sin_port = htons(Config::AsInteger("sv_voice_port", NULL));
 
         if (bind(Network::socketHandle, (sockaddr*)(&bindAddr), sizeof(bindAddr)) == SOCKET_ERROR)
         {
