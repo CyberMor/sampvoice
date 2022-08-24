@@ -27,7 +27,7 @@ class StaticLocalStreamAtPoint : public PointStream {
 public:
 
     explicit StaticLocalStreamAtPoint(float distance, const CVector& position,
-                                      uint32_t color, const std::string& name);
+                                      uint32_t color, const std::vector<char>& name);
 
     ~StaticLocalStreamAtPoint() noexcept = default;
 

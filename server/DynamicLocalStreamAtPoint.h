@@ -29,7 +29,7 @@ public:
 
     explicit DynamicLocalStreamAtPoint(float distance, uint32_t maxPlayers,
                                        const CVector& position, uint32_t color,
-                                       const std::string& name);
+                                       const std::vector<char>& name);
 
     ~DynamicLocalStreamAtPoint() noexcept = default;
 

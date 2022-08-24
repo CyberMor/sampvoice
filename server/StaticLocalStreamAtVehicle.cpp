@@ -16,12 +16,12 @@
 
 StaticLocalStreamAtVehicle::StaticLocalStreamAtVehicle(
     const float distance, const uint16_t vehicleId,
-    const uint32_t color, const std::string& name
+    const uint32_t color, const std::vector<char>& name
 )
     : LocalStream(distance)
 {
-    const auto nameString = name.c_str();
-    const auto nameLength = name.size() + 1;
+    const auto nameString = name.data();
+    const auto nameLength = name.size();
 
     PackWrap(this->packetCreateStream, SV::ControlPacketType::createLStreamAtVehicle, sizeof(SV::CreateLStreamAtPacket) + nameLength);
 

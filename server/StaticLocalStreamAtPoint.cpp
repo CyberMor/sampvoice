@@ -16,13 +16,13 @@
 
 StaticLocalStreamAtPoint::StaticLocalStreamAtPoint(
     const float distance, const CVector& position,
-    const uint32_t color, const std::string& name
+    const uint32_t color, const std::vector<char>& name
 )
     : LocalStream(distance)
     , PointStream(distance, position)
 {
-    const auto nameString = name.c_str();
-    const auto nameLength = name.size() + 1;
+    const auto nameString = name.data();
+    const auto nameLength = name.size();
 
     PackWrap(this->packetCreateStream, SV::ControlPacketType::createLPStream, sizeof(SV::CreateLPStreamPacket) + nameLength);
 

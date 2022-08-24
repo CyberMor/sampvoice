@@ -23,7 +23,7 @@
 DynamicLocalStreamAtPoint::DynamicLocalStreamAtPoint(
     const float distance, const uint32_t maxPlayers,
     const CVector& position, const uint32_t color,
-    const std::string& name
+    const std::vector<char>& name
 )
     : LocalStream(distance)
     , DynamicStream(distance, maxPlayers)
@@ -32,8 +32,8 @@ DynamicLocalStreamAtPoint::DynamicLocalStreamAtPoint(
     assert(pNetGame != nullptr);
     assert(pNetGame->pPlayerPool != nullptr);
 
-    const auto nameString = name.c_str();
-    const auto nameLength = name.size() + 1;
+    const auto nameString = name.data();
+    const auto nameLength = name.size();
 
     PackWrap(this->packetCreateStream, SV::ControlPacketType::createLPStream, sizeof(SV::CreateLPStreamPacket) + nameLength);
 

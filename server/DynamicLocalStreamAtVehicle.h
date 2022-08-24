@@ -26,7 +26,7 @@ public:
 
     explicit DynamicLocalStreamAtVehicle(float distance, uint32_t maxPlayers,
                                          uint16_t vehicleId, uint32_t color,
-                                         const std::string& name);
+                                         const std::vector<char>& name);
 
     ~DynamicLocalStreamAtVehicle() noexcept = default;
 

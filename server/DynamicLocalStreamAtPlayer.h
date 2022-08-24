@@ -26,7 +26,7 @@ public:
 
     explicit DynamicLocalStreamAtPlayer(float distance, uint32_t maxPlayers,
                                         uint16_t playerId, uint32_t color,
-                                        const std::string& name);
+                                        const std::vector<char>& name);
 
     ~DynamicLocalStreamAtPlayer() noexcept = default;
 

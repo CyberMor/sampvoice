@@ -25,7 +25,7 @@ class StaticLocalStreamAtObject : public LocalStream {
 public:
 
     explicit StaticLocalStreamAtObject(float distance, uint16_t objectId,
-                                       uint32_t color, const std::string& name);
+                                       uint32_t color, const std::vector<char>& name);
 
     ~StaticLocalStreamAtObject() noexcept = default;
 

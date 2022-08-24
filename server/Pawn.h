@@ -61,7 +61,7 @@ public:
     // --------------------------------------------------------------------------
 
     virtual Stream* SvCreateGStream                (uint32_t color,
-                                                    const std::string& name) = 0;
+                                                    const std::vector<char>& name) = 0;
 
     // --------------------------------------------------------------------------
 
@@ -70,22 +70,22 @@ public:
                                                     float posy,
                                                     float posz,
                                                     uint32_t color,
-                                                    const std::string& name) = 0;
+                                                    const std::vector<char>& name) = 0;
 
     virtual Stream* SvCreateSLStreamAtVehicle      (float distance,
                                                     uint16_t vehicleid,
                                                     uint32_t color,
-                                                    const std::string& name) = 0;
+                                                    const std::vector<char>& name) = 0;
 
     virtual Stream* SvCreateSLStreamAtPlayer       (float distance,
                                                     uint16_t playerid,
                                                     uint32_t color,
-                                                    const std::string& name) = 0;
+                                                    const std::vector<char>& name) = 0;
 
     virtual Stream* SvCreateSLStreamAtObject       (float distance,
                                                     uint16_t objectid,
                                                     uint32_t color,
-                                                    const std::string& name) = 0;
+                                                    const std::vector<char>& name) = 0;
 
     // --------------------------------------------------------------------------
 
@@ -95,25 +95,25 @@ public:
                                                     float posy,
                                                     float posz,
                                                     uint32_t color,
-                                                    const std::string& name) = 0;
+                                                    const std::vector<char>& name) = 0;
 
     virtual Stream* SvCreateDLStreamAtVehicle      (float distance,
                                                     uint32_t maxplayers,
                                                     uint16_t vehicleid,
                                                     uint32_t color,
-                                                    const std::string& name) = 0;
+                                                    const std::vector<char>& name) = 0;
 
     virtual Stream* SvCreateDLStreamAtPlayer       (float distance,
                                                     uint32_t maxplayers,
                                                     uint16_t playerid,
                                                     uint32_t color,
-                                                    const std::string& name) = 0;
+                                                    const std::vector<char>& name) = 0;
 
     virtual Stream* SvCreateDLStreamAtObject       (float distance,
                                                     uint32_t maxplayers,
                                                     uint16_t objectid,
                                                     uint32_t color,
-                                                    const std::string& name) = 0;
+                                                    const std::vector<char>& name) = 0;
 
     // --------------------------------------------------------------------------
 

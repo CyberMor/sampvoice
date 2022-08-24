@@ -14,10 +14,10 @@
 #include "ControlPacket.h"
 #include "Header.h"
 
-GlobalStream::GlobalStream(const uint32_t color, const std::string& name)
+GlobalStream::GlobalStream(const uint32_t color, const std::vector<char>& name)
 {
-    const auto nameString = name.c_str();
-    const auto nameLength = name.size() + 1;
+    const auto nameString = name.data();
+    const auto nameLength = name.size();
 
     PackWrap(this->packetCreateStream, SV::ControlPacketType::createGStream, sizeof(SV::CreateGStreamPacket) + nameLength);
 

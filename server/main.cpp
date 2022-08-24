@@ -232,7 +232,7 @@ namespace SV
 
         // -------------------------------------------------------------------------------------
 
-        Stream* SvCreateGStream(const uint32_t color, const std::string& name) override
+        Stream* SvCreateGStream(const uint32_t color, const std::vector<char>& name) override
         {
             const auto stream = new (std::nothrow) GlobalStream(color, name);
             if (stream == nullptr) return nullptr;
@@ -252,7 +252,7 @@ namespace SV
             const float posy,
             const float posz,
             const uint32_t color,
-            const std::string& name
+            const std::vector<char>& name
         ) override
         {
             const auto stream = new (std::nothrow) StaticLocalStreamAtPoint(distance, CVector { posx, posy, posz }, color, name);
@@ -269,7 +269,7 @@ namespace SV
             const float distance,
             const uint16_t vehicleId,
             const uint32_t color,
-            const std::string& name
+            const std::vector<char>& name
         ) override
         {
             if (pNetGame->pVehiclePool->pVehicle[vehicleId] == nullptr)
@@ -289,7 +289,7 @@ namespace SV
             const float distance,
             const uint16_t playerId,
             const uint32_t color,
-            const std::string& name
+            const std::vector<char>& name
         ) override
         {
             if (pNetGame->pPlayerPool->pPlayer[playerId] == nullptr)
@@ -309,7 +309,7 @@ namespace SV
             const float distance,
             const uint16_t objectId,
             const uint32_t color,
-            const std::string& name
+            const std::vector<char>& name
         ) override
         {
             if (pNetGame->pObjectPool->pObjects[objectId] == nullptr)
@@ -334,7 +334,7 @@ namespace SV
             const float posy,
             const float posz,
             const uint32_t color,
-            const std::string& name
+            const std::vector<char>& name
         ) override
         {
             const auto stream = new (std::nothrow) DynamicLocalStreamAtPoint(distance, maxPlayers, CVector { posx, posy, posz }, color, name);
@@ -353,7 +353,7 @@ namespace SV
             const uint32_t maxPlayers,
             const uint16_t vehicleId,
             const uint32_t color,
-            const std::string& name
+            const std::vector<char>& name
         ) override
         {
             if (pNetGame->pVehiclePool->pVehicle[vehicleId] == nullptr)
@@ -375,7 +375,7 @@ namespace SV
             const uint32_t maxPlayers,
             const uint16_t playerId,
             const uint32_t color,
-            const std::string& name
+            const std::vector<char>& name
         ) override
         {
             if (pNetGame->pPlayerPool->pPlayer[playerId] == nullptr)
@@ -397,7 +397,7 @@ namespace SV
             const uint32_t maxPlayers,
             const uint16_t objectId,
             const uint32_t color,
-            const std::string& name
+            const std::vector<char>& name
         ) override
         {
             if (pNetGame->pObjectPool->pObjects[objectId] == nullptr)
