@@ -15,6 +15,7 @@
 #include "VoicePacket.h"
 
 #include "Pawn.h"
+#include "Config.h"
 #include "Network.h"
 #include "PlayerStore.h"
 #include "Worker.h"
@@ -802,6 +803,7 @@ PLUGIN_EXPORT int PLUGIN_CALL AmxLoad(AMX* const amx) noexcept
     if (pNetGame == nullptr && (pNetGame = reinterpret_cast<CNetGame*(*)()>(ppPluginData[PLUGIN_DATA_NETGAME])()) != nullptr)
         Logger::Log("[sv:dbg:main:AmxLoad] : net game pointer (value:%p) received", pNetGame);
 
+    if (!Config::Load()) Logger::Log("[sv:dbg:main:AmxLoad] : failed to load config file");
     if (!Network::Bind()) Logger::Log("[sv:dbg:main:AmxLoad] : failed to bind voice server");
 
     Pawn::RegisterScript(amx);
