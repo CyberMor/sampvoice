@@ -172,7 +172,7 @@ bool Network::Bind() noexcept
 
     {
         sockaddr_in hostAddr {};
-        int hostAddrLen { sizeof(hostAddr) };
+        socklen_t hostAddrLen { sizeof(hostAddr) };
 
         if (getsockname(Network::socketHandle, (sockaddr*)(&hostAddr), &hostAddrLen) == SOCKET_ERROR)
         {
@@ -282,7 +282,7 @@ VoicePacketContainerPtr Network::ReceiveVoicePacket()
         return nullptr;
 
     sockaddr_in playerAddr {};
-    int addrLen { sizeof(playerAddr) };
+    socklen_t addrLen { sizeof(playerAddr) };
     char packetBuffer[kMaxVoicePacketSize];
 
     const auto length = recvfrom(Network::socketHandle, packetBuffer,
