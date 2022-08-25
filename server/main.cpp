@@ -754,6 +754,11 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** const ppData) noexcept
         return false;
     }
 
+    if (!Config::Load())
+    {
+        Logger::Log("[sv:inf:main:Load] : failed to load 'server.cfg'");
+    }
+
     if (!Network::Init(logprintf))
     {
         Logger::Log("[sv:err:main:Load] : failed to init network");
@@ -803,7 +808,6 @@ PLUGIN_EXPORT int PLUGIN_CALL AmxLoad(AMX* const amx) noexcept
     if (pNetGame == nullptr && (pNetGame = reinterpret_cast<CNetGame*(*)()>(ppPluginData[PLUGIN_DATA_NETGAME])()) != nullptr)
         Logger::Log("[sv:dbg:main:AmxLoad] : net game pointer (value:%p) received", pNetGame);
 
-    if (!Config::Load()) Logger::Log("[sv:dbg:main:AmxLoad] : failed to load config file");
     if (!Network::Bind()) Logger::Log("[sv:dbg:main:AmxLoad] : failed to bind voice server");
 
     Pawn::RegisterScript(amx);
