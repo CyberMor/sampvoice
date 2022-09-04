@@ -36,6 +36,10 @@
 #define SOCKET_ERROR -1
 #endif
 
+#ifdef _WIN32
+#define socklen_t int
+#endif
+
 static inline uint64_t MakeQword(uint32_t ldword, uint32_t rdword) noexcept
 {
     return static_cast<uint64_t>(ldword) << 32 | static_cast<uint64_t>(rdword);
