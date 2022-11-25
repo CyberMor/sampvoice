@@ -20,7 +20,7 @@
 #include "Memory.hpp"
 #include "AddressesBase.h"
 
-class Samp {
+struct Samp {
 
     Samp() = delete;
     ~Samp() = delete;
@@ -36,12 +36,12 @@ private:
 
 public:
 
-    static bool Init(const AddressesBase& addrBase) noexcept;
+    static bool Init(const AddressesBase& addr_base) noexcept;
     static bool IsInited() noexcept;
     static bool IsLoaded() noexcept;
     static void Free() noexcept;
 
-    static void AddClientCommand(const char* cmdName, SAMP::CMDPROC cmdHandler) noexcept;
+    static void AddClientCommand(const char* name, SAMP::CMDPROC handler) noexcept;
     static void AddMessageToChat(D3DCOLOR color, const char* message) noexcept;
     static void ToggleSampCursor(int mode) noexcept;
 
@@ -60,13 +60,13 @@ private:
 
 private:
 
-    static bool initStatus;
-    static bool loadStatus;
+    static bool _init_status;
+    static bool _load_status;
 
-    static std::vector<LoadCallback> loadCallbacks;
-    static std::vector<ExitCallback> exitCallbacks;
+    static std::vector<LoadCallback> _load_callbacks;
+    static std::vector<ExitCallback> _exit_callbacks;
 
-    static Memory::JumpHookPtr hookSampInit;
-    static Memory::JumpHookPtr hookSampFree;
+    static Memory::JumpHook _hook_samp_init;
+    static Memory::JumpHook _hook_samp_free;
 
 };

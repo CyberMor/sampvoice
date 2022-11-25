@@ -11,322 +11,296 @@
 
 #include "Logger.h"
 
-static DWORD rakClientOffset { 0 };
+static DWORD rak_client_offset = 0;
 
-bool RakNet::Init(const AddressesBase& addrBase) noexcept
+bool RakNet::Init(const AddressesBase& addr_base) noexcept
 {
-    if (RakNet::initStatus)
-        return false;
+    if (_init_status) return false;
 
     Logger::LogToFile("[dbg:raknet:init] : module initializing...");
 
-    if (*reinterpret_cast<WORD*>(addrBase.GetRcInitAddr()) == 0x4689)
-        rakClientOffset = *reinterpret_cast<BYTE*>(addrBase.GetRcInitAddr() + 2);
-    else if (*reinterpret_cast<WORD*>(addrBase.GetRcInitAddr()) == 0x8689)
-        rakClientOffset = *reinterpret_cast<DWORD*>(addrBase.GetRcInitAddr() + 2);
-
-    Logger::LogToFile("[dbg:raknet:init] : finded rakclient interface offset (value:0x%x)", rakClientOffset);
-
-    try
+    if (*reinterpret_cast<WORD*>(addr_base.GetRcInitAddr()) == 0x4689)
     {
-        RakNet::sampDestructHook = MakeJumpHook(addrBase.GetSampDestructAddr(), RakNet::HookSampDestruct);
-        RakNet::rakClientInitHook = MakeJumpHook(addrBase.GetRcInitAddr(), RakNet::HookRaknetInit);
+        rak_client_offset = *reinterpret_cast<BYTE*>(addr_base.GetRcInitAddr() + 2);
     }
-    catch (const std::exception& exception)
+    if (*reinterpret_cast<WORD*>(addr_base.GetRcInitAddr()) == 0x8689)
     {
-        Logger::LogToFile("[err:raknet:init] : failed to create function hooks");
-        RakNet::sampDestructHook.reset();
-        RakNet::rakClientInitHook.reset();
-        return false;
+        rak_client_offset = *reinterpret_cast<DWORD*>(addr_base.GetRcInitAddr() + 2);
     }
 
-    RakNet::connectCallbacks.clear();
-    RakNet::receiveCallbacks.clear();
-    RakNet::sendCallbacks.clear();
-    RakNet::rpcCallbacks.clear();
-    RakNet::disconnectCallbacks.clear();
+    Logger::LogToFile("[dbg:raknet:init] : finded rakclient interface offset (value:0x%x)", rak_client_offset);
 
-    RakNet::connectStatus = false;
-    RakNet::loadStatus = false;
+    _samp_destruct_hook   = Memory::JumpHook((LPVOID)(addr_base.GetSampDestructAddr()), &HookSampDestruct);
+    _rak_client_init_hook = Memory::JumpHook((LPVOID)(addr_base.GetRcInitAddr()), &HookRaknetInit);
+
+    _connect_callbacks.clear();
+    _receive_callbacks.clear();
+    _send_callbacks.clear();
+    _rpc_callbacks.clear();
+    _disconnect_callbacks.clear();
+
+    _connect_status = false;
+    _load_status = false;
 
     Logger::LogToFile("[dbg:raknet:init] : module initialized");
 
-    RakNet::initStatus = true;
+    _init_status = true;
 
     return true;
 }
 
 bool RakNet::IsInited() noexcept
 {
-    return RakNet::initStatus;
+    return _init_status;
 }
 
 bool RakNet::IsLoaded() noexcept
 {
-    return RakNet::loadStatus;
+    return _load_status;
 }
 
 void RakNet::Free() noexcept
 {
-    if (!RakNet::initStatus)
-        return;
-
-    Logger::LogToFile("[dbg:raknet:free] : module releasing...");
-
-    RakNet::sampDestructHook.reset();
-    RakNet::rakClientInitHook.reset();
-
-    if (RakNet::connectStatus)
+    if (_init_status)
     {
-        for (const auto& disconnectCallback : RakNet::disconnectCallbacks)
+        Logger::LogToFile("[dbg:raknet:free] : module releasing...");
+
+        _samp_destruct_hook   = {};
+        _rak_client_init_hook = {};
+
+        if (_connect_status)
         {
-            if (disconnectCallback != nullptr) disconnectCallback();
+            for (const auto& disconnect_callback : _disconnect_callbacks)
+            {
+                if (disconnect_callback != nullptr) disconnect_callback();
+            }
         }
+
+        _connect_status = false;
+
+        _connect_callbacks.clear();
+        _receive_callbacks.clear();
+        _send_callbacks.clear();
+        _rpc_callbacks.clear();
+        _disconnect_callbacks.clear();
+
+        if (_load_status)
+        {
+            const auto rak_client_interface_hook = reinterpret_cast<RakClientHookInterface*>(*_rak_client_interface_ptr);
+            *_rak_client_interface_ptr = _rak_client_interface;
+            delete rak_client_interface_hook;
+        }
+
+        _load_status = false;
+
+        _rak_client_interface_ptr = nullptr;
+        _rak_client_interface     = nullptr;
+
+        Logger::LogToFile("[dbg:raknet:free] : module released");
+
+        _init_status = false;
     }
-
-    RakNet::connectStatus = false;
-
-    RakNet::connectCallbacks.clear();
-    RakNet::receiveCallbacks.clear();
-    RakNet::sendCallbacks.clear();
-    RakNet::rpcCallbacks.clear();
-    RakNet::disconnectCallbacks.clear();
-
-    if (RakNet::loadStatus)
-    {
-        const auto pRakClientInterfaceHook = reinterpret_cast<RakClientHookInterface*>(*RakNet::ppRakClientInterface);
-        *RakNet::ppRakClientInterface = RakNet::pRakClientInterface;
-        delete pRakClientInterfaceHook;
-    }
-
-    RakNet::loadStatus = false;
-
-    RakNet::ppRakClientInterface = nullptr;
-    RakNet::pRakClientInterface = nullptr;
-
-    Logger::LogToFile("[dbg:raknet:free] : module released");
-
-    RakNet::initStatus = false;
 }
 
 bool RakNet::IsConnected() noexcept
 {
-    return RakNet::connectStatus;
+    return _connect_status;
 }
 
-bool RakNet::Send(BitStream* const bitStream) noexcept
+bool RakNet::Send(BitStream* const bit_stream) noexcept
 {
-    if (bitStream == nullptr)
-        return false;
-
-    if (!RakNet::connectStatus)
-        return false;
-
-    return RakNet::pRakClientInterface->Send(bitStream, PacketPriority::MEDIUM_PRIORITY,
-        PacketReliability::RELIABLE_ORDERED, '\0');
+    return bit_stream != nullptr && _connect_status && _rak_client_interface->Send
+        (bit_stream, PacketPriority::MEDIUM_PRIORITY, PacketReliability::RELIABLE_ORDERED, '\0');
 }
 
 std::size_t RakNet::AddConnectCallback(ConnectCallback callback) noexcept
 {
-    if (!RakNet::initStatus)
-        return -1;
+    if (!_init_status) return -1;
 
-    for (std::size_t i { 0 }; i < RakNet::connectCallbacks.size(); ++i)
+    for (std::size_t i = 0; i < _connect_callbacks.size(); ++i)
     {
-        if (RakNet::connectCallbacks[i] == nullptr)
+        if (_connect_callbacks[i] == nullptr)
         {
-            RakNet::connectCallbacks[i] = std::move(callback);
+            _connect_callbacks[i] = std::move(callback);
             return i;
         }
     }
 
-    RakNet::connectCallbacks.emplace_back(std::move(callback));
-    return RakNet::connectCallbacks.size() - 1;
+    _connect_callbacks.emplace_back(std::move(callback));
+    return _connect_callbacks.size() - 1;
 }
 
 std::size_t RakNet::AddReceiveCallback(ReceiveCallback callback) noexcept
 {
-    if (!RakNet::initStatus)
-        return -1;
+    if (!_init_status) return -1;
 
-    for (std::size_t i { 0 }; i < RakNet::receiveCallbacks.size(); ++i)
+    for (std::size_t i = 0; i < _receive_callbacks.size(); ++i)
     {
-        if (RakNet::receiveCallbacks[i] == nullptr)
+        if (_receive_callbacks[i] == nullptr)
         {
-            RakNet::receiveCallbacks[i] = std::move(callback);
+            _receive_callbacks[i] = std::move(callback);
             return i;
         }
     }
 
-    RakNet::receiveCallbacks.emplace_back(std::move(callback));
-    return RakNet::receiveCallbacks.size() - 1;
+    _receive_callbacks.emplace_back(std::move(callback));
+    return _receive_callbacks.size() - 1;
 }
 
 std::size_t RakNet::AddSendCallback(SendCallback callback) noexcept
 {
-    if (!RakNet::initStatus)
-        return -1;
+    if (!_init_status) return -1;
 
-    for (std::size_t i { 0 }; i < RakNet::sendCallbacks.size(); ++i)
+    for (std::size_t i = 0; i < _send_callbacks.size(); ++i)
     {
-        if (RakNet::sendCallbacks[i] == nullptr)
+        if (_send_callbacks[i] == nullptr)
         {
-            RakNet::sendCallbacks[i] = std::move(callback);
+            _send_callbacks[i] = std::move(callback);
             return i;
         }
     }
 
-    RakNet::sendCallbacks.emplace_back(std::move(callback));
-    return RakNet::sendCallbacks.size() - 1;
+    _send_callbacks.emplace_back(std::move(callback));
+    return _send_callbacks.size() - 1;
 }
 
 std::size_t RakNet::AddRpcCallback(RpcCallback callback) noexcept
 {
-    if (!RakNet::initStatus)
-        return -1;
+    if (!_init_status) return -1;
 
-    for (std::size_t i { 0 }; i < RakNet::rpcCallbacks.size(); ++i)
+    for (std::size_t i = 0; i < _rpc_callbacks.size(); ++i)
     {
-        if (RakNet::rpcCallbacks[i] == nullptr)
+        if (_rpc_callbacks[i] == nullptr)
         {
-            RakNet::rpcCallbacks[i] = std::move(callback);
+            _rpc_callbacks[i] = std::move(callback);
             return i;
         }
     }
 
-    RakNet::rpcCallbacks.emplace_back(std::move(callback));
-    return RakNet::rpcCallbacks.size() - 1;
+    _rpc_callbacks.emplace_back(std::move(callback));
+    return _rpc_callbacks.size() - 1;
 }
 
 std::size_t RakNet::AddDisconnectCallback(DisconnectCallback callback) noexcept
 {
-    if (!RakNet::initStatus)
-        return -1;
+    if (!_init_status) return -1;
 
-    for (std::size_t i { 0 }; i < RakNet::disconnectCallbacks.size(); ++i)
+    for (std::size_t i = 0; i < _disconnect_callbacks.size(); ++i)
     {
-        if (RakNet::disconnectCallbacks[i] == nullptr)
+        if (_disconnect_callbacks[i] == nullptr)
         {
-            RakNet::disconnectCallbacks[i] = std::move(callback);
+            _disconnect_callbacks[i] = std::move(callback);
             return i;
         }
     }
 
-    RakNet::disconnectCallbacks.emplace_back(std::move(callback));
-    return RakNet::disconnectCallbacks.size() - 1;
+    _disconnect_callbacks.emplace_back(std::move(callback));
+    return _disconnect_callbacks.size() - 1;
 }
 
 void RakNet::RemoveConnectCallback(const std::size_t callback) noexcept
 {
-    if (!RakNet::initStatus)
-        return;
-
-    if (callback >= RakNet::connectCallbacks.size())
-        return;
-
-    RakNet::connectCallbacks[callback] = nullptr;
+    if (_init_status && callback < _connect_callbacks.size())
+    {
+        _connect_callbacks[callback] = nullptr;
+    }
 }
 
 void RakNet::RemoveReceiveCallback(const std::size_t callback) noexcept
 {
-    if (!RakNet::initStatus)
-        return;
-
-    if (callback >= RakNet::receiveCallbacks.size())
-        return;
-
-    RakNet::receiveCallbacks[callback] = nullptr;
+    if (_init_status && callback < _receive_callbacks.size())
+    {
+        _receive_callbacks[callback] = nullptr;
+    }
 }
 
 void RakNet::RemoveSendCallback(const std::size_t callback) noexcept
 {
-    if (!RakNet::initStatus)
-        return;
-
-    if (callback >= RakNet::sendCallbacks.size())
-        return;
-
-    RakNet::sendCallbacks[callback] = nullptr;
+    if (_init_status && callback < _send_callbacks.size())
+    {
+        _send_callbacks[callback] = nullptr;
+    }
 }
 
 void RakNet::RemoveRpcCallback(const std::size_t callback) noexcept
 {
-    if (!RakNet::initStatus)
-        return;
-
-    if (callback >= RakNet::rpcCallbacks.size())
-        return;
-
-    RakNet::rpcCallbacks[callback] = nullptr;
+    if (_init_status && callback < _rpc_callbacks.size())
+    {
+        _rpc_callbacks[callback] = nullptr;
+    }
 }
 
 void RakNet::RemoveDisconnectCallback(const std::size_t callback) noexcept
 {
-    if (!RakNet::initStatus)
-        return;
-
-    if (callback >= RakNet::disconnectCallbacks.size())
-        return;
-
-    RakNet::disconnectCallbacks[callback] = nullptr;
+    if (_init_status && callback < _disconnect_callbacks.size())
+    {
+        _disconnect_callbacks[callback] = nullptr;
+    }
 }
 
-RakNet::RakClientHookInterface::RakClientHookInterface(RakClientInterface* const pOrigInterface) noexcept
-    : pOrigInterface(pOrigInterface) {}
+RakNet::RakClientHookInterface::RakClientHookInterface(RakClientInterface* const orig_interface) noexcept
+    : _orig_interface { orig_interface }
+{}
 
 bool RakNet::RakClientHookInterface::RPC(int* const rpcIdPointer, BitStream* const parameters,
     const PacketPriority priority, const PacketReliability reliability, const char orderingChannel,
     const bool shiftTimestamp) noexcept
 {
-    bool breakStatus { false };
+    bool break_status = false;
 
-    for (const auto& rpcCallback : RakNet::rpcCallbacks)
+    for (const auto& rpc_callback : _rpc_callbacks)
     {
-        if (rpcCallback != nullptr && !rpcCallback(*rpcIdPointer, *parameters))
-            breakStatus = true;
+        if (rpc_callback != nullptr && !rpc_callback(*rpcIdPointer, *parameters))
+        {
+            break_status = true;
+        }
     }
 
-    if (breakStatus) return true;
+    if (break_status) return true;
 
-    return this->pOrigInterface->RPC(rpcIdPointer, parameters, priority, reliability, orderingChannel, shiftTimestamp);
+    return _orig_interface->RPC(rpcIdPointer, parameters, priority, reliability, orderingChannel, shiftTimestamp);
 }
 
-bool RakNet::RakClientHookInterface::Send(BitStream* const bitStream, const PacketPriority priority,
+bool RakNet::RakClientHookInterface::Send(BitStream* const bit_stream, const PacketPriority priority,
     const PacketReliability reliability, const char orderingChannel) noexcept
 {
-    bool breakStatus { false };
+    bool break_status = false;
 
-    for (const auto& sendCallback : RakNet::sendCallbacks)
+    for (const auto& send_callback : _send_callbacks)
     {
-        if (sendCallback != nullptr && !sendCallback(*bitStream))
-            breakStatus = true;
+        if (send_callback != nullptr && !send_callback(*bit_stream))
+        {
+            break_status = true;
+        }
     }
 
-    if (breakStatus) return true;
+    if (break_status) return true;
 
-    return this->pOrigInterface->Send(bitStream, priority, reliability, orderingChannel);
+    return _orig_interface->Send(bit_stream, priority, reliability, orderingChannel);
 }
 
 Packet* RakNet::RakClientHookInterface::Receive() noexcept
 {
-    Packet* packetPointer;
+    Packet* packet_pointer;
 
-    while ((packetPointer = this->pOrigInterface->Receive()) != nullptr)
+    while ((packet_pointer = _orig_interface->Receive()) != nullptr)
     {
-        bool breakStatus { true };
+        bool break_status = true;
 
-        for (const auto& receiveCallback : RakNet::receiveCallbacks)
+        for (const auto& receive_callback : _receive_callbacks)
         {
-            if (receiveCallback != nullptr && !receiveCallback(*packetPointer))
-                breakStatus = false;
+            if (receive_callback != nullptr && !receive_callback(*packet_pointer))
+            {
+                break_status = false;
+            }
         }
 
-        if (breakStatus) break;
+        if (break_status) break;
 
-        this->pOrigInterface->DeallocatePacket(packetPointer);
+        _orig_interface->DeallocatePacket(packet_pointer);
     }
 
-    return packetPointer;
+    return packet_pointer;
 }
 
 bool RakNet::RakClientHookInterface::Connect(const char* const hostIp, const uint16_t serverPort,
@@ -334,410 +308,419 @@ bool RakNet::RakClientHookInterface::Connect(const char* const hostIp, const uin
 {
     Logger::LogToFile("[dbg:raknet:client:connect] : connecting to game server '%s:%hu'...", hostIp, serverPort);
 
-    RakNet::connectStatus = this->pOrigInterface->Connect(hostIp, serverPort, clientPort, depreciated, threadSleepTimer);
-
-    if (RakNet::connectStatus)
+    _connect_status = _orig_interface->Connect(hostIp, serverPort, clientPort, depreciated, threadSleepTimer);
+    if (_connect_status)
     {
         Logger::LogToFile("[dbg:raknet:client:connect] : connected");
 
-        for (const auto& connectCallback : RakNet::connectCallbacks)
+        for (const auto& connect_callback : _connect_callbacks)
         {
-            if (connectCallback != nullptr) connectCallback(hostIp, serverPort);
+            if (connect_callback != nullptr) connect_callback(hostIp, serverPort);
         }
     }
 
-    return RakNet::connectStatus;
+    return _connect_status;
 }
 
 void RakNet::RakClientHookInterface::Disconnect(const uint32_t blockDuration, const uint8_t orderingChannel) noexcept
 {
     Logger::LogToFile("[dbg:raknet:client:disconnect] : disconnecting from server...");
 
-    if (RakNet::connectStatus)
+    if (_connect_status)
     {
-        for (const auto& disconnectCallback : RakNet::disconnectCallbacks)
+        for (const auto& disconnect_callback : _disconnect_callbacks)
         {
-            if (disconnectCallback != nullptr) disconnectCallback();
+            if (disconnect_callback != nullptr) disconnect_callback();
         }
     }
 
-    RakNet::connectStatus = false;
+    _connect_status = false;
 
-    this->pOrigInterface->Disconnect(blockDuration, orderingChannel);
+    _orig_interface->Disconnect(blockDuration, orderingChannel);
 }
 
 void RakNet::RakClientHookInterface::InitializeSecurity(const char* const privateKeyP, const char* const privateKeyQ) noexcept
 {
-    this->pOrigInterface->InitializeSecurity(privateKeyP, privateKeyQ);
+    _orig_interface->InitializeSecurity(privateKeyP, privateKeyQ);
 }
 
 void RakNet::RakClientHookInterface::SetPassword(const char* const password) noexcept
 {
-    this->pOrigInterface->SetPassword(password);
+    _orig_interface->SetPassword(password);
 }
 
 bool RakNet::RakClientHookInterface::HasPassword() noexcept
 {
-    return this->pOrigInterface->HasPassword();
+    return _orig_interface->HasPassword();
 }
 
 bool RakNet::RakClientHookInterface::Send(const char* const dataPointer, const int dataLength,
     const PacketPriority priority, const PacketReliability reliability, const char orderingChannel) noexcept
 {
-    BitStream bitStream { (uint8_t*)(dataPointer), static_cast<uint32_t>(dataLength), false };
+    BitStream bit_stream { (uint8_t*)(dataPointer), static_cast<uint32_t>(dataLength), false };
 
-    bool breakStatus { false };
+    bool break_status = false;
 
-    for (const auto& sendCallback : RakNet::sendCallbacks)
+    for (const auto& send_callback : _send_callbacks)
     {
-        if (sendCallback != nullptr && !sendCallback(bitStream))
-            breakStatus = true;
+        if (send_callback != nullptr && !send_callback(bit_stream))
+        {
+            break_status = true;
+        }
     }
 
-    if (breakStatus) return true;
+    if (break_status) return true;
 
-    return this->pOrigInterface->Send(&bitStream, priority, reliability, orderingChannel);
+    return _orig_interface->Send(&bit_stream, priority, reliability, orderingChannel);
 }
 
-void RakNet::RakClientHookInterface::DeallocatePacket(Packet* const packetPointer) noexcept
+void RakNet::RakClientHookInterface::DeallocatePacket(Packet* const packet_pointer) noexcept
 {
-    this->pOrigInterface->DeallocatePacket(packetPointer);
+    _orig_interface->DeallocatePacket(packet_pointer);
 }
 
 void RakNet::RakClientHookInterface::PingServer() noexcept
 {
-    this->pOrigInterface->PingServer();
+    _orig_interface->PingServer();
 }
 
 void RakNet::RakClientHookInterface::PingServer(const char* const hostIp,
     const uint16_t serverPort, const uint16_t clientPort,
     const bool onlyReplyOnAcceptingConnections) noexcept
 {
-    this->pOrigInterface->PingServer(hostIp, serverPort, clientPort, onlyReplyOnAcceptingConnections);
+    _orig_interface->PingServer(hostIp, serverPort, clientPort, onlyReplyOnAcceptingConnections);
 }
 
 int RakNet::RakClientHookInterface::GetAveragePing() noexcept
 {
-    return this->pOrigInterface->GetAveragePing();
+    return _orig_interface->GetAveragePing();
 }
 
 int RakNet::RakClientHookInterface::GetLastPing() noexcept
 {
-    return this->pOrigInterface->GetLastPing();
+    return _orig_interface->GetLastPing();
 }
 
 int RakNet::RakClientHookInterface::GetLowestPing() noexcept
 {
-    return this->pOrigInterface->GetLowestPing();
+    return _orig_interface->GetLowestPing();
 }
 
 int RakNet::RakClientHookInterface::GetPlayerPing(const PlayerID playerId) noexcept
 {
-    return this->pOrigInterface->GetPlayerPing(playerId);
+    return _orig_interface->GetPlayerPing(playerId);
 }
 
 void RakNet::RakClientHookInterface::StartOccasionalPing() noexcept
 {
-    this->pOrigInterface->StartOccasionalPing();
+    _orig_interface->StartOccasionalPing();
 }
 
 void RakNet::RakClientHookInterface::StopOccasionalPing() noexcept
 {
-    this->pOrigInterface->StopOccasionalPing();
+    _orig_interface->StopOccasionalPing();
 }
 
 bool RakNet::RakClientHookInterface::IsConnected() noexcept
 {
-    return this->pOrigInterface->IsConnected();
+    return _orig_interface->IsConnected();
 }
 
 uint32_t RakNet::RakClientHookInterface::GetSynchronizedRandomInteger() noexcept
 {
-    return this->pOrigInterface->GetSynchronizedRandomInteger();
+    return _orig_interface->GetSynchronizedRandomInteger();
 }
 
 bool RakNet::RakClientHookInterface::GenerateCompressionLayer(uint32_t inputFrequencyTable[256], const bool inputLayer) noexcept
 {
-    return this->pOrigInterface->GenerateCompressionLayer(inputFrequencyTable, inputLayer);
+    return _orig_interface->GenerateCompressionLayer(inputFrequencyTable, inputLayer);
 }
 
 bool RakNet::RakClientHookInterface::DeleteCompressionLayer(const bool inputLayer) noexcept
 {
-    return this->pOrigInterface->DeleteCompressionLayer(inputLayer);
+    return _orig_interface->DeleteCompressionLayer(inputLayer);
 }
 
 void RakNet::RakClientHookInterface::RegisterAsRemoteProcedureCall(int* const rpcIdPointer, const RPCFunction rpcHandler) noexcept
 {
-    this->pOrigInterface->RegisterAsRemoteProcedureCall(rpcIdPointer, rpcHandler);
+    _orig_interface->RegisterAsRemoteProcedureCall(rpcIdPointer, rpcHandler);
 }
 
 void RakNet::RakClientHookInterface::RegisterClassMemberRPC(int* const rpcIdPointer, void* const rpcHandler) noexcept
 {
-    this->pOrigInterface->RegisterClassMemberRPC(rpcIdPointer, rpcHandler);
+    _orig_interface->RegisterClassMemberRPC(rpcIdPointer, rpcHandler);
 }
 
 void RakNet::RakClientHookInterface::UnregisterAsRemoteProcedureCall(int* const rpcIdPointer) noexcept
 {
-    this->pOrigInterface->UnregisterAsRemoteProcedureCall(rpcIdPointer);
+    _orig_interface->UnregisterAsRemoteProcedureCall(rpcIdPointer);
 }
 
 bool RakNet::RakClientHookInterface::RPC(int* const rpcIdPointer, const char* const dataPointer,
     const uint32_t bitLength, const PacketPriority priority, const PacketReliability reliability,
     const char orderingChannel, const bool shiftTimestamp) noexcept
 {
-    const uint32_t byteLength = (bitLength >> 3) + ((bitLength & 7) == 0 ? 0 : 1);
-    BitStream bitStream { (uint8_t*)(dataPointer), byteLength, false };
+    const uint32_t byte_length = (bitLength >> 3) + ((bitLength & 7) == 0 ? 0 : 1);
+    BitStream bit_stream { (uint8_t*)(dataPointer), byte_length, false };
 
-    bool breakStatus { false };
+    bool break_status = false;
 
-    for (const auto& rpcCallback : RakNet::rpcCallbacks)
+    for (const auto& rpc_callback : _rpc_callbacks)
     {
-        if (rpcCallback != nullptr && !rpcCallback(*rpcIdPointer, bitStream))
-            breakStatus = true;
+        if (rpc_callback != nullptr && !rpc_callback(*rpcIdPointer, bit_stream))
+        {
+            break_status = true;
+        }
     }
 
-    if (breakStatus) return true;
+    if (break_status) return true;
 
-    return this->pOrigInterface->RPC(rpcIdPointer, &bitStream, priority,
+    return _orig_interface->RPC(rpcIdPointer, &bit_stream, priority,
         reliability, orderingChannel, shiftTimestamp);
 }
 
 void RakNet::RakClientHookInterface::SetTrackFrequencyTable(const bool trackFrequencyTable) noexcept
 {
-    this->pOrigInterface->SetTrackFrequencyTable(trackFrequencyTable);
+    _orig_interface->SetTrackFrequencyTable(trackFrequencyTable);
 }
 
 bool RakNet::RakClientHookInterface::GetSendFrequencyTable(uint32_t outputFrequencyTable[256]) noexcept
 {
-    return this->pOrigInterface->GetSendFrequencyTable(outputFrequencyTable);
+    return _orig_interface->GetSendFrequencyTable(outputFrequencyTable);
 }
 
 float RakNet::RakClientHookInterface::GetCompressionRatio() noexcept
 {
-    return this->pOrigInterface->GetCompressionRatio();
+    return _orig_interface->GetCompressionRatio();
 }
 
 float RakNet::RakClientHookInterface::GetDecompressionRatio() noexcept
 {
-    return this->pOrigInterface->GetDecompressionRatio();
+    return _orig_interface->GetDecompressionRatio();
 }
 
 void RakNet::RakClientHookInterface::AttachPlugin(void* const messageHandler) noexcept
 {
-    this->pOrigInterface->AttachPlugin(messageHandler);
+    _orig_interface->AttachPlugin(messageHandler);
 }
 
 void RakNet::RakClientHookInterface::DetachPlugin(void* const messageHandler) noexcept
 {
-    this->pOrigInterface->DetachPlugin(messageHandler);
+    _orig_interface->DetachPlugin(messageHandler);
 }
 
 BitStream* RakNet::RakClientHookInterface::GetStaticServerData() noexcept
 {
-    return this->pOrigInterface->GetStaticServerData();
+    return _orig_interface->GetStaticServerData();
 }
 
 void RakNet::RakClientHookInterface::SetStaticServerData(const char* const dataPointer, const int dataLength) noexcept
 {
-    this->pOrigInterface->SetStaticServerData(dataPointer, dataLength);
+    _orig_interface->SetStaticServerData(dataPointer, dataLength);
 }
 
 BitStream* RakNet::RakClientHookInterface::GetStaticClientData(const PlayerID playerId) noexcept
 {
-    return this->pOrigInterface->GetStaticClientData(playerId);
+    return _orig_interface->GetStaticClientData(playerId);
 }
 
 void RakNet::RakClientHookInterface::SetStaticClientData(const PlayerID playerId,
     const char* const dataPointer, const int dataLength) noexcept
 {
-    this->pOrigInterface->SetStaticClientData(playerId, dataPointer, dataLength);
+    _orig_interface->SetStaticClientData(playerId, dataPointer, dataLength);
 }
 
 void RakNet::RakClientHookInterface::SendStaticClientDataToServer() noexcept
 {
-    this->pOrigInterface->SendStaticClientDataToServer();
+    _orig_interface->SendStaticClientDataToServer();
 }
 
 PlayerID RakNet::RakClientHookInterface::GetServerID() noexcept
 {
-    return this->pOrigInterface->GetServerID();
+    return _orig_interface->GetServerID();
 }
 
 PlayerID RakNet::RakClientHookInterface::GetPlayerID() noexcept
 {
-    return this->pOrigInterface->GetPlayerID();
+    return _orig_interface->GetPlayerID();
 }
 
 PlayerID RakNet::RakClientHookInterface::GetInternalID() noexcept
 {
-    return this->pOrigInterface->GetInternalID();
+    return _orig_interface->GetInternalID();
 }
 
 const char* RakNet::RakClientHookInterface::PlayerIDToDottedIP(const PlayerID playerId) noexcept
 {
-    return this->pOrigInterface->PlayerIDToDottedIP(playerId);
+    return _orig_interface->PlayerIDToDottedIP(playerId);
 }
 
-void RakNet::RakClientHookInterface::PushBackPacket(Packet* const packetPointer, const bool pushAtHead) noexcept
+void RakNet::RakClientHookInterface::PushBackPacket(Packet* const packet_pointer, const bool pushAtHead) noexcept
 {
-    this->pOrigInterface->PushBackPacket(packetPointer, pushAtHead);
+    _orig_interface->PushBackPacket(packet_pointer, pushAtHead);
 }
 
 void RakNet::RakClientHookInterface::SetRouterInterface(void* const routerInterface) noexcept
 {
-    this->pOrigInterface->SetRouterInterface(routerInterface);
+    _orig_interface->SetRouterInterface(routerInterface);
 }
 
 void RakNet::RakClientHookInterface::RemoveRouterInterface(void* const routerInterface) noexcept
 {
-    this->pOrigInterface->RemoveRouterInterface(routerInterface);
+    _orig_interface->RemoveRouterInterface(routerInterface);
 }
 
 void RakNet::RakClientHookInterface::SetTimeoutTime(const RakNetTime timeMs) noexcept
 {
-    this->pOrigInterface->SetTimeoutTime(timeMs);
+    _orig_interface->SetTimeoutTime(timeMs);
 }
 
 bool RakNet::RakClientHookInterface::SetMTUSize(const int mtuSize) noexcept
 {
-    return this->pOrigInterface->SetMTUSize(mtuSize);
+    return _orig_interface->SetMTUSize(mtuSize);
 }
 
 int RakNet::RakClientHookInterface::GetMTUSize() noexcept
 {
-    return this->pOrigInterface->GetMTUSize();
+    return _orig_interface->GetMTUSize();
 }
 
 void RakNet::RakClientHookInterface::AllowConnectionResponseIPMigration(const bool allowConnectionResponseIpMigration) noexcept
 {
-    this->pOrigInterface->AllowConnectionResponseIPMigration(allowConnectionResponseIpMigration);
+    _orig_interface->AllowConnectionResponseIPMigration(allowConnectionResponseIpMigration);
 }
 
 void RakNet::RakClientHookInterface::AdvertiseSystem(const char* const hostIp,
     const uint16_t hostPort, const char* const dataPointer, const int dataLength) noexcept
 {
-    this->pOrigInterface->AdvertiseSystem(hostIp, hostPort, dataPointer, dataLength);
+    _orig_interface->AdvertiseSystem(hostIp, hostPort, dataPointer, dataLength);
 }
 
 RakNetStatisticsStruct* RakNet::RakClientHookInterface::GetStatistics() noexcept
 {
-    return this->pOrigInterface->GetStatistics();
+    return _orig_interface->GetStatistics();
 }
 
 void RakNet::RakClientHookInterface::ApplyNetworkSimulator(const double maxSendBps,
     const uint16_t minExtraPing, const uint16_t extraPingVariance) noexcept
 {
-    this->pOrigInterface->ApplyNetworkSimulator(maxSendBps, minExtraPing, extraPingVariance);
+    _orig_interface->ApplyNetworkSimulator(maxSendBps, minExtraPing, extraPingVariance);
 }
 
 bool RakNet::RakClientHookInterface::IsNetworkSimulatorActive() noexcept
 {
-    return this->pOrigInterface->IsNetworkSimulatorActive();
+    return _orig_interface->IsNetworkSimulatorActive();
 }
 
 PlayerIndex RakNet::RakClientHookInterface::GetPlayerIndex() noexcept
 {
-    return this->pOrigInterface->GetPlayerIndex();
+    return _orig_interface->GetPlayerIndex();
 }
 
-bool RakNet::RakClientHookInterface::RPC_(int* const rpcIdPointer, BitStream* const bitStream,
+bool RakNet::RakClientHookInterface::RPC_(int* const rpcIdPointer, BitStream* const bit_stream,
     const PacketPriority priority, const PacketReliability reliability, const char orderingChannel,
     const bool shiftTimestamp, const NetworkID networkId) noexcept
 {
-    bool breakStatus { false };
+    bool break_status = false;
 
-    for (const auto& rpcCallback : RakNet::rpcCallbacks)
+    for (const auto& rpc_callback : _rpc_callbacks)
     {
-        if (rpcCallback != nullptr && !rpcCallback(*rpcIdPointer, *bitStream))
-            breakStatus = true;
+        if (rpc_callback != nullptr && !rpc_callback(*rpcIdPointer, *bit_stream))
+        {
+            break_status = true;
+        }
     }
 
-    if (breakStatus) return true;
+    if (break_status) return true;
 
-    return this->pOrigInterface->RPC_(rpcIdPointer, bitStream, priority,
+    return _orig_interface->RPC_(rpcIdPointer, bit_stream, priority,
         reliability, orderingChannel, shiftTimestamp, networkId);
 }
 
 void __declspec(naked) RakNet::HookSampDestruct() noexcept
 {
-    static LPVOID retAddr { nullptr };
+    static LPVOID ret_addr = nullptr;
 
-    __asm {
+    __asm
+    {
         pushad
         mov ebp, esp
         sub esp, __LOCAL_SIZE
     }
 
-    retAddr = RakNet::sampDestructHook->GetPatch().memAddr;
-    RakNet::sampDestructHook.reset();
+    ret_addr = _samp_destruct_hook->GetPatch().GetAddr();
+    _samp_destruct_hook = {};
 
-    RakNet::Free();
+    Free();
 
-    __asm {
+    __asm
+    {
         mov esp, ebp
         popad
-        jmp retAddr
+        jmp ret_addr
     }
 }
 
 void __declspec(naked) RakNet::HookRaknetInit() noexcept
 {
-    static LPVOID retAddr { nullptr };
-    static RakClientInterface* retIface { nullptr };
+    static LPVOID ret_addr = nullptr;
+    static RakClientInterface* ret_iface = nullptr;
 
-    __asm {
+    __asm
+    {
         pushad
         mov ebp, esp
         sub esp, __LOCAL_SIZE
-        mov pRakClientInterface, eax
+        mov _rak_client_interface, eax
     }
 
     Logger::LogToFile("[dbg:raknet:hookinit] : module loading...");
 
-    retAddr = RakNet::rakClientInitHook->GetPatch().memAddr;
-    RakNet::rakClientInitHook.reset();
+    ret_addr = _rak_client_init_hook->GetPatch().GetAddr();
+    _rak_client_init_hook = {};
 
-    __asm {
-        mov eax, rakClientOffset
+    __asm
+    {
+        mov eax, rak_client_offset
         add eax, esi
-        mov ppRakClientInterface, eax
+        mov _rak_client_interface_ptr, eax
     }
 
-    retIface = new (std::nothrow) RakClientHookInterface(RakNet::pRakClientInterface);
-
-    if (retIface == nullptr)
+    ret_iface = new (std::nothrow) RakClientHookInterface(_rak_client_interface);
+    if (ret_iface == nullptr)
     {
         Logger::LogToFile("[err:raknet:hookinit] : failed to load module");
-        retIface = RakNet::pRakClientInterface;
-        RakNet::Free();
+        ret_iface = _rak_client_interface;
+        Free();
     }
     else
     {
         Logger::LogToFile("[dbg:raknet:hookinit] : module loaded");
-        RakNet::loadStatus = true;
+        _load_status = true;
     }
 
-    __asm {
+    __asm
+    {
         mov esp, ebp
         popad
-        mov eax, retIface
-        jmp retAddr
+        mov eax, ret_iface
+        jmp ret_addr
     }
 }
 
-bool RakNet::initStatus { false };
-bool RakNet::loadStatus { false };
+bool RakNet::_init_status = false;
+bool RakNet::_load_status = false;
 
-bool RakNet::connectStatus { false };
+bool RakNet::_connect_status = false;
 
-std::vector<RakNet::ConnectCallback> RakNet::connectCallbacks;
-std::vector<RakNet::ReceiveCallback> RakNet::receiveCallbacks;
-std::vector<RakNet::SendCallback> RakNet::sendCallbacks;
-std::vector<RakNet::RpcCallback> RakNet::rpcCallbacks;
-std::vector<RakNet::DisconnectCallback> RakNet::disconnectCallbacks;
+std::vector<RakNet::ConnectCallback>    RakNet::_connect_callbacks;
+std::vector<RakNet::ReceiveCallback>    RakNet::_receive_callbacks;
+std::vector<RakNet::SendCallback>       RakNet::_send_callbacks;
+std::vector<RakNet::RpcCallback>        RakNet::_rpc_callbacks;
+std::vector<RakNet::DisconnectCallback> RakNet::_disconnect_callbacks;
 
-RakClientInterface* RakNet::pRakClientInterface { nullptr };
-RakClientInterface** RakNet::ppRakClientInterface { nullptr };
+RakClientInterface*  RakNet::_rak_client_interface     = nullptr;
+RakClientInterface** RakNet::_rak_client_interface_ptr = nullptr;
 
-Memory::JumpHookPtr RakNet::rakClientInitHook { nullptr };
-Memory::JumpHookPtr RakNet::sampDestructHook { nullptr };
+Memory::JumpHook RakNet::_rak_client_init_hook;
+Memory::JumpHook RakNet::_samp_destruct_hook;

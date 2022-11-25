@@ -18,134 +18,112 @@
 #include "Memory.hpp"
 #include "Logger.h"
 
-bool ImGuiUtil::Init(IDirect3DDevice9* const pDevice) noexcept
+bool ImGuiUtil::Init(IDirect3DDevice9* const device) noexcept
 {
-    assert(pDevice != nullptr);
+    assert(device != nullptr);
 
-    if (ImGuiUtil::initStatus)
-        return false;
+    if (_init_status) return false;
 
-    HWND hDeviceWindow { nullptr };
+    HWND device_window;
     {
-        IDirect3DSwapChain9* pSwapChain { nullptr };
+        IDirect3DSwapChain9* swapchain;
 
-        if (const auto hResult = pDevice->GetSwapChain(0, &pSwapChain); FAILED(hResult))
+        if (const auto result = device->GetSwapChain(0, &swapchain); FAILED(result))
         {
-            Logger::LogToFile("[err:imgui:init] : failed to get swap chain (code:%ld)", hResult);
+            Logger::LogToFile("[err:imgui:init] : failed to get swapchain (code:%ld)", result);
             return false;
         }
 
-        const Memory::ScopeExit scope { [&pSwapChain] { pSwapChain->Release(); } };
+        D3DPRESENT_PARAMETERS parameters;
 
-        D3DPRESENT_PARAMETERS dParameters {};
-
-        if (const auto hResult = pSwapChain->GetPresentParameters(&dParameters); FAILED(hResult))
+        const auto result = swapchain->GetPresentParameters(&parameters);
+        swapchain->Release();
+        if (FAILED(result))
         {
-            Logger::LogToFile("[err:imgui:init] : failed to get present parameters (code:%ld)", hResult);
+            Logger::LogToFile("[err:imgui:init] : failed to get present parameters (code:%ld)", result);
             return false;
         }
 
-        hDeviceWindow = dParameters.hDeviceWindow;
+        device_window = parameters.hDeviceWindow;
     }
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
-    ImGui::GetIO().IniFilename = NULL;
+    ImGui::GetIO().IniFilename = nullptr;
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-    ImGuiUtil::win32loadStatus = ImGui_ImplWin32_Init(hDeviceWindow);
-    ImGuiUtil::dx9loadStatus = ImGui_ImplDX9_Init(pDevice);
+    _win32_load_status = ImGui_ImplWin32_Init(device_window);
+    _dx9_load_status = ImGui_ImplDX9_Init(device);
 
-    ImGuiUtil::renderStatus = false;
-    ImGuiUtil::initStatus = true;
+    _render_status = false;
+    _init_status = true;
 
     return true;
 }
 
 bool ImGuiUtil::IsInited() noexcept
 {
-    return ImGuiUtil::initStatus;
+    return _init_status;
 }
 
 void ImGuiUtil::Free() noexcept
 {
-    ImGuiUtil::EndRender();
+    EndRender();
 
-    if (ImGuiUtil::dx9loadStatus)
-        ImGui_ImplDX9_Shutdown();
+    if (_dx9_load_status) ImGui_ImplDX9_Shutdown();
+    _dx9_load_status = false;
 
-    ImGuiUtil::dx9loadStatus = false;
+    if (_win32_load_status) ImGui_ImplWin32_Shutdown();
+    _win32_load_status = false;
 
-    if (ImGuiUtil::win32loadStatus)
-        ImGui_ImplWin32_Shutdown();
-
-    ImGuiUtil::win32loadStatus = false;
-
-    if (ImGuiUtil::initStatus)
-        ImGui::DestroyContext();
-
-    ImGuiUtil::initStatus = false;
+    if (_init_status) ImGui::DestroyContext();
+    _init_status = false;
 }
 
 bool ImGuiUtil::BeginRender() noexcept
 {
-    if (!ImGuiUtil::initStatus)
-        return false;
+    if (!_init_status || _render_status) return false;
 
-    if (ImGuiUtil::renderStatus)
-        return false;
-
-    if (ImGuiUtil::dx9loadStatus)
-        ImGui_ImplDX9_NewFrame();
-
-    if (ImGuiUtil::win32loadStatus)
-        ImGui_ImplWin32_NewFrame();
+    if (_dx9_load_status) ImGui_ImplDX9_NewFrame();
+    if (_win32_load_status) ImGui_ImplWin32_NewFrame();
 
     ImGui::NewFrame();
 
-    ImGuiUtil::renderStatus = true;
+    _render_status = true;
 
     return true;
 }
 
 bool ImGuiUtil::IsRendering() noexcept
 {
-    return ImGuiUtil::renderStatus;
+    return _render_status;
 }
 
 void ImGuiUtil::EndRender() noexcept
 {
-    if (!ImGuiUtil::initStatus)
-        return;
-
-    if (!ImGuiUtil::renderStatus)
-        return;
-
-    ImGui::EndFrame();
-    ImGui::Render();
-
-    if (ImGuiUtil::dx9loadStatus)
+    if (_init_status && _render_status)
     {
-        ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-    }
+        ImGui::EndFrame();
+        ImGui::Render();
 
-    ImGuiUtil::renderStatus = false;
+        if (_dx9_load_status)
+        {
+            ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+        }
+
+        _render_status = false;
+    }
 }
 
-LRESULT ImGuiUtil::WindowProc(const HWND hWnd, const UINT uMsg,
-                              const WPARAM wParam, const LPARAM lParam) noexcept
+LRESULT ImGuiUtil::WindowProc(const HWND window, const UINT message,
+    const WPARAM w_param, const LPARAM l_param) noexcept
 {
-    if (!ImGuiUtil::initStatus)
-        return FALSE;
+    if (!_init_status || !_win32_load_status) return FALSE;
 
-    if (!ImGuiUtil::win32loadStatus)
-        return FALSE;
-
-    if (uMsg == WM_CHAR)
+    if (message == WM_CHAR)
     {
-        if (wchar_t wChar; MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED,
-            reinterpret_cast<LPCSTR>(&wParam), 1, &wChar, 1) == 1)
+        if (wchar_t wChar; MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, (LPCSTR)(&w_param), 1, &wChar, 1) == 1)
         {
             ImGui::GetIO().AddInputCharacter(wChar);
         }
@@ -154,10 +132,10 @@ LRESULT ImGuiUtil::WindowProc(const HWND hWnd, const UINT uMsg,
     }
 
     extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
-    return ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
+    return ImGui_ImplWin32_WndProcHandler(window, message, w_param, l_param);
 }
 
-bool ImGuiUtil::initStatus { false };
-bool ImGuiUtil::win32loadStatus { false };
-bool ImGuiUtil::dx9loadStatus { false };
-bool ImGuiUtil::renderStatus { false };
+bool ImGuiUtil::_init_status       = false;
+bool ImGuiUtil::_win32_load_status = false;
+bool ImGuiUtil::_dx9_load_status   = false;
+bool ImGuiUtil::_render_status     = false;

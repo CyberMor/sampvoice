@@ -9,56 +9,52 @@
 
 #pragma once
 
-#include <memory>
-
 #include <d3d9.h>
 #include <d3dx9.h>
 
 #include "Resource.h"
 
-class BlurEffect {
+struct BlurEffect {
 
-    BlurEffect() = delete;
-    BlurEffect(const BlurEffect&) = delete;
-    BlurEffect(BlurEffect&&) = delete;
-    BlurEffect& operator=(const BlurEffect&) = delete;
-    BlurEffect& operator=(BlurEffect&&) = delete;
-
-public:
-
-    explicit BlurEffect(IDirect3DDevice9* pDevice,
-                        const Resource& rEffect);
-
+    BlurEffect() noexcept = default;
     ~BlurEffect() noexcept;
+    BlurEffect(const BlurEffect&) = delete;
+    BlurEffect(BlurEffect&& object) noexcept;
+    BlurEffect& operator=(const BlurEffect&) = delete;
+    BlurEffect& operator=(BlurEffect&& object) noexcept;
 
 public:
 
-    void Render(float level) const noexcept;
+    BlurEffect(IDirect3DDevice9* device, const Resource& resource) noexcept;
+
+public:
+
+    bool Valid() const noexcept;
+
+public:
+
+    void Render(float level) noexcept;
 
 private:
 
-    void Draw() const noexcept;
+    void Draw() noexcept;
 
 private:
 
-    IDirect3DDevice9* const pDevice;
+    IDirect3DDevice9*            _device               = nullptr;
+    IDirect3DSurface9*           _device_backbuffer    = nullptr;
 
-    IDirect3DSurface9* pDeviceBackBuffer { nullptr };
+    UINT                         _backbuffer_width     = 0;
+    UINT                         _backbuffer_height    = 0;
 
-    UINT backBufferWidth { 0 };
-    UINT backBufferHeight { 0 };
+    ID3DXEffect*                 _effect               = nullptr;
+    IDirect3DVertexDeclaration9* _vertex_declaration   = nullptr;
 
-    ID3DXEffect* pEffect { nullptr };
-    IDirect3DVertexDeclaration9* pVertexDeclaration { nullptr };
-
-    IDirect3DTexture9* pBackBufferTexture { nullptr };
-    IDirect3DSurface9* pBackBufferSurface { nullptr };
-    IDirect3DTexture9* pTempBufferTexture { nullptr };
-    IDirect3DSurface9* pTempBufferSurface { nullptr };
-    IDirect3DTexture9* pFrontBufferTexture { nullptr };
-    IDirect3DSurface9* pFrontBufferSurface { nullptr };
+    IDirect3DTexture9*           _backbuffer_texture   = nullptr;
+    IDirect3DSurface9*           _backbuffer_surface   = nullptr;
+    IDirect3DTexture9*           _temp_buffer_texture  = nullptr;
+    IDirect3DSurface9*           _temp_buffer_surface  = nullptr;
+    IDirect3DTexture9*           _front_buffer_texture = nullptr;
+    IDirect3DSurface9*           _front_buffer_surface = nullptr;
 
 };
-
-using BlurEffectPtr = std::unique_ptr<BlurEffect>;
-#define MakeBlurEffect std::make_unique<BlurEffect>

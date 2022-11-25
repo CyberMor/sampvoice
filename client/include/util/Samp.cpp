@@ -16,194 +16,176 @@
 
 #include "Logger.h"
 
-bool Samp::Init(const AddressesBase& addrBase) noexcept
+bool Samp::Init(const AddressesBase& addr_base) noexcept
 {
-    if (Samp::initStatus)
-        return false;
+    if (_init_status) return false;
 
     Logger::LogToFile("[dbg:samp:init] : module initializing...");
 
-    try
-    {
-        Samp::hookSampFree = MakeJumpHook(addrBase.GetSampDestructAddr(), Samp::HookSampFree);
-        Samp::hookSampInit = MakeJumpHook(addrBase.GetSampInitAddr(), Samp::HookSampInit);
-    }
-    catch (const std::exception& exception)
-    {
-        Logger::LogToFile("[err:samp:init] : failed to create function hooks");
-        Samp::hookSampInit.reset();
-        Samp::hookSampFree.reset();
-        return false;
-    }
+    _hook_samp_free = Memory::JumpHook((LPVOID)(addr_base.GetSampDestructAddr()), &HookSampFree);
+    _hook_samp_init = Memory::JumpHook((LPVOID)(addr_base.GetSampInitAddr()), &HookSampInit);
 
-    SAMP::InitSamp(addrBase.GetBaseAddr());
+    SAMP::InitSamp(addr_base.GetBaseAddr());
 
-    Samp::loadCallbacks.clear();
-    Samp::exitCallbacks.clear();
+    _load_callbacks.clear();
+    _exit_callbacks.clear();
 
-    Samp::loadStatus = false;
+    _load_status = false;
 
     Logger::LogToFile("[dbg:samp:init] : module initialized");
 
-    Samp::initStatus = true;
+    _init_status = true;
 
     return true;
 }
 
 bool Samp::IsInited() noexcept
 {
-    return Samp::initStatus;
+    return _init_status;
 }
 
 bool Samp::IsLoaded() noexcept
 {
-    return Samp::loadStatus;
+    return _load_status;
 }
 
 void Samp::Free() noexcept
 {
-    if (!Samp::initStatus)
-        return;
-
-    Logger::LogToFile("[dbg:samp:free] : module releasing...");
-
-    Samp::hookSampInit.reset();
-    Samp::hookSampFree.reset();
-
-    if (Samp::loadStatus)
+    if (_init_status)
     {
-        for (const auto& exitCallback : Samp::exitCallbacks)
+        Logger::LogToFile("[dbg:samp:free] : module releasing...");
+
+        _hook_samp_init = {};
+        _hook_samp_free = {};
+
+        if (_load_status)
         {
-            if (exitCallback != nullptr)
-                exitCallback();
+            for (const auto& exit_callback : _exit_callbacks)
+            {
+                if (exit_callback != nullptr) exit_callback();
+            }
         }
+
+        _load_status = false;
+
+        _load_callbacks.clear();
+        _exit_callbacks.clear();
+
+        Logger::LogToFile("[dbg:samp:free] : module released");
+
+        _init_status = false;
     }
-
-    Samp::loadStatus = false;
-
-    Samp::loadCallbacks.clear();
-    Samp::exitCallbacks.clear();
-
-    Logger::LogToFile("[dbg:samp:free] : module released");
-
-    Samp::initStatus = false;
 }
 
-void Samp::AddClientCommand(const char* const cmdName, const SAMP::CMDPROC cmdHandler) noexcept
+void Samp::AddClientCommand(const char* const name, const SAMP::CMDPROC handler) noexcept
 {
-    constexpr int kMaxCommands = MAX_CLIENT_CMDS - 1;
+    constexpr int    kMaxCommands      = MAX_CLIENT_CMDS - 1;
     constexpr size_t kMaxCommandLength = 30;
 
-    if (cmdName == nullptr || *cmdName == '\0' || cmdHandler == nullptr)
-        return;
-
-    if (!Samp::loadStatus)
-        return;
-
-    if (const auto pInputBox = SAMP::pInputBox();
-        pInputBox != nullptr && pInputBox->m_nCommandCount < kMaxCommands &&
-        std::strlen(cmdName) <= kMaxCommandLength)
+    if (name != nullptr && *name != '\0' && handler != nullptr)
     {
-        Logger::LogToFile("[dbg:samp:addclientcommand] : command '%s' adding...", cmdName);
-        pInputBox->AddCommand(cmdName, cmdHandler);
+        if (_load_status)
+        {
+            if (const auto input_box = SAMP::pInputBox(); input_box != nullptr &&
+                input_box->m_nCommandCount < kMaxCommands && std::strlen(name) <= kMaxCommandLength)
+            {
+                Logger::LogToFile("[dbg:samp:addclientcommand] : command '%s' adding...", name);
+                input_box->AddCommand(name, handler);
+            }
+        }
     }
 }
 
 void Samp::AddMessageToChat(const D3DCOLOR color, const char* const message) noexcept
 {
-    if (message == nullptr || *message == '\0')
-        return;
-
-    if (!Samp::loadStatus)
-        return;
-
-    if (const auto pChat = SAMP::pChat(); pChat != nullptr)
+    if (message != nullptr && *message != '\0')
     {
-        pChat->AddEntry(SAMP::ChatEntry::CHAT_TYPE_DEBUG,
-                        message, nullptr, color, NULL);
+        if (_load_status)
+        {
+            if (const auto chat = SAMP::pChat(); chat != nullptr)
+            {
+                chat->AddEntry(SAMP::ChatEntry::CHAT_TYPE_DEBUG, message, nullptr, color, NULL);
+            }
+        }
     }
 }
 
 void Samp::ToggleSampCursor(const int mode) noexcept
 {
-    if (!Samp::loadStatus)
-        return;
-
-    if (const auto pInputBox = SAMP::pInputBox();
-        pInputBox == nullptr || pInputBox->m_bEnabled == TRUE)
-        return;
-
-    if (const auto pScoreboard = SAMP::pScoreboard();
-        pScoreboard == nullptr || pScoreboard->m_bIsEnabled == TRUE)
-        return;
-
-    if (const auto pGame = SAMP::pGame();
-        pGame != nullptr && pGame->IsMenuVisible() == FALSE)
+    if (_load_status)
     {
-        pGame->SetCursorMode(mode, mode == 0 ? TRUE : FALSE);
-        if (mode == 0) pGame->ProcessInputEnabling();
+        if (const auto input_box = SAMP::pInputBox(); input_box != nullptr &&
+            input_box->m_bEnabled == FALSE)
+        {
+            if (const auto scoreboard = SAMP::pScoreboard(); scoreboard != nullptr &&
+                scoreboard->m_bIsEnabled == FALSE)
+            {
+                if (const auto game = SAMP::pGame(); game != nullptr && game->IsMenuVisible() == FALSE)
+                {
+                    game->SetCursorMode(mode, mode == 0 ? TRUE : FALSE);
+                    if (mode == 0) game->ProcessInputEnabling();
+                }
+            }
+        }
     }
 }
 
 std::size_t Samp::AddLoadCallback(LoadCallback callback) noexcept
 {
-    if (!Samp::initStatus) return -1;
+    if (!_init_status) return -1;
 
-    for (std::size_t i { 0 }; i < Samp::loadCallbacks.size(); ++i)
+    for (std::size_t i = 0; i < _load_callbacks.size(); ++i)
     {
-        if (Samp::loadCallbacks[i] == nullptr)
+        if (_load_callbacks[i] == nullptr)
         {
-            Samp::loadCallbacks[i] = std::move(callback);
+            _load_callbacks[i] = std::move(callback);
             return i;
         }
     }
 
-    Samp::loadCallbacks.emplace_back(std::move(callback));
-    return Samp::loadCallbacks.size() - 1;
+    _load_callbacks.emplace_back(std::move(callback));
+    return _load_callbacks.size() - 1;
 }
 
 std::size_t Samp::AddExitCallback(ExitCallback callback) noexcept
 {
-    if (!Samp::initStatus) return -1;
+    if (!_init_status) return -1;
 
-    for (std::size_t i { 0 }; i < Samp::exitCallbacks.size(); ++i)
+    for (std::size_t i = 0; i < _exit_callbacks.size(); ++i)
     {
-        if (Samp::exitCallbacks[i] == nullptr)
+        if (_exit_callbacks[i] == nullptr)
         {
-            Samp::exitCallbacks[i] = std::move(callback);
+            _exit_callbacks[i] = std::move(callback);
             return i;
         }
     }
 
-    Samp::exitCallbacks.emplace_back(std::move(callback));
-    return Samp::exitCallbacks.size() - 1;
+    _exit_callbacks.emplace_back(std::move(callback));
+    return _exit_callbacks.size() - 1;
 }
 
 void Samp::RemoveLoadCallback(const std::size_t callback) noexcept
 {
-    if (!Samp::initStatus) return;
-
-    if (callback >= Samp::loadCallbacks.size())
-        return;
-
-    Samp::loadCallbacks[callback] = nullptr;
+    if (_init_status && callback < _load_callbacks.size())
+    {
+        _load_callbacks[callback] = nullptr;
+    }
 }
 
 void Samp::RemoveExitCallback(const std::size_t callback) noexcept
 {
-    if (!Samp::initStatus) return;
-
-    if (callback >= Samp::exitCallbacks.size())
-        return;
-
-    Samp::exitCallbacks[callback] = nullptr;
+    if (_init_status && callback < _exit_callbacks.size())
+    {
+        _exit_callbacks[callback] = nullptr;
+    }
 }
 
 void __declspec(naked) Samp::HookSampInit() noexcept
 {
-    static LPVOID retAddr { nullptr };
+    static LPVOID ret_addr = nullptr;
 
-    __asm {
+    __asm
+    {
         pushad
         mov ebp, esp
         sub esp, __LOCAL_SIZE
@@ -211,53 +193,55 @@ void __declspec(naked) Samp::HookSampInit() noexcept
 
     Logger::LogToFile("[dbg:samp:load] : module loading...");
 
-    retAddr = Samp::hookSampInit->GetPatch().memAddr;
-    Samp::hookSampInit.reset();
+    ret_addr = _hook_samp_init->GetPatch().GetAddr();
+    _hook_samp_init = {};
 
-    for (const auto& loadCallback : Samp::loadCallbacks)
+    for (const auto& load_callback : _load_callbacks)
     {
-        if (loadCallback != nullptr)
-            loadCallback();
+        if (load_callback != nullptr) load_callback();
     }
 
-    Samp::loadStatus = true;
+    _load_status = true;
 
     Logger::LogToFile("[dbg:samp:load] : module loaded");
 
-    __asm {
+    __asm
+    {
         mov esp, ebp
         popad
-        jmp retAddr
+        jmp ret_addr
     }
 }
 
 void __declspec(naked) Samp::HookSampFree() noexcept
 {
-    static LPVOID retAddr { nullptr };
+    static LPVOID ret_addr = nullptr;
 
-    __asm {
+    __asm
+    {
         pushad
         mov ebp, esp
         sub esp, __LOCAL_SIZE
     }
 
-    retAddr = Samp::hookSampFree->GetPatch().memAddr;
-    Samp::hookSampFree.reset();
+    ret_addr = _hook_samp_free->GetPatch().GetAddr();
+    _hook_samp_free = {};
 
-    Samp::Free();
+    Free();
 
-    __asm {
+    __asm
+    {
         mov esp, ebp
         popad
-        jmp retAddr
+        jmp ret_addr
     }
 }
 
-bool Samp::initStatus { false };
-bool Samp::loadStatus { false };
+bool Samp::_init_status = false;
+bool Samp::_load_status = false;
 
-std::vector<Samp::LoadCallback> Samp::loadCallbacks;
-std::vector<Samp::ExitCallback> Samp::exitCallbacks;
+std::vector<Samp::LoadCallback> Samp::_load_callbacks;
+std::vector<Samp::ExitCallback> Samp::_exit_callbacks;
 
-Memory::JumpHookPtr Samp::hookSampInit { nullptr };
-Memory::JumpHookPtr Samp::hookSampFree { nullptr };
+Memory::JumpHook Samp::_hook_samp_init;
+Memory::JumpHook Samp::_hook_samp_free;

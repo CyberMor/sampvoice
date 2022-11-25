@@ -9,9 +9,10 @@
 
 #pragma once
 
+#include <cassert>
+#include <cstdio>
 #include <ctime>
-#include <iostream>
-#include <algorithm>
+
 #include <mutex>
 #include <array>
 
@@ -30,7 +31,7 @@ DefineColor(Info,    ffe0a5);
 
 #undef DefineColor
 
-class Logger {
+struct Logger {
 
     Logger() = delete;
     ~Logger() = delete;
@@ -41,66 +42,64 @@ class Logger {
 
 public:
 
-    static bool Init(const char* fileName) noexcept;
-    static bool Free() noexcept;
+    static bool Init(const char* path) noexcept;
+    static void Free() noexcept;
 
-    template<class... ARGS>
-    static bool LogToFile(const char* message, ARGS... args) noexcept
+public:
+
+    template <class... ARGS>
+    static bool LogToFile(const char* const message, const ARGS... args) noexcept
     {
-        const std::scoped_lock lock { Logger::logFileMutex };
+        assert(_log_file != nullptr);
 
-        if (Logger::logFile == nullptr)
-            return false;
+        const std::lock_guard lock { _log_file_mutex };
 
-        const auto cTime = std::time(nullptr);
-        const auto timeOfDay = std::localtime(&cTime);
+        const auto c_time = std::time(nullptr);
+        const auto time_of_day = std::localtime(&c_time);
+        assert(time_of_day != nullptr);
 
-        if (timeOfDay == nullptr)
-            return false;
-
-        std::fprintf(Logger::logFile, "[%.2d:%.2d:%.2d] : ",
-            timeOfDay->tm_hour, timeOfDay->tm_min, timeOfDay->tm_sec);
-        std::fprintf(Logger::logFile, message, args...);
-        std::fputc('\n', Logger::logFile);
-        std::fflush(Logger::logFile);
+        std::fprintf(_log_file, "[%.2d:%.2d:%.2d] : ",
+            time_of_day->tm_hour, time_of_day->tm_min, time_of_day->tm_sec);
+        std::fprintf(_log_file, message, args...);
+        std::fputc('\n', _log_file);
+        std::fflush(_log_file);
 
         return true;
     }
 
-    template<class... ARGS>
-    static bool LogToChat(D3DCOLOR color, const char* message, ARGS... args) noexcept
+    template <class... ARGS>
+    static bool LogToChat(const D3DCOLOR color, const char* const message, const ARGS... args) noexcept
     {
-        constexpr auto kMaxLengthMessage = 144;
+        constexpr size_t kMaxLengthMessage = 144;
+        std::array<char, kMaxLengthMessage> message_buffer;
 
-        std::array<char, kMaxLengthMessage> messageBuffer;
-
-        if (const auto length = std::snprintf(messageBuffer.data(), messageBuffer.size(), message, args...);
-            length != std::clamp(length, 0, static_cast<int>(messageBuffer.size() - 1)))
+        if (const auto length = std::snprintf(message_buffer.data(), message_buffer.size(), message, args...);
+            length < 0 || length >= static_cast<int>(message_buffer.size()))
         {
-            Logger::LogToFile("[inf:logger:logtochat] : message is too long to display in chat");
+            LogToFile("[inf:logger:logtochat] : message is too long to display in chat");
             return false;
         }
 
         {
-            const std::scoped_lock lock { Logger::logChatMutex };
-            Samp::AddMessageToChat(color, messageBuffer.data());
+            const std::lock_guard lock { _log_chat_mutex };
+            Samp::AddMessageToChat(color, message_buffer.data());
         }
 
         return true;
     }
 
-    template<class... ARGS>
-    static inline void Log(D3DCOLOR color, const char* message, ARGS... args) noexcept
+    template <class... ARGS>
+    static void Log(const D3DCOLOR color, const char* const message, const ARGS... args) noexcept
     {
-        Logger::LogToFile(message, args...);
-        Logger::LogToChat(color, message, args...);
+        LogToFile(message, args...);
+        LogToChat(color, message, args...);
     }
 
 private:
 
-    static std::FILE* logFile;
+    static std::FILE* _log_file;
 
-    static std::mutex logFileMutex;
-    static std::mutex logChatMutex;
+    static std::mutex _log_file_mutex;
+    static std::mutex _log_chat_mutex;
 
 };

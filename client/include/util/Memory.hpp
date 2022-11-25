@@ -13,20 +13,23 @@
 #include <type_traits>
 #include <functional>
 #include <cassert>
+#include <cstring>
 #include <vector>
 
 #include <Windows.h>
 
-#define RequestArithmeticType(type) static_assert(std::is_arithmetic<type>::value, #type " is not arithmetic type")
-#define RequestAddressType(type) static_assert(std::is_arithmetic<type>::value || std::is_pointer<type>::value, #type " is not address type")
-#define SizeOfArray(arr) ((sizeof(arr) / sizeof(0[arr])) / ((size_t)(!(sizeof(arr) % sizeof(0[arr])))))
+#define GetArraySize(array) (sizeof(array) / sizeof(*(array)))
 
 namespace Memory
 {
-    class ScopeExit {
-    public:
+    struct ScopeExit {
 
         ScopeExit() noexcept = default;
+        ~ScopeExit() noexcept
+        {
+            if (_callback != nullptr) _callback();
+        }
+
         ScopeExit(const ScopeExit&) = delete;
         ScopeExit(ScopeExit&&) noexcept = default;
         ScopeExit& operator=(const ScopeExit&) = delete;
@@ -34,35 +37,32 @@ namespace Memory
 
     private:
 
-        using CallbackType = std::function<void()>;
+        using Callback = std::function<void()>;
 
     public:
 
-        explicit ScopeExit(CallbackType callback) noexcept
-            : callback(std::move(callback)) {}
-
-        ~ScopeExit() noexcept
-        {
-            if (this->callback) this->callback();
-        }
+        ScopeExit(Callback&& callback) noexcept
+            : _callback { std::move(callback) }
+        {}
 
     public:
 
         void Release() noexcept
         {
-            this->callback = nullptr;
+            _callback = nullptr;
         }
 
     private:
 
-        CallbackType callback { nullptr };
+        Callback _callback = nullptr;
 
     };
 
-    template<class ObjectType> class ObjectContainer {
-    public:
+    template <class Type>
+    struct ObjectContainer {
 
         ObjectContainer() = default;
+        ~ObjectContainer() noexcept = default;
         ObjectContainer(const ObjectContainer&) = default;
         ObjectContainer(ObjectContainer&&) noexcept = default;
         ObjectContainer& operator=(const ObjectContainer&) = default;
@@ -70,221 +70,292 @@ namespace Memory
 
     public:
 
-        explicit ObjectContainer(const DWORD addMemSize)
-            : bytes(sizeof(ObjectType) + addMemSize) {}
+        ObjectContainer(const DWORD extra_size)
+            : bytes ( sizeof(Type) + extra_size )
+        {}
 
-        template<class MemAddrType = LPCVOID, class MemSizeType = DWORD>
-        explicit ObjectContainer(const MemAddrType memAddr, const MemSizeType memSize)
-            : bytes((DWORD)(memSize))
+        ObjectContainer(const LPCVOID addr, const DWORD size)
+            : bytes ( size )
         {
-            RequestAddressType(MemAddrType);
-            RequestArithmeticType(MemSizeType);
+            assert(addr != nullptr);
+            assert(size >= sizeof(Type));
 
-            assert((LPCVOID)(memAddr));
-            assert((DWORD)(memSize));
-
-            assert((DWORD)(memSize) >= sizeof(ObjectType));
-
-            std::memcpy(this->bytes.data(), (LPCVOID)(memAddr), this->bytes.size());
+            std::memcpy(bytes.data(), addr, size);
         }
-
-        ~ObjectContainer() noexcept = default;
 
     public:
 
-        const ObjectType* operator->() const noexcept
+        const Type* operator->() const noexcept
         {
-            return reinterpret_cast<const ObjectType*>(this->bytes.data());
+            return reinterpret_cast<const Type*>(bytes.data());
         }
 
-        ObjectType* operator->() noexcept
+        Type* operator->() noexcept
         {
-            return reinterpret_cast<ObjectType*>(this->bytes.data());
+            return reinterpret_cast<Type*>(bytes.data());
         }
 
-        const ObjectType* operator&() const noexcept
+    public:
+
+        const Type* operator&() const noexcept
         {
-            return reinterpret_cast<const ObjectType*>(this->bytes.data());
+            return reinterpret_cast<const Type*>(bytes.data());
         }
 
-        ObjectType* operator&() noexcept
+        Type* operator&() noexcept
         {
-            return reinterpret_cast<ObjectType*>(this->bytes.data());
+            return reinterpret_cast<Type*>(bytes.data());
         }
+
+    public:
 
         LPCVOID GetData() const noexcept
         {
-            return static_cast<LPCVOID>(this->bytes.data());
+            return static_cast<LPCVOID>(bytes.data());
         }
 
         LPVOID GetData() noexcept
         {
-            return static_cast<LPVOID>(this->bytes.data());
+            return static_cast<LPVOID>(bytes.data());
+        }
+
+    public:
+
+        DWORD GetSize() const noexcept
+        {
+            return static_cast<DWORD>(bytes.size());
+        }
+
+    private:
+
+        std::vector<BYTE> bytes = std::vector<BYTE>(sizeof(Type));
+
+    };
+
+    struct UnprotectScope {
+
+        UnprotectScope() noexcept = default;
+        ~UnprotectScope() noexcept
+        {
+            Disable();
+        }
+
+        UnprotectScope(const UnprotectScope&) = delete;
+        UnprotectScope(UnprotectScope&& object) noexcept
+            : _addr    { object._addr }
+            , _size    { object._size }
+            , _enabled { object._enabled }
+            , _protect { object._protect }
+        {
+            object._addr    = nullptr;
+            object._size    = 0;
+            object._enabled = FALSE;
+            object._protect = 0;
+        }
+
+        UnprotectScope& operator=(const UnprotectScope&) = delete;
+        UnprotectScope& operator=(UnprotectScope&& object) noexcept
+        {
+            if (&object != this)
+            {
+                Disable();
+
+                _addr    = object._addr;
+                _size    = object._size;
+                _enabled = object._enabled;
+                _protect = object._protect;
+
+                object._addr    = nullptr;
+                object._size    = 0;
+                object._enabled = FALSE;
+                object._protect = 0;
+            }
+
+            return *this;
+        }
+
+    public:
+
+        UnprotectScope(const LPVOID addr, const DWORD size, const bool enabled = true) noexcept
+            : _addr { addr }
+            , _size { size }
+        {
+            if (enabled) Enable();
+        }
+
+    public:
+
+        void Enable() noexcept
+        {
+            if (_enabled == FALSE)
+            {
+                assert(_addr != nullptr);
+                assert(_size != 0);
+
+                assert(_protect == PAGE_EXECUTE_READWRITE);
+
+                if (VirtualProtect(_addr, _size, _protect, &_protect) != FALSE)
+                {
+                    _enabled = TRUE;
+                }
+            }
+        }
+
+        void Disable() noexcept
+        {
+            if (_enabled == TRUE)
+            {
+                assert(_addr != nullptr);
+                assert(_size != 0);
+
+                if (VirtualProtect(_addr, _size, _protect, &_protect) != FALSE)
+                {
+                    _enabled = FALSE;
+                }
+            }
+        }
+
+    public:
+
+        LPVOID GetAddr() const noexcept
+        {
+            assert(_addr != nullptr);
+            return _addr;
         }
 
         DWORD GetSize() const noexcept
         {
-            return static_cast<DWORD>(this->bytes.size());
+            assert(_size != 0);
+            return _size;
         }
 
     private:
 
-        std::vector<BYTE> bytes { sizeof(ObjectType) };
-
-    };
-
-    template<class ObjectType> using ObjectContainerPtr = std::unique_ptr<ObjectContainer<ObjectType>>;
-
-    class UnprotectScope {
-
-        UnprotectScope() = delete;
-        UnprotectScope(const UnprotectScope&) = delete;
-        UnprotectScope(UnprotectScope&&) = delete;
-        UnprotectScope& operator=(const UnprotectScope&) = delete;
-        UnprotectScope& operator=(UnprotectScope&&) = delete;
-
-    public:
-
-        template<class MemAddrType = LPVOID, class MemSizeType = DWORD>
-        explicit UnprotectScope(const MemAddrType memAddr, const MemSizeType memSize, const bool enabled = true) noexcept
-            : memAddr((LPVOID)(memAddr)), memSize((DWORD)(memSize))
-        {
-            RequestAddressType(MemAddrType);
-            RequestArithmeticType(MemSizeType);
-
-            assert((LPVOID)(memAddr));
-            assert((DWORD)(memSize));
-
-            if (enabled) this->Enable();
-        }
-
-        ~UnprotectScope() noexcept
-        {
-            this->Disable();
-        }
-
-    public:
-
-        void Enable() noexcept
-        {
-            if (this->enabled) return;
-
-            this->enabled = VirtualProtect(
-                this->memAddr, this->memSize,
-                PAGE_EXECUTE_READWRITE,
-                &this->origProtect
-            );
-        }
-
-        void Disable() noexcept
-        {
-            if (!this->enabled) return;
-
-            DWORD oldProtect;
-
-            this->enabled = !VirtualProtect(
-                this->memAddr, this->memSize,
-                this->origProtect, &oldProtect
-            );
-        }
-
-    public:
-
-        const LPVOID memAddr;
-        const DWORD memSize;
+        LPVOID _addr = nullptr;
+        DWORD  _size = 0;
 
     private:
 
-        BOOL enabled { FALSE };
-
-        DWORD origProtect { NULL };
+        BOOL   _enabled = FALSE;
+        DWORD  _protect = PAGE_EXECUTE_READWRITE;
 
     };
 
-    using UnprotectScopePtr = std::unique_ptr<UnprotectScope>;
+    template <DWORD Size>
+    struct Patch {
 
-    class Patch {
-
-        Patch() = delete;
-        Patch(const Patch&) = delete;
-        Patch(Patch&&) = delete;
-        Patch& operator=(const Patch&) = delete;
-        Patch& operator=(Patch&&) = delete;
-
-    public:
-
-        template<class MemAddrType = LPVOID, class PatchAddrType = LPCVOID, class MemSizeType = DWORD>
-        explicit Patch(const MemAddrType memAddr, const PatchAddrType patchAddr, const MemSizeType memSize, const bool enabled = true)
-            : patchData((DWORD)(memSize)), origData((DWORD)(memSize)), memAddr((LPVOID)(memAddr)), memSize((DWORD)(memSize))
-        {
-            RequestAddressType(MemAddrType);
-            RequestAddressType(PatchAddrType);
-            RequestArithmeticType(MemSizeType);
-
-            assert((LPVOID)(memAddr));
-            assert((LPCVOID)(patchAddr));
-            assert((DWORD)(memSize));
-
-            std::memcpy(this->patchData.data(), (LPCVOID)(patchAddr), this->memSize);
-            std::memcpy(this->origData.data(), this->memAddr, this->memSize);
-
-            if (enabled) this->Enable();
-        }
-
+        Patch() noexcept = default;
         ~Patch() noexcept
         {
-            this->Disable();
+            Disable();
+        }
+
+        Patch(const Patch&) = delete;
+        Patch(Patch&& object) noexcept
+            : _addr    { object._addr }
+            , _enabled { object._enabled }
+        {
+            std::memcpy(_patch_data, object._patch_data, Size);
+            std::memcpy(_orig_data, object._orig_data, Size);
+
+            object._addr    = nullptr;
+            object._enabled = FALSE;
+        }
+
+        Patch& operator=(const Patch&) = delete;
+        Patch& operator=(Patch&& object) noexcept
+        {
+            if (&object != this)
+            {
+                Disable();
+
+                _addr    = object._addr;
+                _enabled = object._enabled;
+
+                std::memcpy(_patch_data, object._patch_data, Size);
+                std::memcpy(_orig_data, object._orig_data, Size);
+
+                object._addr    = nullptr;
+                object._enabled = FALSE;
+            }
+
+            return *this;
+        }
+
+    public:
+
+        Patch(const LPVOID addr, const LPCVOID patch, const bool enabled = true) noexcept
+            : _addr { addr }
+        {
+            assert(addr  != nullptr);
+            assert(patch != nullptr);
+
+            std::memcpy(_patch_data, patch, Size);
+            std::memcpy(_orig_data, addr, Size);
+
+            if (enabled) Enable();
         }
 
     public:
 
         void Enable() noexcept
         {
-            if (this->enabled) return;
-
+            if (_enabled == FALSE)
             {
-                const UnprotectScope scope { this->memAddr, this->memSize };
-                std::memcpy(this->memAddr, this->patchData.data(), this->memSize);
+                assert(_addr != nullptr);
+
+                const UnprotectScope scope { _addr, Size };
+                std::memcpy(_addr, _patch_data, Size);
             }
 
-            this->enabled = TRUE;
+            _enabled = TRUE;
         }
 
         void Disable() noexcept
         {
-            if (!this->enabled) return;
-
+            if (_enabled == TRUE)
             {
-                const UnprotectScope scope { this->memAddr, this->memSize };
-                std::memcpy(this->memAddr, this->origData.data(), this->memSize);
+                assert(_addr != nullptr);
+
+                const UnprotectScope scope { _addr, Size };
+                std::memcpy(_addr, _orig_data, Size);
             }
 
-            this->enabled = FALSE;
+            _enabled = FALSE;
         }
 
     public:
 
-        const LPVOID memAddr;
-        const DWORD memSize;
+        LPVOID GetAddr() const noexcept
+        {
+            assert(_addr != nullptr);
+            return _addr;
+        }
+
+        constexpr DWORD GetSize() const noexcept
+        {
+            return Size;
+        }
 
     private:
 
-        BOOL enabled { FALSE };
+        LPVOID _addr = nullptr;
 
-        std::vector<BYTE> patchData;
-        std::vector<BYTE> origData;
+        BOOL   _enabled = FALSE;
+
+        BYTE   _patch_data[Size];
+        BYTE   _orig_data[Size];
 
     };
 
-    using PatchPtr = std::unique_ptr<Patch>;
+    struct JumpHook {
 
-    class JumpHook {
-
-        JumpHook() = delete;
+        JumpHook() noexcept = default;
+        ~JumpHook() noexcept = default;
         JumpHook(const JumpHook&) = delete;
-        JumpHook(JumpHook&&) = delete;
+        JumpHook(JumpHook&&) noexcept = default;
         JumpHook& operator=(const JumpHook&) = delete;
-        JumpHook& operator=(JumpHook&&) = delete;
+        JumpHook& operator=(JumpHook&&) noexcept = default;
 
     private:
 
@@ -293,22 +364,22 @@ namespace Memory
         struct JumpInstruction {
 
             JumpInstruction() = delete;
-            JumpInstruction(const JumpInstruction&) = delete;
-            JumpInstruction(JumpInstruction&&) = delete;
-            JumpInstruction& operator=(const JumpInstruction&) = delete;
-            JumpInstruction& operator=(JumpInstruction&&) = delete;
-
-        public:
-
-            explicit JumpInstruction(const INT offset) noexcept
-                : offset(offset) {}
-
             ~JumpInstruction() noexcept = default;
+            JumpInstruction(const JumpInstruction&) noexcept = default;
+            JumpInstruction(JumpInstruction&&) noexcept = default;
+            JumpInstruction& operator=(const JumpInstruction&) noexcept = default;
+            JumpInstruction& operator=(JumpInstruction&&) noexcept = default;
 
         public:
 
-            const BYTE opcode { 0xE9 };
-            const INT offset { 0 };
+            JumpInstruction(const INT32 offset) noexcept
+                : _offset { offset }
+            {}
+
+        private:
+
+            BYTE  _opcode = 0xE9;
+            INT32 _offset;
 
         };
 
@@ -316,52 +387,46 @@ namespace Memory
 
     public:
 
-        template<class InjectAddrType = LPVOID, class HookAddrType = LPCVOID>
-        explicit JumpHook(const InjectAddrType injectAddr, const HookAddrType hookAddr, const bool enabled = true)
-            : patch(injectAddr, &JumpInstruction(((DWORD)(hookAddr)) - (((DWORD)(injectAddr)) +
-                sizeof(JumpInstruction))), sizeof(JumpInstruction), enabled)
+        JumpHook(const LPVOID inject_addr, const LPCVOID hook_addr, const bool enabled = true) noexcept
+            : _patch { inject_addr, &JumpInstruction((DWORD)(hook_addr) -
+                ((DWORD)(inject_addr) + sizeof(JumpInstruction))), enabled }
         {
-            RequestAddressType(InjectAddrType);
-            RequestAddressType(HookAddrType);
-
-            assert((LPVOID)(injectAddr));
-            assert((LPCVOID)(hookAddr));
+            assert(hook_addr != nullptr);
         }
-
-        ~JumpHook() noexcept = default;
 
     public:
 
-        inline void Enable() noexcept
+        void Enable() noexcept
         {
-            this->patch.Enable();
+            _patch.Enable();
         }
 
-        inline void Disable() noexcept
+        void Disable() noexcept
         {
-            this->patch.Disable();
+            _patch.Disable();
         }
 
-        const Patch& GetPatch() const noexcept
+    public:
+
+        const Patch<sizeof(JumpInstruction)>& GetPatch() const noexcept
         {
-            return this->patch;
+            return _patch;
         }
 
     private:
 
-        Patch patch;
+        Patch<sizeof(JumpInstruction)> _patch;
 
     };
 
-    using JumpHookPtr = std::unique_ptr<JumpHook>;
+    struct CallHook {
 
-    class CallHook {
-
-        CallHook() = delete;
+        CallHook() noexcept = default;
+        ~CallHook() noexcept = default;
         CallHook(const CallHook&) = delete;
-        CallHook(CallHook&&) = delete;
+        CallHook(CallHook&&) noexcept = default;
         CallHook& operator=(const CallHook&) = delete;
-        CallHook& operator=(CallHook&&) = delete;
+        CallHook& operator=(CallHook&&) noexcept = default;
 
     private:
 
@@ -370,22 +435,22 @@ namespace Memory
         struct CallInstruction {
 
             CallInstruction() = delete;
-            CallInstruction(const CallInstruction&) = delete;
-            CallInstruction(CallInstruction&&) = delete;
-            CallInstruction& operator=(const CallInstruction&) = delete;
-            CallInstruction& operator=(CallInstruction&&) = delete;
-
-        public:
-
-            explicit CallInstruction(const INT offset) noexcept
-                : offset(offset) {}
-
             ~CallInstruction() noexcept = default;
+            CallInstruction(const CallInstruction&) noexcept = default;
+            CallInstruction(CallInstruction&&) noexcept = default;
+            CallInstruction& operator=(const CallInstruction&) noexcept = default;
+            CallInstruction& operator=(CallInstruction&&) noexcept = default;
 
         public:
 
-            const BYTE opcode { 0xE8 };
-            const INT offset { 0 };
+            CallInstruction(const INT32 offset) noexcept
+                : _offset { offset }
+            {}
+
+        private:
+
+            BYTE  _opcode = 0xE8;
+            INT32 _offset;
 
         };
 
@@ -393,101 +458,91 @@ namespace Memory
 
     public:
 
-        template<class InjectAddrType = LPVOID, class HookAddrType = LPCVOID>
-        explicit CallHook(const InjectAddrType injectAddr, const HookAddrType hookAddr, const bool enabled = true)
-            : callFuncAddr((LPVOID)((((DWORD)(injectAddr)) + sizeof(CallInstruction)) + ((CallInstruction*)(injectAddr))->offset))
-            , patch(injectAddr, &CallInstruction(((DWORD)(hookAddr)) - (((DWORD)(injectAddr)) + sizeof(CallInstruction))),
-                sizeof(CallInstruction), enabled)
+        CallHook(const LPVOID inject_addr, const LPCVOID hook_addr, const bool enabled = true) noexcept
+            : _call_func_addr { (LPVOID)(((DWORD)(inject_addr) + sizeof(CallInstruction)) +
+                ((CallInstruction*)(inject_addr))->offset) }
+            , _patch { inject_addr, &CallInstruction((DWORD)(hook_addr) -
+                ((DWORD)(inject_addr) + sizeof(CallInstruction))), enabled }
         {
-            RequestAddressType(InjectAddrType);
-            RequestAddressType(HookAddrType);
-
-            assert((LPVOID)(injectAddr));
-            assert((LPCVOID)(hookAddr));
-        }
-
-        ~CallHook() noexcept = default;
-
-    public:
-
-        inline void Enable() noexcept
-        {
-            this->patch.Enable();
-        }
-
-        inline void Disable() noexcept
-        {
-            this->patch.Disable();
-        }
-
-        const Patch& GetPatch() const noexcept
-        {
-            return this->patch;
+            assert(hook_addr != nullptr);
         }
 
     public:
 
-        const LPVOID callFuncAddr;
+        void Enable() noexcept
+        {
+            _patch.Enable();
+        }
+
+        void Disable() noexcept
+        {
+            _patch.Disable();
+        }
+
+    public:
+
+        LPVOID GetCallFuncAddr() const noexcept
+        {
+            assert(_call_func_addr != nullptr);
+            return _call_func_addr;
+        }
+
+        const Patch<sizeof(CallInstruction)>& GetPatch() const noexcept
+        {
+            return _patch;
+        }
 
     private:
 
-        Patch patch;
+        LPVOID _call_func_addr = nullptr;
+        Patch<sizeof(CallInstruction)> _patch;
 
     };
 
-    using CallHookPtr = std::unique_ptr<CallHook>;
+    struct DllFuncHook {
 
-    class DllFuncHook {
-
-        DllFuncHook() = delete;
-        DllFuncHook(const DllFuncHook&) = delete;
-        DllFuncHook(DllFuncHook&&) = delete;
-        DllFuncHook& operator=(const DllFuncHook&) = delete;
-        DllFuncHook& operator=(DllFuncHook&&) = delete;
-
-    public:
-
-        template<class HookAddrType = LPCVOID>
-        explicit DllFuncHook(const char* moduleName, const char* functionName,
-                             const HookAddrType hookAddr, const bool enabled = true)
-            : hook(GetProcAddress(GetModuleHandle(moduleName), functionName), hookAddr, enabled)
-        {
-            RequestAddressType(HookAddrType);
-
-            assert((LPCVOID)(hookAddr));
-        }
-
+        DllFuncHook() noexcept = default;
         ~DllFuncHook() noexcept = default;
+        DllFuncHook(const DllFuncHook&) = delete;
+        DllFuncHook(DllFuncHook&&) noexcept = default;
+        DllFuncHook& operator=(const DllFuncHook&) = delete;
+        DllFuncHook& operator=(DllFuncHook&&) noexcept = default;
 
     public:
 
-        inline void Enable() noexcept
+        DllFuncHook(const char* const module, const char* const function, const LPCVOID hook_addr, const bool enabled = true) noexcept
+            : _hook { GetProcAddress(GetModuleHandle(module), function), hook_addr, enabled }
+        {}
+
+    public:
+
+        void Enable() noexcept
         {
-            this->hook.Enable();
+            _hook.Enable();
         }
 
-        inline void Disable() noexcept
+        void Disable() noexcept
         {
-            this->hook.Disable();
+            _hook.Disable();
         }
+
+    public:
 
         const JumpHook& GetHook() const noexcept
         {
-            return this->hook;
+            return _hook;
         }
 
     private:
 
-        JumpHook hook;
+        JumpHook _hook;
 
     };
 
-    using DllFuncHookPtr = std::unique_ptr<DllFuncHook>;
+    struct Scanner {
 
-    class Scanner {
-    public:
-
-        Scanner() = delete;
+        Scanner() noexcept = default;
+        ~Scanner() noexcept = default;
         Scanner(const Scanner&) noexcept = default;
         Scanner(Scanner&&) noexcept = default;
         Scanner& operator=(const Scanner&) noexcept = default;
@@ -495,94 +550,63 @@ namespace Memory
 
     public:
 
-        template<class MemAddrType = LPCVOID, class MemSizeType = DWORD>
-        explicit Scanner(const MemAddrType memAddr, const MemSizeType memSize) noexcept
-            : memAddr((LPCVOID)(memAddr)), memSize((DWORD)(memSize))
+        Scanner(const LPCVOID addr, const DWORD size) noexcept
+            : _addr { addr }
+            , _size { size }
         {
-            RequestAddressType(MemAddrType);
-            RequestArithmeticType(MemSizeType);
-
-            assert((LPCVOID)(memAddr));
-            assert((DWORD)(memSize));
+            assert(addr != nullptr);
+            assert(size != 0);
         }
-
-        ~Scanner() noexcept = default;
 
     public:
 
         LPVOID Find(PCCH pattern, PCCH mask) const noexcept
         {
-            PCCH currentByte = (PCCH)(this->memAddr);
-            PCCH lastByte = (PCCH)((DWORD)(this->memAddr) +
-                this->memSize - std::strlen(mask));
+            assert(pattern != nullptr);
+            assert(mask    != nullptr);
 
-            for (DWORD i; currentByte < lastByte; ++currentByte)
+            PCCH current_byte = (PCCH)(_addr);
+            PCCH last_byte = (PCCH)((DWORD)(_addr) + _size - std::strlen(mask));
+
+            for (DWORD i; current_byte < last_byte; ++current_byte)
             {
-                for (i = 0; mask[i]; ++i) if (mask[i] == 'x' &&
-                    pattern[i] != currentByte[i]) break;
-
-                if (!mask[i]) break;
+                for (i = 0; mask[i]; ++i) if (mask[i] == 'x' && pattern[i] != current_byte[i]) break;
+                if (mask[i] == '\0') break;
             }
 
-            return currentByte != lastByte ? (LPVOID)(currentByte) : nullptr;
+            return current_byte != last_byte ? (LPVOID)(current_byte) : nullptr;
         }
 
     private:
 
-        LPCVOID memAddr { nullptr };
-        DWORD memSize { NULL };
+        LPCVOID _addr = nullptr;
+        DWORD   _size = 0;
 
     };
 
-    using ScannerPtr = std::unique_ptr<Scanner>;
-
-    template<class MemAddrType = LPCVOID, class ModuleAddrType = LPCVOID, class ModuleSizeType = DWORD>
-    static bool GetModuleInfo(const MemAddrType memAddr, ModuleAddrType& moduleAddr, ModuleSizeType& moduleSize) noexcept
+    static bool GetModuleInfo(const LPCVOID addr, LPCVOID& module_addr, DWORD& module_size) noexcept
     {
-        RequestAddressType(MemAddrType);
-        RequestAddressType(ModuleAddrType);
-        RequestArithmeticType(ModuleSizeType);
+        MEMORY_BASIC_INFORMATION info;
 
-        MEMORY_BASIC_INFORMATION info {};
+        if (VirtualQuery(addr, &info, sizeof(info)) == 0) return false;
 
-        if (VirtualQuery((LPCVOID)(memAddr), &info, sizeof(info)) == 0)
-            return false;
-
-        if ((moduleAddr = (ModuleAddrType)(info.AllocationBase)) == nullptr)
-            return false;
+        module_addr = info.AllocationBase;
+        if (module_addr == nullptr) return false;
 
         const auto dos = (IMAGE_DOS_HEADER*)(info.AllocationBase);
-        const auto pe = (IMAGE_NT_HEADERS*)(((DWORD)(dos)) + dos->e_lfanew);
+        const auto pe = (IMAGE_NT_HEADERS*)((DWORD)(dos) + dos->e_lfanew);
 
-        if (pe->Signature != IMAGE_NT_SIGNATURE)
-            return false;
+        if (pe->Signature != IMAGE_NT_SIGNATURE) return false;
 
-        if ((moduleSize = (ModuleSizeType)(pe->OptionalHeader.SizeOfImage)) == 0)
-            return false;
+        module_size = pe->OptionalHeader.SizeOfImage;
+        if (module_size == 0) return false;
 
         return true;
     }
 
-    template<class MemAddrType = LPVOID, class MemSizeType = DWORD>
-    static inline void FillWithNops(const MemAddrType memAddr, const MemSizeType memSize) noexcept
+    static void FillWithNops(const LPVOID addr, const DWORD size) noexcept
     {
-        RequestAddressType(MemAddrType);
-        RequestArithmeticType(MemSizeType);
-
-        assert((LPVOID)(memAddr));
-        assert((DWORD)(memSize));
-
-        {
-            const UnprotectScope scope { memAddr, memSize };
-            std::memset((LPVOID)(memAddr), 0x90, (DWORD)(memSize));
-        }
+        const UnprotectScope scope { addr, size };
+        std::memset(addr, 0x90, size);
     }
 }
-
-#define MakeObjectContainer(ObjectType) std::make_unique<Memory::ObjectContainer<ObjectType>>
-#define MakeUnprotectScope              std::make_unique<Memory::UnprotectScope>
-#define MakePatch                       std::make_unique<Memory::Patch>
-#define MakeJumpHook                    std::make_unique<Memory::JumpHook>
-#define MakeCallHook                    std::make_unique<Memory::CallHook>
-#define MakeDllFuncHook                 std::make_unique<Memory::DllFuncHook>
-#define MakeScanner                     std::make_unique<Memory::Scanner>

@@ -9,35 +9,33 @@
 
 #pragma once
 
-#include <memory>
-
 #include <Windows.h>
 
-class Resource {
+struct Resource {
 
-    Resource() = delete;
-    Resource(const Resource&) = delete;
-    Resource(Resource&&) = delete;
-    Resource& operator=(const Resource&) = delete;
-    Resource& operator=(Resource&&) = delete;
-
-public:
-
-    explicit Resource(HMODULE hModule, DWORD rId, LPCSTR rType);
-
+    Resource() noexcept = default;
     ~Resource() noexcept = default;
+    Resource(const Resource&) noexcept = default;
+    Resource(Resource&&) noexcept = default;
+    Resource& operator=(const Resource&) noexcept = default;
+    Resource& operator=(Resource&&) noexcept = default;
 
 public:
 
-    LPVOID GetDataPtr() const noexcept;
-    DWORD GetDataSize() const noexcept;
+    Resource(HMODULE module, DWORD id, LPCSTR type) noexcept
+
+public:
+
+    bool Valid() const noexcept;
+
+public:
+
+    LPVOID GetData() const noexcept;
+    DWORD GetSize() const noexcept;
 
 private:
 
-    LPVOID dataPtr { nullptr };
-    DWORD dataSize { 0 };
+    LPVOID _data = nullptr;
+    DWORD  _size = 0;
 
 };
-
-using ResourcePtr = std::unique_ptr<Resource>;
-#define MakeResource std::make_unique<Resource>

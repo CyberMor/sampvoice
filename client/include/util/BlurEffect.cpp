@@ -17,208 +17,368 @@
 #include "Memory.hpp"
 #include "Logger.h"
 
-BlurEffect::BlurEffect(IDirect3DDevice9* const pDevice, const Resource& rEffect) : pDevice(pDevice)
+BlurEffect::~BlurEffect() noexcept
 {
-    assert(pDevice != nullptr);
+    if (_device_backbuffer    != nullptr) _device_backbuffer->Release();
+    if (_effect               != nullptr) _effect->Release();
+    if (_vertex_declaration   != nullptr) _vertex_declaration->Release();
+    if (_backbuffer_surface   != nullptr) _backbuffer_surface->Release();
+    if (_backbuffer_texture   != nullptr) _backbuffer_texture->Release();
+    if (_temp_buffer_surface  != nullptr) _temp_buffer_surface->Release();
+    if (_temp_buffer_texture  != nullptr) _temp_buffer_texture->Release();
+    if (_front_buffer_surface != nullptr) _front_buffer_surface->Release();
+    if (_front_buffer_texture != nullptr) _front_buffer_texture->Release();
+}
 
-    if (const auto hResult = pDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &this->pDeviceBackBuffer); FAILED(hResult))
+BlurEffect::BlurEffect(BlurEffect&& object) noexcept
+    : _device               { object._device }
+    , _device_backbuffer    { object._device_backbuffer }
+    , _backbuffer_width     { object._backbuffer_width }
+    , _backbuffer_height    { object._backbuffer_height }
+    , _effect               { object._effect }
+    , _vertex_declaration   { object._vertex_declaration }
+    , _backbuffer_texture   { object._backbuffer_texture }
+    , _backbuffer_surface   { object._backbuffer_surface }
+    , _temp_buffer_texture  { object._temp_buffer_texture }
+    , _temp_buffer_surface  { object._temp_buffer_surface }
+    , _front_buffer_texture { object._front_buffer_texture }
+    , _front_buffer_surface { object._front_buffer_surface }
+{
+    object._device               = nullptr;
+    object._device_backbuffer    = nullptr;
+    object._backbuffer_width     = 0;
+    object._backbuffer_height    = 0;
+    object._effect               = nullptr;
+    object._vertex_declaration   = nullptr;
+    object._backbuffer_texture   = nullptr;
+    object._backbuffer_surface   = nullptr;
+    object._temp_buffer_texture  = nullptr;
+    object._temp_buffer_surface  = nullptr;
+    object._front_buffer_texture = nullptr;
+    object._front_buffer_surface = nullptr;
+}
+
+BlurEffect& BlurEffect::operator=(BlurEffect&& object) noexcept
+{
+    if (&object != this)
     {
-        Logger::LogToFile("[err:blureffect] : failed to get device back buffer (code:%ld)", hResult);
-        throw std::exception();
+        if (_device_backbuffer    != nullptr) _device_backbuffer->Release();
+        if (_effect               != nullptr) _effect->Release();
+        if (_vertex_declaration   != nullptr) _vertex_declaration->Release();
+        if (_backbuffer_surface   != nullptr) _backbuffer_surface->Release();
+        if (_backbuffer_texture   != nullptr) _backbuffer_texture->Release();
+        if (_temp_buffer_surface  != nullptr) _temp_buffer_surface->Release();
+        if (_temp_buffer_texture  != nullptr) _temp_buffer_texture->Release();
+        if (_front_buffer_surface != nullptr) _front_buffer_surface->Release();
+        if (_front_buffer_texture != nullptr) _front_buffer_texture->Release();
+
+        _device               = object._device;
+        _device_backbuffer    = object._device_backbuffer;
+        _backbuffer_width     = object._backbuffer_width;
+        _backbuffer_height    = object._backbuffer_height;
+        _effect               = object._effect;
+        _vertex_declaration   = object._vertex_declaration;
+        _backbuffer_texture   = object._backbuffer_texture;
+        _backbuffer_surface   = object._backbuffer_surface;
+        _temp_buffer_texture  = object._temp_buffer_texture;
+        _temp_buffer_surface  = object._temp_buffer_surface;
+        _front_buffer_texture = object._front_buffer_texture;
+        _front_buffer_surface = object._front_buffer_surface;
+
+        object._device               = nullptr;
+        object._device_backbuffer    = nullptr;
+        object._backbuffer_width     = 0;
+        object._backbuffer_height    = 0;
+        object._effect               = nullptr;
+        object._vertex_declaration   = nullptr;
+        object._backbuffer_texture   = nullptr;
+        object._backbuffer_surface   = nullptr;
+        object._temp_buffer_texture  = nullptr;
+        object._temp_buffer_surface  = nullptr;
+        object._front_buffer_texture = nullptr;
+        object._front_buffer_surface = nullptr;
+    }
+
+    return *this;
+}
+
+BlurEffect::BlurEffect(IDirect3DDevice9* const device, const Resource& resource) noexcept
+{
+    assert(device != nullptr);
+
+    if (const auto result = device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO,
+        &_device_backbuffer); FAILED(result))
+    {
+        Logger::LogToFile("[err:blureffect] : failed to get device backbuffer (code:%ld)", result);
+        return;
     }
 
     {
-        D3DSURFACE_DESC backBufferDesc {};
+        D3DSURFACE_DESC backbuffer_desc;
 
-        if (const auto hResult = this->pDeviceBackBuffer->GetDesc(&backBufferDesc); FAILED(hResult))
+        if (const auto result = _device_backbuffer->GetDesc(&backbuffer_desc); FAILED(result))
         {
-            Logger::LogToFile("[err:blureffect] : failed to get back buffer description (code:%ld)", hResult);
-            this->pDeviceBackBuffer->Release();
-            throw std::exception();
+            Logger::LogToFile("[err:blureffect] : failed to get backbuffer description (code:%ld)", result);
+            _device_backbuffer->Release();
+            _device_backbuffer = nullptr;
+            return;
         }
 
-        this->backBufferWidth = backBufferDesc.Width;
-        this->backBufferHeight = backBufferDesc.Height;
+        _backbuffer_width  = backbuffer_desc.Width;
+        _backbuffer_height = backbuffer_desc.Height;
     }
 
     {
-        ID3DXBuffer* pErrorBuffer { nullptr };
+        ID3DXBuffer* error_buffer;
 
-        if (const auto hResult = D3DXCreateEffect(pDevice, rEffect.GetDataPtr(), rEffect.GetDataSize(),
+        if (const auto result = D3DXCreateEffect(device, resource.GetData(), resource.GetSize(),
             NULL, NULL, D3DXFX_DONOTSAVESTATE | D3DXFX_NOT_CLONEABLE | D3DXSHADER_ENABLE_BACKWARDS_COMPATIBILITY,
-            NULL, &this->pEffect, &pErrorBuffer); FAILED(hResult))
+            NULL, &_effect, &error_buffer); FAILED(result))
         {
             Logger::LogToFile("[err:blureffect] : failed to create effect (code:%ld) (%.*s)",
-                hResult, pErrorBuffer->GetBufferSize() - 1, pErrorBuffer->GetBufferPointer());
-            this->pDeviceBackBuffer->Release();
-            pErrorBuffer->Release();
-            throw std::exception();
+                result, error_buffer->GetBufferSize() - 1, error_buffer->GetBufferPointer());
+            _device_backbuffer->Release();
+            _device_backbuffer = nullptr;
+            _backbuffer_width = 0;
+            _backbuffer_height = 0;
+            error_buffer->Release();
+            return;
         }
     }
 
-    const float iResolution[] = { this->backBufferWidth, this->backBufferHeight };
+    const float iResolution[]
+    {
+        static_cast<float>(_backbuffer_width),
+        static_cast<float>(_backbuffer_height)
+    };
 
-    this->pEffect->SetFloatArray(static_cast<D3DXHANDLE>("iResolution"), iResolution, SizeOfArray(iResolution));
-    this->pEffect->SetFloat(static_cast<D3DXHANDLE>("iLevel"), 0.f);
+    _effect->SetFloatArray(static_cast<D3DXHANDLE>("iResolution"), iResolution, GetArraySize(iResolution));
+    _effect->SetFloat(static_cast<D3DXHANDLE>("iLevel"), 0.f);
 
-    const D3DVERTEXELEMENT9 vertexElements[] =
+    const D3DVERTEXELEMENT9 vertex_elements[]
     {
         { 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITIONT, 0 },
         { 0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
         D3DDECL_END()
     };
 
-    if (const auto hResult = pDevice->CreateVertexDeclaration(vertexElements, &this->pVertexDeclaration); FAILED(hResult))
+    if (const auto result = device->CreateVertexDeclaration(vertex_elements,
+        &_vertex_declaration); FAILED(result))
     {
-        Logger::LogToFile("[err:blureffect] : failed to create vertex declaration (code:%ld)", hResult);
-        this->pDeviceBackBuffer->Release();
-        this->pEffect->Release();
-        throw std::exception();
+        Logger::LogToFile("[err:blureffect] : failed to create vertex declaration (code:%ld)", result);
+        _device_backbuffer->Release();
+        _device_backbuffer = nullptr;
+        _backbuffer_width = 0;
+        _backbuffer_height = 0;
+        _effect->Release();
+        _effect = nullptr;
+        return;
     }
 
-    if (const auto hResult = D3DXCreateTexture(pDevice,
-        this->backBufferWidth, this->backBufferHeight, D3DX_DEFAULT, D3DUSAGE_RENDERTARGET,
-        D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &this->pBackBufferTexture); FAILED(hResult))
+    if (const auto result = D3DXCreateTexture(device, _backbuffer_width, _backbuffer_height,
+        D3DX_DEFAULT, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+        &_backbuffer_texture); FAILED(result))
     {
-        Logger::LogToFile("[err:blureffect] : failed to create back-buffer texture (code:%ld)", hResult);
-        this->pDeviceBackBuffer->Release();
-        this->pEffect->Release();
-        this->pVertexDeclaration->Release();
-        throw std::exception();
+        Logger::LogToFile("[err:blureffect] : failed to create back-buffer texture (code:%ld)", result);
+        _device_backbuffer->Release();
+        _device_backbuffer = nullptr;
+        _backbuffer_width = 0;
+        _backbuffer_height = 0;
+        _effect->Release();
+        _effect = nullptr;
+        _vertex_declaration->Release();
+        _vertex_declaration = nullptr;
+        return;
     }
 
-    if (const auto hResult = this->pBackBufferTexture->GetSurfaceLevel(0, &this->pBackBufferSurface); FAILED(hResult))
+    if (const auto result = _backbuffer_texture->GetSurfaceLevel(0,
+        &_backbuffer_surface); FAILED(result))
     {
-        Logger::LogToFile("[err:blureffect] : failed to get back-buffer surface (code:%ld)", hResult);
-        this->pDeviceBackBuffer->Release();
-        this->pEffect->Release();
-        this->pVertexDeclaration->Release();
-        this->pBackBufferTexture->Release();
-        throw std::exception();
+        Logger::LogToFile("[err:blureffect] : failed to get back-buffer surface (code:%ld)", result);
+        _device_backbuffer->Release();
+        _device_backbuffer = nullptr;
+        _backbuffer_width = 0;
+        _backbuffer_height = 0;
+        _effect->Release();
+        _effect = nullptr;
+        _vertex_declaration->Release();
+        _vertex_declaration = nullptr;
+        _backbuffer_texture->Release();
+        _backbuffer_texture = nullptr;
+        return;
     }
 
-    if (const auto hResult = D3DXCreateTexture(pDevice, this->backBufferWidth,
-        this->backBufferHeight, D3DX_DEFAULT, D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP,
-        D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &this->pTempBufferTexture); FAILED(hResult))
+    if (const auto result = D3DXCreateTexture(device, _backbuffer_width,
+        _backbuffer_height, D3DX_DEFAULT, D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP,
+        D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &_temp_buffer_texture); FAILED(result))
     {
-        Logger::LogToFile("[err:blureffect] : failed to create temp-buffer texture (code:%ld)", hResult);
-        this->pDeviceBackBuffer->Release();
-        this->pEffect->Release();
-        this->pVertexDeclaration->Release();
-        this->pBackBufferSurface->Release();
-        this->pBackBufferTexture->Release();
-        throw std::exception();
+        Logger::LogToFile("[err:blureffect] : failed to create temp-buffer texture (code:%ld)", result);
+        _device_backbuffer->Release();
+        _device_backbuffer = nullptr;
+        _backbuffer_width = 0;
+        _backbuffer_height = 0;
+        _effect->Release();
+        _effect = nullptr;
+        _vertex_declaration->Release();
+        _vertex_declaration = nullptr;
+        _backbuffer_texture->Release();
+        _backbuffer_texture = nullptr;
+        _backbuffer_surface->Release();
+        _backbuffer_surface = nullptr;
+        return;
     }
 
-    if (const auto hResult = this->pTempBufferTexture->GetSurfaceLevel(0, &this->pTempBufferSurface); FAILED(hResult))
+    if (const auto result = _temp_buffer_texture->GetSurfaceLevel(0,
+        &_temp_buffer_surface); FAILED(result))
     {
-        Logger::LogToFile("[err:blureffect] : failed to get temp-buffer surface (code:%ld)", hResult);
-        this->pDeviceBackBuffer->Release();
-        this->pEffect->Release();
-        this->pVertexDeclaration->Release();
-        this->pBackBufferSurface->Release();
-        this->pBackBufferTexture->Release();
-        this->pTempBufferTexture->Release();
-        throw std::exception();
+        Logger::LogToFile("[err:blureffect] : failed to get temp-buffer surface (code:%ld)", result);
+        _device_backbuffer->Release();
+        _device_backbuffer = nullptr;
+        _backbuffer_width = 0;
+        _backbuffer_height = 0;
+        _effect->Release();
+        _effect = nullptr;
+        _vertex_declaration->Release();
+        _vertex_declaration = nullptr;
+        _backbuffer_texture->Release();
+        _backbuffer_texture = nullptr;
+        _backbuffer_surface->Release();
+        _backbuffer_surface = nullptr;
+        _temp_buffer_texture->Release();
+        _temp_buffer_texture = nullptr;
+        return;
     }
 
-    if (const auto hResult = D3DXCreateTexture(pDevice, this->backBufferWidth,
-        this->backBufferHeight, D3DX_DEFAULT, D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP,
-        D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &this->pFrontBufferTexture); FAILED(hResult))
+    if (const auto result = D3DXCreateTexture(device, _backbuffer_width,
+        _backbuffer_height, D3DX_DEFAULT, D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP,
+        D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &_front_buffer_texture); FAILED(result))
     {
-        Logger::LogToFile("[err:blureffect] : failed to create front-buffer texture (code:%ld)", hResult);
-        this->pDeviceBackBuffer->Release();
-        this->pEffect->Release();
-        this->pVertexDeclaration->Release();
-        this->pBackBufferSurface->Release();
-        this->pBackBufferTexture->Release();
-        this->pTempBufferSurface->Release();
-        this->pTempBufferTexture->Release();
-        throw std::exception();
+        Logger::LogToFile("[err:blureffect] : failed to create front-buffer texture (code:%ld)", result);
+        _device_backbuffer->Release();
+        _device_backbuffer = nullptr;
+        _backbuffer_width = 0;
+        _backbuffer_height = 0;
+        _effect->Release();
+        _effect = nullptr;
+        _vertex_declaration->Release();
+        _vertex_declaration = nullptr;
+        _backbuffer_texture->Release();
+        _backbuffer_texture = nullptr;
+        _backbuffer_surface->Release();
+        _backbuffer_surface = nullptr;
+        _temp_buffer_texture->Release();
+        _temp_buffer_texture = nullptr;
+        _temp_buffer_surface->Release();
+        _temp_buffer_surface = nullptr;
+        return;
     }
 
-    if (const auto hResult = this->pFrontBufferTexture->GetSurfaceLevel(0, &this->pFrontBufferSurface); FAILED(hResult))
+    if (const auto result = _front_buffer_texture->GetSurfaceLevel(0,
+        &_front_buffer_surface); FAILED(result))
     {
-        Logger::LogToFile("[err:blureffect] : failed to get front-buffer surface (code:%ld)", hResult);
-        this->pDeviceBackBuffer->Release();
-        this->pEffect->Release();
-        this->pVertexDeclaration->Release();
-        this->pBackBufferSurface->Release();
-        this->pBackBufferTexture->Release();
-        this->pTempBufferSurface->Release();
-        this->pTempBufferTexture->Release();
-        this->pFrontBufferTexture->Release();
-        throw std::exception();
+        Logger::LogToFile("[err:blureffect] : failed to get front-buffer surface (code:%ld)", result);
+        _device_backbuffer->Release();
+        _device_backbuffer = nullptr;
+        _backbuffer_width = 0;
+        _backbuffer_height = 0;
+        _effect->Release();
+        _effect = nullptr;
+        _vertex_declaration->Release();
+        _vertex_declaration = nullptr;
+        _backbuffer_texture->Release();
+        _backbuffer_texture = nullptr;
+        _backbuffer_surface->Release();
+        _backbuffer_surface = nullptr;
+        _temp_buffer_texture->Release();
+        _temp_buffer_texture = nullptr;
+        _temp_buffer_surface->Release();
+        _temp_buffer_surface = nullptr;
+        _front_buffer_texture->Release();
+        _front_buffer_texture = nullptr;
+        return;
+    }
+
+    _device = device;
+}
+
+bool BlurEffect::Valid() const noexcept
+{
+    return _device               != nullptr &&
+           _device_backbuffer    != nullptr &&
+           _backbuffer_width     != 0       &&
+           _backbuffer_height    != 0       &&
+           _effect               != nullptr &&
+           _vertex_declaration   != nullptr &&
+           _backbuffer_texture   != nullptr &&
+           _backbuffer_surface   != nullptr &&
+           _temp_buffer_texture  != nullptr &&
+           _temp_buffer_surface  != nullptr &&
+           _front_buffer_texture != nullptr &&
+           _front_buffer_surface != nullptr ;
+}
+
+void BlurEffect::Render(const float level) noexcept
+{
+    assert(_device               != nullptr);
+    assert(_device_backbuffer    != nullptr);
+    assert(_effect               != nullptr);
+    assert(_backbuffer_texture   != nullptr);
+    assert(_backbuffer_surface   != nullptr);
+    assert(_temp_buffer_texture  != nullptr);
+    assert(_temp_buffer_surface  != nullptr);
+    assert(_front_buffer_texture != nullptr);
+    assert(_front_buffer_surface != nullptr);
+
+    if (SUCCEEDED(_device->StretchRect(_device_backbuffer, NULL, _backbuffer_surface, NULL, D3DTEXF_POINT)) &&
+        SUCCEEDED(_effect->SetFloat(static_cast<D3DXHANDLE>("iLevel"), std::clamp(level, 0.f, 100.f))) &&
+        SUCCEEDED(_effect->Begin(nullptr, NULL)))
+    {
+        if (SUCCEEDED(_effect->SetTexture(static_cast<D3DXHANDLE>("iFrameTexture"), _backbuffer_texture)) &&
+            SUCCEEDED(_device->SetRenderTarget(0, _temp_buffer_surface)) &&
+            SUCCEEDED(_effect->BeginPass(0)))
+        {
+            Draw(); _effect->EndPass();
+        }
+
+        if (SUCCEEDED(_effect->SetTexture(static_cast<D3DXHANDLE>("iFrameTexture"), _temp_buffer_texture)) &&
+            SUCCEEDED(_device->SetRenderTarget(0, _front_buffer_surface)) &&
+            SUCCEEDED(_effect->BeginPass(1)))
+        {
+            Draw(); _effect->EndPass();
+        }
+
+        if (SUCCEEDED(_device->SetRenderTarget(0, _device_backbuffer)) &&
+            SUCCEEDED(_effect->SetTexture(static_cast<D3DXHANDLE>("iBackBuffer"), _backbuffer_texture)) &&
+            SUCCEEDED(_effect->SetTexture(static_cast<D3DXHANDLE>("iFrameTexture"), _front_buffer_texture)) &&
+            SUCCEEDED(_effect->BeginPass(2)))
+        {
+            Draw(); _effect->EndPass();
+        }
+
+        _effect->End();
     }
 }
 
-BlurEffect::~BlurEffect() noexcept
+void BlurEffect::Draw() noexcept
 {
-    this->pDeviceBackBuffer->Release();
-    this->pEffect->Release();
-    this->pVertexDeclaration->Release();
-    this->pBackBufferSurface->Release();
-    this->pBackBufferTexture->Release();
-    this->pTempBufferSurface->Release();
-    this->pTempBufferTexture->Release();
-    this->pFrontBufferSurface->Release();
-    this->pFrontBufferTexture->Release();
-}
+    assert(_device             != nullptr);
+    assert(_backbuffer_width   != 0);
+    assert(_backbuffer_height  != 0);
+    assert(_vertex_declaration != nullptr);
 
-void BlurEffect::Render(const float level) const noexcept
-{
-    if (SUCCEEDED(this->pDevice->StretchRect(this->pDeviceBackBuffer, NULL, this->pBackBufferSurface, NULL, D3DTEXF_POINT)) &&
-        SUCCEEDED(this->pEffect->SetFloat(static_cast<D3DXHANDLE>("iLevel"), std::clamp(level, 0.f, 100.f))) &&
-        SUCCEEDED(this->pEffect->Begin(nullptr, NULL)))
+    struct EffectVertex { float x, y, z, tx0, tx1; };
+
+    if (SUCCEEDED(_device->SetVertexDeclaration(_vertex_declaration)))
     {
-        if (SUCCEEDED(this->pEffect->SetTexture(static_cast<D3DXHANDLE>("iFrameTexture"), this->pBackBufferTexture)) &&
-            SUCCEEDED(this->pDevice->SetRenderTarget(0, this->pTempBufferSurface)) &&
-            SUCCEEDED(this->pEffect->BeginPass(0)))
+        const float screen_width  = _backbuffer_width;
+        const float screen_height = _backbuffer_height;
+
+        const EffectVertex quad[]
         {
-            this->Draw();
-            this->pEffect->EndPass();
-        }
-
-        if (SUCCEEDED(this->pEffect->SetTexture(static_cast<D3DXHANDLE>("iFrameTexture"), this->pTempBufferTexture)) &&
-            SUCCEEDED(this->pDevice->SetRenderTarget(0, this->pFrontBufferSurface)) &&
-            SUCCEEDED(this->pEffect->BeginPass(1)))
-        {
-            this->Draw();
-            this->pEffect->EndPass();
-        }
-
-        if (SUCCEEDED(this->pDevice->SetRenderTarget(0, this->pDeviceBackBuffer)) &&
-            SUCCEEDED(this->pEffect->SetTexture(static_cast<D3DXHANDLE>("iBackBuffer"), this->pBackBufferTexture)) &&
-            SUCCEEDED(this->pEffect->SetTexture(static_cast<D3DXHANDLE>("iFrameTexture"), this->pFrontBufferTexture)) &&
-            SUCCEEDED(this->pEffect->BeginPass(2)))
-        {
-            this->Draw();
-            this->pEffect->EndPass();
-        }
-
-        this->pEffect->End();
-    }
-}
-
-void BlurEffect::Draw() const noexcept
-{
-    struct EffectVertex
-    {
-        float x, y, z;
-        float tx0, tx1;
-    };
-
-    if (SUCCEEDED(this->pDevice->SetVertexDeclaration(this->pVertexDeclaration)))
-    {
-        const float screenWidth = this->backBufferWidth;
-        const float screenHeight = this->backBufferHeight;
-
-        const EffectVertex quad[] =
-        {
-            { 0.f,         0.f,          0.5f, 0.f, 0.f },
-            { screenWidth, 0.f,          0.5f, 1.f, 0.f },
-            { 0.f,         screenHeight, 0.5f, 0.f, 1.f },
-            { screenWidth, screenHeight, 0.5f, 1.f, 1.f }
+            { 0.f,          0.f,           0.5f, 0.f, 0.f },
+            { screen_width, 0.f,           0.5f, 1.f, 0.f },
+            { 0.f,          screen_height, 0.5f, 0.f, 1.f },
+            { screen_width, screen_height, 0.5f, 1.f, 1.f }
         };
 
         _rwD3D9DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));

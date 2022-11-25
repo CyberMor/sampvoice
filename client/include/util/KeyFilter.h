@@ -18,27 +18,29 @@
 struct KeyEvent {
 
     KeyEvent() noexcept = default;
-    KeyEvent(const KeyEvent&) noexcept = default;
-    KeyEvent(KeyEvent&&) = delete;
-    KeyEvent& operator=(const KeyEvent&) noexcept = default;
-    KeyEvent& operator=(KeyEvent&&) = delete;
-
-public:
-
-    explicit KeyEvent(BYTE keyId, bool isPressed, int activeKeys) noexcept
-        : keyId(keyId), isPressed(isPressed), activeKeys(activeKeys) {}
-
     ~KeyEvent() noexcept = default;
+    KeyEvent(const KeyEvent&) noexcept = default;
+    KeyEvent(KeyEvent&&) noexcept = default;
+    KeyEvent& operator=(const KeyEvent&) noexcept = default;
+    KeyEvent& operator=(KeyEvent&&) noexcept = default;
 
 public:
 
-    BYTE keyId { NULL };
-    bool isPressed { false };
-    int activeKeys { 0 };
+    KeyEvent(const BYTE key_id, const bool is_pressed, const int active_keys) noexcept
+        : key_id      { key_id }
+        , is_pressed  { is_pressed }
+        , active_keys { active_keys }
+    {}
+
+public:
+
+    BYTE key_id      = 0;
+    bool is_pressed  = false;
+    int  active_keys = 0;
 
 };
 
-class KeyFilter {
+struct KeyFilter {
 
     KeyFilter() = delete;
     ~KeyFilter() = delete;
@@ -49,24 +51,24 @@ class KeyFilter {
 
 public:
 
-    static bool AddKey(BYTE keyId) noexcept;
-    static bool RemoveKey(BYTE keyId) noexcept;
+    static bool AddKey(BYTE key_id) noexcept;
+    static bool RemoveKey(BYTE key_id) noexcept;
 
     static void RemoveAllKeys() noexcept;
     static void ReleaseAllKeys() noexcept;
 
-    static bool PushPressEvent(BYTE keyId) noexcept;
-    static bool PushReleaseEvent(BYTE keyId) noexcept;
+    static bool PushPressEvent(BYTE key_id) noexcept;
+    static bool PushReleaseEvent(BYTE key_id) noexcept;
 
     static bool PopEvent(KeyEvent& event) noexcept;
 
 private:
 
-    static SPSCQueue<KeyEvent> keyQueue;
+    static SPSCQueue<KeyEvent> _key_queue;
 
-    static std::array<bool, 256> pressedKeys;
-    static std::array<bool, 256> statusKeys;
+    static std::array<bool, 256> _pressed_keys;
+    static std::array<bool, 256> _status_keys;
 
-    static int activeKeys;
+    static int _active_keys;
 
 };

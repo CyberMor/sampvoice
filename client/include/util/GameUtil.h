@@ -9,13 +9,15 @@
 
 #pragma once
 
+#include <string>
+
 #include <Windows.h>
 
 #include <game/CRect.h>
 
 #include "AddressesBase.h"
 
-class GameUtil {
+struct GameUtil {
 
     GameUtil() = delete;
     ~GameUtil() = delete;
@@ -26,13 +28,14 @@ class GameUtil {
 
 public:
 
-    static bool IsKeyPressed(int keyId) noexcept;
+    static bool IsKeyPressed(int key_id) noexcept;
     static bool IsMenuActive() noexcept;
     static bool IsWindowActive() noexcept;
     static bool IsGameActive() noexcept;
     static bool HasPlayerPed() noexcept;
-    static bool IsPlayerVisible(WORD playerId) noexcept;
-    static bool GetRadarRect(CRect& radarRect) noexcept;
-    static void DisableAntiCheat(const AddressesBase& addrBase);
+    static bool IsPlayerVisible(WORD player_id) noexcept;
+    static bool GetRadarRect(CRect& radar_rect) noexcept;
+    static void DisableAntiCheat(DWORD base_addr) noexcept;
+    static std::string GetSampvoiceDirectory();
 
 };
