@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory>
 #include <vector>
 #include <map>
 
@@ -8,9 +7,10 @@
 
 #include "Channel.h"
 
-class Effect {
+struct Effect {
 
     Effect() = delete;
+    ~Effect() noexcept;
     Effect(const Effect&) = delete;
     Effect(Effect&&) = delete;
     Effect& operator=(const Effect&) = delete;
@@ -18,10 +18,7 @@ class Effect {
 
 public:
 
-    explicit Effect(DWORD type, int priority,
-                    const void* paramPtr, DWORD paramSize);
-
-    ~Effect() noexcept;
+    Effect(DWORD type, int priority, const void* param_data, DWORD param_size);
 
 public:
 
@@ -29,13 +26,10 @@ public:
 
 private:
 
-    const DWORD type;
-    const int priority;
-    std::vector<BYTE> params;
+    DWORD                  _type;
+    int                    _priority;
+    std::vector<BYTE>      _params;
 
-    std::map<HSTREAM, HFX> fxHandles;
+    std::map<HSTREAM, HFX> _fx_handles;
 
 };
-
-using EffectPtr = std::unique_ptr<Effect>;
-#define MakeEffect std::make_unique<Effect>

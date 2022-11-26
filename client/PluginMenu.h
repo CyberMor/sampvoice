@@ -26,7 +26,7 @@
 #define SAMP_RU
 #endif
 
-class PluginMenu {
+struct PluginMenu {
 
     PluginMenu() = delete;
     ~PluginMenu() = delete;
@@ -161,9 +161,9 @@ private:
     static ImFont* pDescFont;
     static ImFont* pDefFont;
 
-    static Memory::PatchPtr openChatFuncPatch;
-    static Memory::PatchPtr openScoreboardFuncPatch;
-    static Memory::PatchPtr switchModeFuncPatch;
+    static Memory::Patch<sizeof(BYTE)> openChatFuncPatch;
+    static Memory::Patch<sizeof(BYTE)> openScoreboardFuncPatch;
+    static Memory::Patch<sizeof(BYTE)> switchModeFuncPatch;
 
     static int prevChatMode;
 

@@ -61,7 +61,7 @@ namespace Memory
     template <class Type>
     struct ObjectContainer {
 
-        ObjectContainer() = default;
+        ObjectContainer() noexcept = default;
         ~ObjectContainer() noexcept = default;
         ObjectContainer(const ObjectContainer&) = default;
         ObjectContainer(ObjectContainer&&) noexcept = default;
@@ -71,64 +71,76 @@ namespace Memory
     public:
 
         ObjectContainer(const DWORD extra_size)
-            : bytes ( sizeof(Type) + extra_size )
+            : _bytes ( sizeof(Type) + extra_size )
         {}
 
         ObjectContainer(const LPCVOID addr, const DWORD size)
-            : bytes ( size )
+            : _bytes ( size )
         {
             assert(addr != nullptr);
             assert(size >= sizeof(Type));
 
-            std::memcpy(bytes.data(), addr, size);
+            std::memcpy(_bytes.data(), addr, size);
         }
 
     public:
 
         const Type* operator->() const noexcept
         {
-            return reinterpret_cast<const Type*>(bytes.data());
+            return reinterpret_cast<const Type*>(_bytes.data());
         }
 
         Type* operator->() noexcept
         {
-            return reinterpret_cast<Type*>(bytes.data());
+            return reinterpret_cast<Type*>(_bytes.data());
         }
 
     public:
 
         const Type* operator&() const noexcept
         {
-            return reinterpret_cast<const Type*>(bytes.data());
+            return reinterpret_cast<const Type*>(_bytes.data());
         }
 
         Type* operator&() noexcept
         {
-            return reinterpret_cast<Type*>(bytes.data());
+            return reinterpret_cast<Type*>(_bytes.data());
+        }
+
+    public:
+
+        const Type& operator*() const noexcept
+        {
+            return *reinterpret_cast<const Type*>(_bytes.data());
+        }
+
+        Type& operator*() noexcept
+        {
+            return *reinterpret_cast<Type*>(_bytes.data());
         }
 
     public:
 
         LPCVOID GetData() const noexcept
         {
-            return static_cast<LPCVOID>(bytes.data());
+            return static_cast<LPCVOID>(_bytes.data());
         }
 
         LPVOID GetData() noexcept
         {
-            return static_cast<LPVOID>(bytes.data());
+            return static_cast<LPVOID>(_bytes.data());
         }
 
     public:
 
         DWORD GetSize() const noexcept
         {
-            return static_cast<DWORD>(bytes.size());
+            return static_cast<DWORD>(_bytes.size());
         }
 
     private:
 
-        std::vector<BYTE> bytes = std::vector<BYTE>(sizeof(Type));
+        std::vector<BYTE> _bytes;
 
     };
 

@@ -9,18 +9,17 @@
 
 #pragma once
 
-#include <memory>
 #include <functional>
-#include <array>
 
 #include <audio/bass.h>
 #include <audio/opus.h>
 
 #include "Header.h"
 
-class Channel {
+struct Channel {
 
     Channel() = delete;
+    ~Channel() noexcept;
     Channel(const Channel&) = delete;
     Channel(Channel&&) = delete;
     Channel& operator=(const Channel&) = delete;
@@ -33,42 +32,45 @@ private:
 
 public:
 
-    explicit Channel(DWORD channelFlags);
+    Channel(DWORD flags) noexcept;
 
-    ~Channel() noexcept;
+public:
+
+    bool Valid() const noexcept;
 
 public:
 
     HSTREAM GetHandle() const noexcept;
+
     void SetSpeaker(WORD speaker) noexcept;
     bool HasSpeaker() const noexcept;
     WORD GetSpeaker() const noexcept;
 
     bool IsActive() const noexcept;
-    void Reset() noexcept;
-    void Push(DWORD packetNumber, const BYTE* dataPtr, DWORD dataSize) noexcept;
 
-    void SetPlayCallback(PlayCallback playCallback) noexcept;
-    void SetStopCallback(StopCallback stopCallback) noexcept;
+    void Reset() noexcept;
+    void Push(DWORD packet, const BYTE* data, DWORD size) noexcept;
+
+public:
+
+    void SetPlayCallback(PlayCallback&& callback) noexcept;
+    void SetStopCallback(StopCallback&& callback) noexcept;
 
 private:
 
-    const HSTREAM handle;
-    WORD speaker { SV::kNonePlayer };
+    HSTREAM      _handle          = NULL;
+    WORD         _speaker         = SV::kNonePlayer;
 
-    PlayCallback playCallback { nullptr };
-    StopCallback stopCallback { nullptr };
+    PlayCallback _play_callback   = nullptr;
+    StopCallback _stop_callback   = nullptr;
 
-    OpusDecoder* const decoder;
-    std::array<opus_int16, SV::kFrameSizeInSamples> decBuffer;
+    OpusDecoder* _decoder         = nullptr;
+    opus_int16   _dec_buffer[SV::kFrameSizeInSamples];
 
-    DWORD expectedPacketNumber { 0 };
-    bool initialized { false };
-    bool playing { false };
+    DWORD        _expected_packet = 0;
+    bool         _initialized     = false;
+    bool         _playing         = false;
 
-    int opusErrorCode { -1 };
+    int          _opus_error      = -1;
 
 };
-
-using ChannelPtr = std::unique_ptr<Channel>;
-#define MakeChannel std::make_unique<Channel>

@@ -28,79 +28,79 @@ bool PluginMenu::Init(IDirect3DDevice9* const pDevice, const AddressesBase& cons
     if (pDevice == nullptr)
         return false;
 
-    if (PluginMenu::initStatus || !ImGuiUtil::IsInited())
+    if (initStatus || !ImGuiUtil::IsInited())
         return false;
 
     try
     {
-        const BYTE returnOpcode { 0xC3 };
-        PluginMenu::openChatFuncPatch = MakePatch(addrBase.GetOpenChatFunc(),
+        const BYTE returnOpcode = 0xC3;
+        openChatFuncPatch = MakePatch(addrBase.GetOpenChatFunc(),
             &returnOpcode, sizeof(returnOpcode), false);
-        PluginMenu::openScoreboardFuncPatch = MakePatch(addrBase.GetOpenScoreboardFunc(),
+        openScoreboardFuncPatch = MakePatch(addrBase.GetOpenScoreboardFunc(),
             &returnOpcode, sizeof(returnOpcode), false);
-        PluginMenu::switchModeFuncPatch = MakePatch(addrBase.GetSwitchModeFunc(),
+        switchModeFuncPatch = MakePatch(addrBase.GetSwitchModeFunc(),
             &returnOpcode, sizeof(returnOpcode), false);
     }
     catch (const std::exception& exception)
     {
         Logger::LogToFile("[sv:err:pluginmenu:init] : failed to create function patches");
-        PluginMenu::openChatFuncPatch.reset();
-        PluginMenu::openScoreboardFuncPatch.reset();
-        PluginMenu::switchModeFuncPatch.reset();
+        openChatFuncPatch.reset();
+        openScoreboardFuncPatch.reset();
+        switchModeFuncPatch.reset();
         return false;
     }
 
-    Memory::ScopeExit patchesResetScope { [] { PluginMenu::openChatFuncPatch.reset();
-                                               PluginMenu::openScoreboardFuncPatch.reset();
-                                               PluginMenu::switchModeFuncPatch.reset(); } };
+    Memory::ScopeExit patchesResetScope { [] { openChatFuncPatch.reset();
+                                               openScoreboardFuncPatch.reset();
+                                               switchModeFuncPatch.reset(); } };
 
     try
     {
-        PluginMenu::blurEffect = MakeBlurEffect(pDevice, rShader);
-        PluginMenu::tLogo = MakeTexture(pDevice, rLogo);
+        blurEffect = MakeBlurEffect(pDevice, rShader);
+        tLogo = MakeTexture(pDevice, rLogo);
     }
     catch (const std::exception& exception)
     {
         Logger::LogToFile("[sv:err:pluginmenu:init] : failed to create resources");
-        PluginMenu::blurEffect.reset();
-        PluginMenu::tLogo.reset();
+        blurEffect.reset();
+        tLogo.reset();
         return false;
     }
 
-    Memory::ScopeExit resourcesResetScope { [] { PluginMenu::blurEffect.reset();
-                                                 PluginMenu::tLogo.reset(); } };
+    Memory::ScopeExit resourcesResetScope { [] { blurEffect.reset();
+                                                 tLogo.reset(); } };
 
     ImGui::StyleColorsClassic();
 
-    if (float varWindowPaddingX { 0.f }, varWindowPaddingY { 0.f };
+    if (float varWindowPaddingX = 0.f, varWindowPaddingY = 0.f;
         Render::ConvertBaseXValueToScreenXValue(kBaseMenuPaddingX, varWindowPaddingX) &&
         Render::ConvertBaseYValueToScreenYValue(kBaseMenuPaddingY, varWindowPaddingY))
     {
         ImGui::GetStyle().WindowPadding = { varWindowPaddingX, varWindowPaddingY };
     }
 
-    if (float varFramePaddingX { 0.f }, varFramePaddingY { 0.f };
+    if (float varFramePaddingX = 0.f, varFramePaddingY = 0.f;
         Render::ConvertBaseXValueToScreenXValue(kBaseMenuFramePaddingX, varFramePaddingX) &&
         Render::ConvertBaseYValueToScreenYValue(kBaseMenuFramePaddingY, varFramePaddingY))
     {
         ImGui::GetStyle().FramePadding = { varFramePaddingX, varFramePaddingY };
     }
 
-    if (float varItemSpacingX { 0.f }, varItemSpacingY { 0.f };
+    if (float varItemSpacingX = 0.f, varItemSpacingY = 0.f;
         Render::ConvertBaseXValueToScreenXValue(kBaseMenuItemSpacingX, varItemSpacingX) &&
         Render::ConvertBaseYValueToScreenYValue(kBaseMenuItemSpacingY, varItemSpacingY))
     {
         ImGui::GetStyle().ItemSpacing = { varItemSpacingX, varItemSpacingY };
     }
 
-    if (float varItemInnerSpacingX { 0.f }, varItemInnerSpacingY { 0.f };
+    if (float varItemInnerSpacingX = 0.f, varItemInnerSpacingY = 0.f;
         Render::ConvertBaseXValueToScreenXValue(kBaseMenuItemInnerSpacingX, varItemInnerSpacingX) &&
         Render::ConvertBaseYValueToScreenYValue(kBaseMenuItemInnerSpacingY, varItemInnerSpacingY))
     {
         ImGui::GetStyle().ItemInnerSpacing = { varItemInnerSpacingX, varItemInnerSpacingY };
     }
 
-    if (float varRounding { 0.f }; Render::ConvertBaseXValueToScreenXValue(kBaseMenuRounding, varRounding))
+    if (float varRounding = 0.f; Render::ConvertBaseXValueToScreenXValue(kBaseMenuRounding, varRounding))
     {
         ImGui::GetStyle().FrameRounding = varRounding;
         ImGui::GetStyle().ScrollbarRounding = varRounding;
@@ -133,7 +133,7 @@ bool PluginMenu::Init(IDirect3DDevice9* const pDevice, const AddressesBase& cons
     ImGui::GetIO().Fonts->AddFontDefault();
 
     {
-        float varTitleFontSize { 0.f };
+        float varTitleFontSize = 0.f;
 
         if (!Render::ConvertBaseYValueToScreenYValue(kBaseFontTitleSize, varTitleFontSize))
         {
@@ -141,20 +141,20 @@ bool PluginMenu::Init(IDirect3DDevice9* const pDevice, const AddressesBase& cons
             return false;
         }
 
-        PluginMenu::pTitleFont = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(rFont.GetDataPtr(),
+        pTitleFont = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(rFont.GetDataPtr(),
             rFont.GetDataSize(), varTitleFontSize, NULL, ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
 
-        if (PluginMenu::pTitleFont == nullptr)
+        if (pTitleFont == nullptr)
         {
             Logger::LogToFile("[sv:err:pluginmenu:init] : failed to create title font");
             return false;
         }
     }
 
-    Memory::ScopeExit titleFontResetScope { [] { delete PluginMenu::pTitleFont; } };
+    Memory::ScopeExit titleFontResetScope { [] { delete pTitleFont; } };
 
     {
-        float varTabFontSize { 0.f };
+        float varTabFontSize = 0.f;
 
         if (!Render::ConvertBaseYValueToScreenYValue(kBaseFontTabSize, varTabFontSize))
         {
@@ -162,20 +162,20 @@ bool PluginMenu::Init(IDirect3DDevice9* const pDevice, const AddressesBase& cons
             return false;
         }
 
-        PluginMenu::pTabFont = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(rFont.GetDataPtr(),
+        pTabFont = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(rFont.GetDataPtr(),
             rFont.GetDataSize(), varTabFontSize, NULL, ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
 
-        if (PluginMenu::pTabFont == nullptr)
+        if (pTabFont == nullptr)
         {
             Logger::LogToFile("[sv:err:pluginmenu:init] : failed to create tab font");
             return false;
         }
     }
 
-    Memory::ScopeExit tabFontResetScope { [] { delete PluginMenu::pTabFont; } };
+    Memory::ScopeExit tabFontResetScope { [] { delete pTabFont; } };
 
     {
-        float varDescFontSize { 0.f };
+        float varDescFontSize = 0.f;
 
         if (!Render::ConvertBaseYValueToScreenYValue(kBaseFontDescSize, varDescFontSize))
         {
@@ -183,20 +183,20 @@ bool PluginMenu::Init(IDirect3DDevice9* const pDevice, const AddressesBase& cons
             return false;
         }
 
-        PluginMenu::pDescFont = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(rFont.GetDataPtr(),
+        pDescFont = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(rFont.GetDataPtr(),
             rFont.GetDataSize(), varDescFontSize, NULL, ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
 
-        if (PluginMenu::pDescFont == nullptr)
+        if (pDescFont == nullptr)
         {
             Logger::LogToFile("[sv:err:pluginmenu:init] : failed to create description font");
             return false;
         }
     }
 
-    Memory::ScopeExit descFontResetScope { [] { delete PluginMenu::pDescFont; } };
+    Memory::ScopeExit descFontResetScope { [] { delete pDescFont; } };
 
     {
-        float varFontSize { 0.f };
+        float varFontSize = 0.f;
 
         if (!Render::ConvertBaseYValueToScreenYValue(kBaseFontSize, varFontSize))
         {
@@ -204,19 +204,19 @@ bool PluginMenu::Init(IDirect3DDevice9* const pDevice, const AddressesBase& cons
             return false;
         }
 
-        PluginMenu::pDefFont = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(rFont.GetDataPtr(),
+        pDefFont = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(rFont.GetDataPtr(),
             rFont.GetDataSize(), varFontSize, NULL, ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
 
-        if (PluginMenu::pDefFont == nullptr)
+        if (pDefFont == nullptr)
         {
             Logger::LogToFile("[sv:err:pluginmenu:init] : failed to create default font");
             return false;
         }
     }
 
-    PluginMenu::blurLevel = 0;
-    PluginMenu::blurLevelDeviation = 0;
-    PluginMenu::showStatus = false;
+    blurLevel = 0;
+    blurLevelDeviation = 0;
+    showStatus = false;
 
     patchesResetScope.Release();
     resourcesResetScope.Release();
@@ -224,54 +224,54 @@ bool PluginMenu::Init(IDirect3DDevice9* const pDevice, const AddressesBase& cons
     tabFontResetScope.Release();
     descFontResetScope.Release();
 
-    PluginMenu::initStatus = true;
-    PluginMenu::SyncOptions();
+    initStatus = true;
+    SyncOptions();
 
     return true;
 }
 
 void PluginMenu::Free() noexcept
 {
-    PluginMenu::Hide();
+    Hide();
 
-    if (!PluginMenu::initStatus)
+    if (!initStatus)
         return;
 
-    PluginMenu::tLogo.reset();
-    PluginMenu::blurEffect.reset();
+    tLogo.reset();
+    blurEffect.reset();
 
-    delete PluginMenu::pTitleFont;
-    delete PluginMenu::pTabFont;
-    delete PluginMenu::pDescFont;
-    delete PluginMenu::pDefFont;
+    delete pTitleFont;
+    delete pTabFont;
+    delete pDescFont;
+    delete pDefFont;
 
-    PluginMenu::openChatFuncPatch.reset();
-    PluginMenu::openScoreboardFuncPatch.reset();
-    PluginMenu::switchModeFuncPatch.reset();
+    openChatFuncPatch.reset();
+    openScoreboardFuncPatch.reset();
+    switchModeFuncPatch.reset();
 
-    PluginMenu::prevChatMode = SAMP::CChat::Normal;
-    PluginMenu::blurLevelDeviation = 0.f;
-    PluginMenu::blurLevel = 0.f;
+    prevChatMode = SAMP::CChat::Normal;
+    blurLevelDeviation = 0.f;
+    blurLevel = 0.f;
 
-    PluginMenu::bMicroMovement = false;
+    bMicroMovement = false;
 
-    PluginMenu::initStatus = false;
+    initStatus = false;
 }
 
 bool PluginMenu::Show() noexcept
 {
-    if (!PluginMenu::initStatus || GameUtil::IsMenuActive() || PluginMenu::showStatus)
+    if (!initStatus || GameUtil::IsMenuActive() || showStatus)
         return false;
 
-    PluginMenu::openChatFuncPatch->Enable();
-    PluginMenu::openScoreboardFuncPatch->Enable();
-    PluginMenu::switchModeFuncPatch->Enable();
+    openChatFuncPatch->Enable();
+    openScoreboardFuncPatch->Enable();
+    switchModeFuncPatch->Enable();
 
-    PluginMenu::blurLevelDeviation = kBlurLevelIncrement;
+    blurLevelDeviation = kBlurLevelIncrement;
 
     if (const auto pChat = SAMP::pChat(); pChat != nullptr)
     {
-        PluginMenu::prevChatMode = pChat->m_nMode;
+        prevChatMode = pChat->m_nMode;
         pChat->m_nMode = SAMP::CChat::Off;
     }
 
@@ -290,64 +290,64 @@ bool PluginMenu::Show() noexcept
         pInputBox->Close();
     }
 
-    PluginMenu::SyncOptions();
-    PluginMenu::showStatus = true;
+    SyncOptions();
+    showStatus = true;
 
     return true;
 }
 
 bool PluginMenu::IsShowed() noexcept
 {
-    return PluginMenu::showStatus;
+    return showStatus;
 }
 
 void PluginMenu::Hide() noexcept
 {
-    if (!PluginMenu::initStatus || !PluginMenu::showStatus)
+    if (!initStatus || !showStatus)
         return;
 
     Samp::ToggleSampCursor(0);
 
-    PluginMenu::blurLevelDeviation = kBlurLevelDecrement;
+    blurLevelDeviation = kBlurLevelDecrement;
 
     if (const auto pChat = SAMP::pChat(); pChat != nullptr)
     {
-        pChat->m_nMode = PluginMenu::prevChatMode;
+        pChat->m_nMode = prevChatMode;
     }
 
-    PluginMenu::switchModeFuncPatch->Disable();
-    PluginMenu::openScoreboardFuncPatch->Disable();
-    PluginMenu::openChatFuncPatch->Disable();
+    switchModeFuncPatch->Disable();
+    openScoreboardFuncPatch->Disable();
+    openChatFuncPatch->Disable();
 
     ImGui::SetWindowFocus(nullptr);
 
-    PluginMenu::nBuffer[0] = '\0';
-    PluginMenu::bCheckDevice = false;
+    nBuffer[0] = '\0';
+    bCheckDevice = false;
     Record::StopChecking();
 
-    PluginMenu::showStatus = false;
+    showStatus = false;
 }
 
 void PluginMenu::Render() noexcept
 {
-    if (!PluginMenu::initStatus)
+    if (!initStatus)
         return;
 
-    if (PluginMenu::blurLevel > 0.f)
+    if (blurLevel > 0.f)
     {
-        PluginMenu::blurEffect->Render(PluginMenu::blurLevel);
+        blurEffect->Render(blurLevel);
     }
 
-    if (!PluginMenu::showStatus)
+    if (!showStatus)
         return;
 
-    float vWindowWidth { 0.f }, vWindowHeight { 0.f };
+    float vWindowWidth = 0.f, vWindowHeight = 0.f;
 
     if (!Render::ConvertBaseXValueToScreenXValue(kBaseMenuWidth, vWindowWidth) ||
         !Render::ConvertBaseYValueToScreenYValue(kBaseMenuHeight, vWindowHeight))
         return;
 
-    float vTabWidth { 0.f }, vTabHeight { 0.f };
+    float vTabWidth = 0.f, vTabHeight = 0.f;
 
     if (!Render::ConvertBaseXValueToScreenXValue(kBaseTabWidth, vTabWidth) ||
         !Render::ConvertBaseYValueToScreenYValue(kBaseTabHeight, vTabHeight))
@@ -373,14 +373,14 @@ void PluginMenu::Render() noexcept
         // Title rendering...
         // -------------------------------
 
-        ImGui::PushFont(PluginMenu::pTitleFont);
+        ImGui::PushFont(pTitleFont);
 
         ImGui::Text(kTitleText);
 
         ImGui::SameLine(ImGui::GetWindowWidth() - (4 * ImGui::CalcTextSize(kTitleText).y + (vTabWidth -
             4 * ImGui::CalcTextSize(kTitleText).y) / 2.f + ImGui::GetStyle().WindowPadding.x));
 
-        ImGui::Image(PluginMenu::tLogo->GetTexture(), { 4 * ImGui::CalcTextSize(kTitleText).y, ImGui::CalcTextSize(kTitleText).y });
+        ImGui::Image(tLogo->GetTexture(), { 4 * ImGui::CalcTextSize(kTitleText).y, ImGui::CalcTextSize(kTitleText).y });
 
         ImGui::PopFont();
         ImGui::NewLine();
@@ -388,22 +388,22 @@ void PluginMenu::Render() noexcept
         // Tabs rendering...
         // -------------------------------
 
-        ImGui::PushFont(PluginMenu::pTabFont);
+        ImGui::PushFont(pTabFont);
 
-        if (ImGui::Button(kTab1TitleText, { vTabWidth, vTabHeight })) PluginMenu::iSelectedMenu = 0;
+        if (ImGui::Button(kTab1TitleText, { vTabWidth, vTabHeight })) iSelectedMenu = 0;
         ImGui::SameLine(ImGui::GetStyle().WindowPadding.x + vTabWidth + kBaseTabPadding);
-        if (ImGui::Button(kTab2TitleText, { vTabWidth, vTabHeight })) PluginMenu::iSelectedMenu = 1;
+        if (ImGui::Button(kTab2TitleText, { vTabWidth, vTabHeight })) iSelectedMenu = 1;
         ImGui::SameLine(ImGui::GetStyle().WindowPadding.x + 2 * (vTabWidth + kBaseTabPadding));
-        if (ImGui::Button(kTab3TitleText, { vTabWidth, vTabHeight })) PluginMenu::iSelectedMenu = 2;
+        if (ImGui::Button(kTab3TitleText, { vTabWidth, vTabHeight })) iSelectedMenu = 2;
 
         ImGui::PopFont();
 
         // Description rendering...
         // -------------------------------
 
-        ImGui::PushFont(PluginMenu::pDefFont);
+        ImGui::PushFont(pDefFont);
 
-        switch (PluginMenu::iSelectedMenu)
+        switch (iSelectedMenu)
         {
             case 0:
             {
@@ -411,72 +411,72 @@ void PluginMenu::Render() noexcept
                 // -------------------------------
 
                 ImGui::NewLine();
-                ImGui::PushFont(PluginMenu::pDescFont);
+                ImGui::PushFont(pDescFont);
                 ImGui::Text(kTab1Desc1TitleText);
                 ImGui::Separator();
                 ImGui::PopFont();
                 ImGui::NewLine();
 
-                if (ImGui::Checkbox(kTab1Desc1EnableSoundText, &PluginMenu::soundEnable))
+                if (ImGui::Checkbox(kTab1Desc1EnableSoundText, &soundEnable))
                 {
                     // Enabling/Disabling sound
-                    Playback::SetSoundEnable(PluginMenu::soundEnable);
+                    Playback::SetSoundEnable(soundEnable);
                 }
 
-                if (PluginMenu::soundEnable)
+                if (soundEnable)
                 {
-                    if (ImGui::SliderInt(kTab1Desc1VolumeSoundText, &PluginMenu::soundVolume, 0, 100))
+                    if (ImGui::SliderInt(kTab1Desc1VolumeSoundText, &soundVolume, 0, 100))
                     {
                         // Setting volume
-                        Playback::SetSoundVolume(PluginMenu::soundVolume);
+                        Playback::SetSoundVolume(soundVolume);
                     }
                 }
 
                 ImGui::NewLine();
-                ImGui::PushFont(PluginMenu::pDescFont);
+                ImGui::PushFont(pDescFont);
                 ImGui::Text(kTab1Desc2TitleText);
                 ImGui::Separator();
                 ImGui::PopFont();
                 ImGui::NewLine();
 
-                if (ImGui::Checkbox(kTab1Desc2BalancerText, &PluginMenu::soundBalancer))
+                if (ImGui::Checkbox(kTab1Desc2BalancerText, &soundBalancer))
                 {
                     // Enabling/Disabling sound balancer
-                    Playback::SetSoundBalancer(PluginMenu::soundBalancer);
+                    Playback::SetSoundBalancer(soundBalancer);
                 }
 
-                if (ImGui::Checkbox(kTab1Desc2FilterText, &PluginMenu::soundFilter))
+                if (ImGui::Checkbox(kTab1Desc2FilterText, &soundFilter))
                 {
                     // Enabling/Disabling sound filter
-                    Playback::SetSoundFilter(PluginMenu::soundFilter);
+                    Playback::SetSoundFilter(soundFilter);
                 }
 
                 ImGui::NewLine();
-                ImGui::PushFont(PluginMenu::pDescFont);
+                ImGui::PushFont(pDescFont);
                 ImGui::Text(kTab1Desc3TitleText);
                 ImGui::Separator();
                 ImGui::PopFont();
                 ImGui::NewLine();
 
-                if (ImGui::SliderFloat(kTab1Desc3SpeakerIconScaleText, &PluginMenu::speakerIconScale, 0.2f, 2.0f))
+                if (ImGui::SliderFloat(kTab1Desc3SpeakerIconScaleText, &speakerIconScale, 0.2f, 2.0f))
                 {
-                    SpeakerList::SetSpeakerIconScale(PluginMenu::speakerIconScale);
+                    SpeakerList::SetSpeakerIconScale(speakerIconScale);
                 }
 
-                if (ImGui::SliderInt(kTab1Desc3SpeakerIconOffsetXText, &PluginMenu::speakerIconOffsetX, -500, 500))
+                if (ImGui::SliderInt(kTab1Desc3SpeakerIconOffsetXText, &speakerIconOffsetX, -500, 500))
                 {
-                    SpeakerList::SetSpeakerIconOffsetX(PluginMenu::speakerIconOffsetX);
+                    SpeakerList::SetSpeakerIconOffsetX(speakerIconOffsetX);
                 }
 
-                if (ImGui::SliderInt(kTab1Desc3SpeakerIconOffsetYText, &PluginMenu::speakerIconOffsetY, -500, 500))
+                if (ImGui::SliderInt(kTab1Desc3SpeakerIconOffsetYText, &speakerIconOffsetY, -500, 500))
                 {
-                    SpeakerList::SetSpeakerIconOffsetY(PluginMenu::speakerIconOffsetY);
+                    SpeakerList::SetSpeakerIconOffsetY(speakerIconOffsetY);
                 }
 
                 const auto rstBtnSize = ImGui::GetItemRectSize();
 
                 ImGui::NewLine();
-                ImGui::PushFont(PluginMenu::pDescFont);
+                ImGui::PushFont(pDescFont);
                 ImGui::Text(kTab1Desc4TitleText);
                 ImGui::Separator();
                 ImGui::PopFont();
@@ -488,7 +488,7 @@ void PluginMenu::Render() noexcept
                     SpeakerList::SyncConfigs();
                     Playback::ResetConfigs();
                     Playback::SyncConfigs();
-                    PluginMenu::SyncOptions();
+                    SyncOptions();
                 }
             } break;
             case 1:
@@ -497,7 +497,7 @@ void PluginMenu::Render() noexcept
                 // -------------------------------
 
                 ImGui::NewLine();
-                ImGui::PushFont(PluginMenu::pDescFont);
+                ImGui::PushFont(pDescFont);
                 ImGui::Text(kTab2Desc1TitleText);
                 ImGui::Separator();
                 ImGui::PopFont();
@@ -507,40 +507,40 @@ void PluginMenu::Render() noexcept
 
                 if (!devList.empty())
                 {
-                    if (ImGui::Checkbox(kTab2Desc1EnableMicroText, &PluginMenu::microEnable))
+                    if (ImGui::Checkbox(kTab2Desc1EnableMicroText, &microEnable))
                     {
                         // Enabling/Disabling microphone
-                        Record::SetMicroEnable(PluginMenu::microEnable);
+                        Record::SetMicroEnable(microEnable);
 
-                        if (!PluginMenu::microEnable && PluginMenu::bCheckDevice)
-                            PluginMenu::bCheckDevice = false;
+                        if (!microEnable && bCheckDevice)
+                            bCheckDevice = false;
                     }
 
-                    if (PluginMenu::microEnable)
+                    if (microEnable)
                     {
-                        if (ImGui::SliderInt(kTab2Desc1MicroVolumeText, &PluginMenu::microVolume, 0, 100))
+                        if (ImGui::SliderInt(kTab2Desc1MicroVolumeText, &microVolume, 0, 100))
                         {
                             // Setting volume micro
-                            Record::SetMicroVolume(PluginMenu::microVolume);
+                            Record::SetMicroVolume(microVolume);
                         }
 
-                        if (ImGui::BeginCombo(kTab2Desc1DeviceNameText, devList[PluginMenu::deviceIndex].c_str()))
+                        if (ImGui::BeginCombo(kTab2Desc1DeviceNameText, devList[deviceIndex].c_str()))
                         {
-                            for (int i { 0 }; i < devList.size(); ++i)
+                            for (int i = 0; i < devList.size(); ++i)
                             {
-                                if (ImGui::Selectable(devList[i].c_str(), i == PluginMenu::deviceIndex))
-                                    Record::SetMicroDevice(PluginMenu::deviceIndex = i);
+                                if (ImGui::Selectable(devList[i].c_str(), i == deviceIndex))
+                                    Record::SetMicroDevice(deviceIndex = i);
 
-                                if (i == PluginMenu::deviceIndex)
+                                if (i == deviceIndex)
                                     ImGui::SetItemDefaultFocus();
                             }
 
                             ImGui::EndCombo();
                         }
 
-                        if (ImGui::Checkbox(kTab2Desc1CheckDeviceText, &PluginMenu::bCheckDevice))
+                        if (ImGui::Checkbox(kTab2Desc1CheckDeviceText, &bCheckDevice))
                         {
-                            if (PluginMenu::bCheckDevice) Record::StartChecking();
+                            if (bCheckDevice) Record::StartChecking();
                             else Record::StopChecking();
                         }
                     }
@@ -551,35 +551,35 @@ void PluginMenu::Render() noexcept
                 }
 
                 ImGui::NewLine();
-                ImGui::PushFont(PluginMenu::pDescFont);
+                ImGui::PushFont(pDescFont);
                 ImGui::Text(kTab2Desc2TitleText);
                 ImGui::Separator();
                 ImGui::PopFont();
                 ImGui::NewLine();
 
-                if (ImGui::SliderFloat(kTab2Desc2MicroIconScaleText, &PluginMenu::microIconScale, 0.2f, 2.0f))
+                if (ImGui::SliderFloat(kTab2Desc2MicroIconScaleText, &microIconScale, 0.2f, 2.0f))
                 {
                     // Setting scale micro icon
-                    MicroIcon::SetMicroIconScale(PluginMenu::microIconScale);
+                    MicroIcon::SetMicroIconScale(microIconScale);
                 }
 
-                if (float screenWidth { 0.f }, screenHeight { 0.f };
+                if (float screenWidth = 0.f, screenHeight = 0.f;
                     Render::GetScreenSize(screenWidth, screenHeight))
                 {
-                    if (ImGui::SliderInt(kTab2Desc2MicroIconPositionXText, &PluginMenu::microIconPositionX, 0, screenWidth))
-                        MicroIcon::SetMicroIconPositionX(PluginMenu::microIconPositionX);
+                    if (ImGui::SliderInt(kTab2Desc2MicroIconPositionXText, &microIconPositionX, 0, screenWidth))
+                        MicroIcon::SetMicroIconPositionX(microIconPositionX);
 
-                    if (ImGui::SliderInt(kTab2Desc2MicroIconPositionYText, &PluginMenu::microIconPositionY, 0, screenHeight))
-                        MicroIcon::SetMicroIconPositionY(PluginMenu::microIconPositionY);
+                    if (ImGui::SliderInt(kTab2Desc2MicroIconPositionYText, &microIconPositionY, 0, screenHeight))
+                        MicroIcon::SetMicroIconPositionY(microIconPositionY);
                 }
 
                 if (ImGui::Button(kTab2Desc2MicroIconMoveText, ImGui::GetItemRectSize()))
-                    PluginMenu::bMicroMovement = true;
+                    bMicroMovement = true;
 
                 const auto rstBtnSize = ImGui::GetItemRectSize();
 
                 ImGui::NewLine();
-                ImGui::PushFont(PluginMenu::pDescFont);
+                ImGui::PushFont(pDescFont);
                 ImGui::Text(kTab1Desc4TitleText);
                 ImGui::Separator();
                 ImGui::PopFont();
@@ -591,7 +591,7 @@ void PluginMenu::Render() noexcept
                     MicroIcon::SyncConfigs();
                     Record::ResetConfigs();
                     Record::SyncConfigs();
-                    PluginMenu::SyncOptions();
+                    SyncOptions();
                 }
             } break;
             case 2:
@@ -600,7 +600,7 @@ void PluginMenu::Render() noexcept
                 // -------------------------------
 
                 ImGui::NewLine();
-                ImGui::PushFont(PluginMenu::pDescFont);
+                ImGui::PushFont(pDescFont);
                 ImGui::Text(kTab3Desc1TitleText);
                 ImGui::Separator();
                 ImGui::PopFont();
@@ -608,8 +608,8 @@ void PluginMenu::Render() noexcept
 
                 ImGui::PushItemWidth(-1);
                 const ImVec2 oldCurPos = ImGui::GetCursorPos();
-                ImGui::InputText("##label", PluginMenu::nBuffer.data(), PluginMenu::nBuffer.size());
-                if (!ImGui::IsItemActive() && PluginMenu::nBuffer[0] == '\0')
+                ImGui::InputText("##label", nBuffer.data(), nBuffer.size());
+                if (!ImGui::IsItemActive() && nBuffer[0] == '\0')
                 {
                     const ImVec2 newCurPos = ImGui::GetCursorPos();
                     const float inputTextHeight = newCurPos.y - oldCurPos.y;
@@ -626,7 +626,7 @@ void PluginMenu::Render() noexcept
 
                 WORD iPlayerId;
 
-                if (_snscanf_s(PluginMenu::nBuffer.data(), PluginMenu::nBuffer.size(), "%hu", &iPlayerId) == 0)
+                if (_snscanf_s(nBuffer.data(), nBuffer.size(), "%hu", &iPlayerId) == 0)
                     iPlayerId = SV::kNonePlayer;
 
                 ImGui::PushItemWidth(listWidth);
@@ -660,15 +660,15 @@ void PluginMenu::Render() noexcept
                     {
                         if (const auto pPlayerPool = pNetGame->GetPlayerPool(); pPlayerPool != nullptr)
                         {
-                            for (WORD playerId { 0 }; playerId < MAX_PLAYERS; ++playerId)
+                            for (WORD playerId = 0; playerId < MAX_PLAYERS; ++playerId)
                             {
                                 if (pPlayerPool->IsConnected(playerId) == FALSE)
                                     continue;
 
                                 if (const auto playerName = pPlayerPool->GetName(playerId); playerName != nullptr)
                                 {
-                                    if ((PluginMenu::nBuffer[0] == '\0' || (iPlayerId != SV::kNonePlayer ? playerId == iPlayerId :
-                                         static_cast<bool>(std::strstr(playerName, PluginMenu::nBuffer.data())))) &&
+                                    if ((nBuffer[0] == '\0' || (iPlayerId != SV::kNonePlayer ? playerId == iPlayerId :
+                                         static_cast<bool>(std::strstr(playerName, nBuffer.data())))) &&
                                         !BlackList::IsPlayerBlocked(playerId))
                                     {
                                         ImGui::PushID(playerId);
@@ -728,12 +728,10 @@ void PluginMenu::Render() noexcept
                     ImGuiWindowFlags_NoMove |
                     ImGuiWindowFlags_NoResize))
                 {
-                    const auto& blackList = BlackList::RequestBlackList();
-
-                    for (const auto& playerInfo : blackList)
+                    for (const auto& playerInfo : BlackList::RequestBlackList())
                     {
-                        if (!(PluginMenu::nBuffer[0] == '\0' || (iPlayerId != SV::kNonePlayer ? playerInfo.playerId == iPlayerId :
-                            static_cast<bool>(std::strstr(playerInfo.playerName.c_str(), PluginMenu::nBuffer.data()))))) continue;
+                        if (!(nBuffer[0] == '\0' || (iPlayerId != SV::kNonePlayer ? playerInfo.playerId == iPlayerId :
+                            static_cast<bool>(std::strstr(playerInfo.playerName.c_str(), nBuffer.data()))))) continue;
 
                         const ImVec2 oldCurPos = ImGui::GetCursorPos();
                         const ImVec2 oldCurScreenPos = ImGui::GetCursorScreenPos();
@@ -791,30 +789,30 @@ void PluginMenu::Render() noexcept
 
 void PluginMenu::Update() noexcept
 {
-    if (PluginMenu::blurLevelDeviation != 0.f)
+    if (blurLevelDeviation != 0.f)
     {
-        PluginMenu::blurLevel += PluginMenu::blurLevelDeviation;
+        blurLevel += blurLevelDeviation;
 
-        if (PluginMenu::blurLevel > 100.f)
+        if (blurLevel > 100.f)
         {
-            PluginMenu::blurLevelDeviation = 0.f;
-            PluginMenu::blurLevel = 100.f;
+            blurLevelDeviation = 0.f;
+            blurLevel          = 100.f;
         }
-        else if (PluginMenu::blurLevel < 0.f)
+        else if (blurLevel < 0.f)
         {
-            PluginMenu::blurLevelDeviation = 0.f;
-            PluginMenu::blurLevel = 0.f;
+            blurLevelDeviation = 0.f;
+            blurLevel          = 0.f;
         }
     }
 
-    if (PluginMenu::bMicroMovement)
+    if (bMicroMovement)
     {
-        static bool movementInitStatus { false };
-        static int oldMousePosX { 0 }, oldMousePosY { 0 };
+        static bool movementInitStatus = false;
+        static int oldMousePosX = 0, oldMousePosY = 0;
 
         if (!movementInitStatus)
         {
-            PluginMenu::Hide();
+            Hide();
 
             oldMousePosX = MicroIcon::GetMicroIconPositionX();
             oldMousePosY = MicroIcon::GetMicroIconPositionY();
@@ -836,9 +834,9 @@ void PluginMenu::Update() noexcept
             }
 
             movementInitStatus = false;
-            PluginMenu::bMicroMovement = false;
+            bMicroMovement     = false;
 
-            PluginMenu::Show();
+            Show();
         }
     }
 }
@@ -846,21 +844,19 @@ void PluginMenu::Update() noexcept
 LRESULT PluginMenu::WindowProc(const HWND hWnd, const UINT uMsg,
     const WPARAM wParam, const LPARAM lParam) noexcept
 {
-    if (!PluginMenu::initStatus)
-        return FALSE;
+    if (!initStatus) return FALSE;
 
     if (uMsg == WM_KEYDOWN && static_cast<BYTE>(wParam) == 0x7A)
     {
-        if (!PluginMenu::Show()) PluginMenu::Hide();
+        if (!Show()) Hide();
         return TRUE;
     }
 
-    if (!PluginMenu::showStatus && !PluginMenu::bMicroMovement)
-        return FALSE;
+    if (!showStatus && !bMicroMovement) return FALSE;
 
     if (uMsg == WM_KEYDOWN && static_cast<BYTE>(wParam) == 0x1B)
     {
-        PluginMenu::Hide();
+        Hide();
         return TRUE;
     }
 
@@ -869,64 +865,56 @@ LRESULT PluginMenu::WindowProc(const HWND hWnd, const UINT uMsg,
 
 void PluginMenu::SyncOptions() noexcept
 {
-    PluginMenu::soundEnable = Playback::GetSoundEnable();
-    PluginMenu::soundVolume = Playback::GetSoundVolume();
-    PluginMenu::soundBalancer = Playback::GetSoundBalancer();
-    PluginMenu::soundFilter = Playback::GetSoundFilter();
+    soundEnable   = Playback::GetSoundEnable();
+    soundVolume   = Playback::GetSoundVolume();
+    soundBalancer = Playback::GetSoundBalancer();
+    soundFilter   = Playback::GetSoundFilter();
 
-    PluginMenu::speakerIconScale = SpeakerList::GetSpeakerIconScale();
-    PluginMenu::speakerIconOffsetX = SpeakerList::GetSpeakerIconOffsetX();
-    PluginMenu::speakerIconOffsetY = SpeakerList::GetSpeakerIconOffsetY();
+    speakerIconScale   = SpeakerList::GetSpeakerIconScale();
+    speakerIconOffsetX = SpeakerList::GetSpeakerIconOffsetX();
+    speakerIconOffsetY = SpeakerList::GetSpeakerIconOffsetY();
 
-    PluginMenu::microEnable = Record::GetMicroEnable();
-    PluginMenu::microVolume = Record::GetMicroVolume();
-    PluginMenu::deviceIndex = Record::GetMicroDevice();
+    microEnable = Record::GetMicroEnable();
+    microVolume = Record::GetMicroVolume();
+    deviceIndex = Record::GetMicroDevice();
 
-    PluginMenu::microIconScale = MicroIcon::GetMicroIconScale();
-    PluginMenu::microIconPositionX = MicroIcon::GetMicroIconPositionX();
-    PluginMenu::microIconPositionY = MicroIcon::GetMicroIconPositionY();
-    PluginMenu::microIconColor = MicroIcon::GetMicroIconColor();
-    PluginMenu::microIconAngle = MicroIcon::GetMicroIconAngle();
+    microIconScale     = MicroIcon::GetMicroIconScale();
+    microIconPositionX = MicroIcon::GetMicroIconPositionX();
+    microIconPositionY = MicroIcon::GetMicroIconPositionY();
+    microIconColor     = MicroIcon::GetMicroIconColor();
+    microIconAngle     = MicroIcon::GetMicroIconAngle();
 }
 
-bool PluginMenu::initStatus { false };
-bool PluginMenu::showStatus { false };
-
-float PluginMenu::blurLevel { 0.f };
-float PluginMenu::blurLevelDeviation { 0.f };
-BlurEffectPtr PluginMenu::blurEffect { nullptr };
-
-TexturePtr PluginMenu::tLogo { nullptr };
-
-ImFont* PluginMenu::pTitleFont { nullptr };
-ImFont* PluginMenu::pTabFont { nullptr };
-ImFont* PluginMenu::pDescFont { nullptr };
-ImFont* PluginMenu::pDefFont { nullptr };
-
-Memory::PatchPtr PluginMenu::openChatFuncPatch { nullptr };
-Memory::PatchPtr PluginMenu::openScoreboardFuncPatch { nullptr };
-Memory::PatchPtr PluginMenu::switchModeFuncPatch { nullptr };
-
-int PluginMenu::prevChatMode { 0 };
-
-bool PluginMenu::soundEnable { false };
-int PluginMenu::soundVolume { 0 };
-bool PluginMenu::soundBalancer { false };
-bool PluginMenu::soundFilter { false };
-float PluginMenu::speakerIconScale { 0.f };
-int PluginMenu::speakerIconOffsetX { 0 };
-int PluginMenu::speakerIconOffsetY { 0 };
-
-bool PluginMenu::microEnable { false };
-int PluginMenu::microVolume { 0 };
-int PluginMenu::deviceIndex { 0 };
-float PluginMenu::microIconScale { 0.f };
-int PluginMenu::microIconPositionX { 0 };
-int PluginMenu::microIconPositionY { 0 };
-D3DCOLOR PluginMenu::microIconColor { 0 };
-float PluginMenu::microIconAngle { 0.f };
-
-int PluginMenu::iSelectedMenu { 0 };
-bool PluginMenu::bCheckDevice { false };
-bool PluginMenu::bMicroMovement { false };
-std::array<char, 64> PluginMenu::nBuffer {};
+bool                        PluginMenu::initStatus = false;
+bool                        PluginMenu::showStatus = false;
+float                       PluginMenu::blurLevel = 0.f;
+float                       PluginMenu::blurLevelDeviation = 0.f;
+BlurEffect                  PluginMenu::blurEffect;
+Texture                     PluginMenu::tLogo;
+ImFont*                     PluginMenu::pTitleFont = nullptr;
+ImFont*                     PluginMenu::pTabFont = nullptr;
+ImFont*                     PluginMenu::pDescFont = nullptr;
+ImFont*                     PluginMenu::pDefFont = nullptr;
+Memory::Patch<sizeof(BYTE)> PluginMenu::openChatFuncPatch;
+Memory::Patch<sizeof(BYTE)> PluginMenu::openScoreboardFuncPatch;
+Memory::Patch<sizeof(BYTE)> PluginMenu::switchModeFuncPatch;
+int                         PluginMenu::prevChatMode = 0;
+bool                        PluginMenu::soundEnable = false;
+int                         PluginMenu::soundVolume = 0;
+bool                        PluginMenu::soundBalancer = false;
+bool                        PluginMenu::soundFilter = false;
+float                       PluginMenu::speakerIconScale = 0.f;
+int                         PluginMenu::speakerIconOffsetX = 0;
+int                         PluginMenu::speakerIconOffsetY = 0;
+bool                        PluginMenu::microEnable = false;
+int                         PluginMenu::microVolume = 0;
+int                         PluginMenu::deviceIndex = 0;
+float                       PluginMenu::microIconScale = 0.f;
+int                         PluginMenu::microIconPositionX = 0;
+int                         PluginMenu::microIconPositionY = 0;
+D3DCOLOR                    PluginMenu::microIconColor = 0;
+float                       PluginMenu::microIconAngle = 0.f;
+int                         PluginMenu::iSelectedMenu = 0;
+bool                        PluginMenu::bCheckDevice = false;
+bool                        PluginMenu::bMicroMovement = false;
+std::array<char, 64>        PluginMenu::nBuffer;

@@ -11,5 +11,5 @@
 
 DWORD ControlPacket::GetFullSize() const noexcept
 {
-    return sizeof(*this) + this->length;
+    return sizeof(*this) + length;
 }

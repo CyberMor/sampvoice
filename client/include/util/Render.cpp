@@ -34,13 +34,13 @@ bool Render::Init() noexcept
 
     _hook_direct3d_create9 = Memory::JumpHook((LPVOID)(GameDirect3DCreate9), &HookDirect3DCreate9);
 
-    _device_init_callbacks.clear();
-    _before_reset_callbacks.clear();
-    _begin_scene_callbacks.clear();
-    _render_callbacks.clear();
-    _end_scene_callbacks.clear();
-    _after_reset_callbacks.clear();
-    _device_free_callbacks.clear();
+    _device_init_callback = nullptr;
+    _before_reset_callback = nullptr;
+    _begin_scene_callback = nullptr;
+    _render_callback = nullptr;
+    _end_scene_callback = nullptr;
+    _after_reset_callback = nullptr;
+    _device_free_callback = nullptr;
 
     _device_mutex.lock();
     _direct_interface = nullptr;
@@ -63,13 +63,13 @@ void Render::Free() noexcept
 
         _hook_direct3d_create9 = {};
 
-        _device_init_callbacks.clear();
-        _before_reset_callbacks.clear();
-        _begin_scene_callbacks.clear();
-        _render_callbacks.clear();
-        _end_scene_callbacks.clear();
-        _after_reset_callbacks.clear();
-        _device_free_callbacks.clear();
+        _device_init_callback = nullptr;
+        _before_reset_callback = nullptr;
+        _begin_scene_callback = nullptr;
+        _render_callback = nullptr;
+        _end_scene_callback = nullptr;
+        _after_reset_callback = nullptr;
+        _device_free_callback = nullptr;
 
         _device_mutex.lock();
         _direct_interface = nullptr;
@@ -153,179 +153,39 @@ bool Render::ConvertScreenYValueToBaseYValue(const float screen_value, float& ba
     return true;
 }
 
-std::size_t Render::AddDeviceInitCallback(DeviceInitCallback callback) noexcept
+void Render::SetDeviceInitCallback(DeviceInitCallback&& callback) noexcept
 {
-    if (!_init_status) return -1;
-
-    for (std::size_t i = 0; i < _device_init_callbacks.size(); ++i)
-    {
-        if (_device_init_callbacks[i] == nullptr)
-        {
-            _device_init_callbacks[i] = std::move(callback);
-            return i;
-        }
-    }
-
-    _device_init_callbacks.emplace_back(std::move(callback));
-    return _device_init_callbacks.size() - 1;
+    if (_init_status) _device_init_callback = std::move(callback);
 }
 
-std::size_t Render::AddBeforeResetCallback(BeforeResetCallback callback) noexcept
+void Render::SetBeforeResetCallback(BeforeResetCallback&& callback) noexcept
 {
-    if (!_init_status) return -1;
-
-    for (std::size_t i = 0; i < _before_reset_callbacks.size(); ++i)
-    {
-        if (_before_reset_callbacks[i] == nullptr)
-        {
-            _before_reset_callbacks[i] = std::move(callback);
-            return i;
-        }
-    }
-
-    _before_reset_callbacks.emplace_back(std::move(callback));
-    return _before_reset_callbacks.size() - 1;
+    if (_init_status) _before_reset_callback = std::move(callback);
 }
 
-std::size_t Render::AddBeginSceneCallback(BeginSceneCallback callback) noexcept
+void Render::SetBeginSceneCallback(BeginSceneCallback&& callback) noexcept
 {
-    if (!_init_status) return -1;
-
-    for (std::size_t i = 0; i < _begin_scene_callbacks.size(); ++i)
-    {
-        if (_begin_scene_callbacks[i] == nullptr)
-        {
-            _begin_scene_callbacks[i] = std::move(callback);
-            return i;
-        }
-    }
-
-    _begin_scene_callbacks.emplace_back(std::move(callback));
-    return _begin_scene_callbacks.size() - 1;
+    if (_init_status) _begin_scene_callback = std::move(callback);
 }
 
-std::size_t Render::AddRenderCallback(RenderCallback callback) noexcept
+void Render::SetRenderCallback(RenderCallback&& callback) noexcept
 {
-    if (!_init_status) return -1;
-
-    for (std::size_t i = 0; i < _render_callbacks.size(); ++i)
-    {
-        if (_render_callbacks[i] == nullptr)
-        {
-            _render_callbacks[i] = std::move(callback);
-            return i;
-        }
-    }
-
-    _render_callbacks.emplace_back(std::move(callback));
-    return _render_callbacks.size() - 1;
+    if (_init_status) _render_callback = std::move(callback);
 }
 
-std::size_t Render::AddEndSceneCallback(EndSceneCallback callback) noexcept
+void Render::SetEndSceneCallback(EndSceneCallback&& callback) noexcept
 {
-    if (!_init_status) return -1;
-
-    for (std::size_t i = 0; i < _end_scene_callbacks.size(); ++i)
-    {
-        if (_end_scene_callbacks[i] == nullptr)
-        {
-            _end_scene_callbacks[i] = std::move(callback);
-            return i;
-        }
-    }
-
-    _end_scene_callbacks.emplace_back(std::move(callback));
-    return _end_scene_callbacks.size() - 1;
+    if (_init_status) _end_scene_callback = std::move(callback);
 }
 
-std::size_t Render::AddAfterResetCallback(AfterResetCallback callback) noexcept
+void Render::SetAfterResetCallback(AfterResetCallback&& callback) noexcept
 {
-    if (!_init_status) return -1;
-
-    for (std::size_t i = 0; i < _after_reset_callbacks.size(); ++i)
-    {
-        if (_after_reset_callbacks[i] == nullptr)
-        {
-            _after_reset_callbacks[i] = std::move(callback);
-            return i;
-        }
-    }
-
-    _after_reset_callbacks.emplace_back(std::move(callback));
-    return _after_reset_callbacks.size() - 1;
+    if (_init_status) _after_reset_callback = std::move(callback);
 }
 
-std::size_t Render::AddDeviceFreeCallback(DeviceFreeCallback callback) noexcept
+void Render::SetDeviceFreeCallback(DeviceFreeCallback&& callback) noexcept
 {
-    if (!_init_status) return -1;
-
-    for (std::size_t i = 0; i < _device_free_callbacks.size(); ++i)
-    {
-        if (_device_free_callbacks[i] == nullptr)
-        {
-            _device_free_callbacks[i] = std::move(callback);
-            return i;
-        }
-    }
-
-    _device_free_callbacks.emplace_back(std::move(callback));
-    return _device_free_callbacks.size() - 1;
-}
-
-void Render::RemoveDeviceInitCallback(const std::size_t callback) noexcept
-{
-    if (_init_status && callback < _device_init_callbacks.size())
-    {
-        _device_init_callbacks[callback] = nullptr;
-    }
-}
-
-void Render::RemoveBeforeResetCallback(const std::size_t callback) noexcept
-{
-    if (_init_status && callback < _before_reset_callbacks.size())
-    {
-        _before_reset_callbacks[callback] = nullptr;
-    }
-}
-
-void Render::RemoveBeginSceneCallback(const std::size_t callback) noexcept
-{
-    if (_init_status && callback < _begin_scene_callbacks.size())
-    {
-        _begin_scene_callbacks[callback] = nullptr;
-    }
-}
-
-void Render::RemoveRenderCallback(const std::size_t callback) noexcept
-{
-    if (_init_status && callback < _render_callbacks.size())
-    {
-        _render_callbacks[callback] = nullptr;
-    }
-}
-
-void Render::RemoveEndSceneCallback(const std::size_t callback) noexcept
-{
-    if (_init_status && callback < _end_scene_callbacks.size())
-    {
-        _end_scene_callbacks[callback] = nullptr;
-    }
-}
-
-void Render::RemoveAfterResetCallback(const std::size_t callback) noexcept
-{
-    if (_init_status && callback < _after_reset_callbacks.size())
-    {
-        _after_reset_callbacks[callback] = nullptr;
-    }
-}
-
-void Render::RemoveDeviceFreeCallback(const std::size_t callback) noexcept
-{
-    if (_init_status && callback < _device_free_callbacks.size())
-    {
-        _device_free_callbacks[callback] = nullptr;
-    }
+    if (_init_status) _device_free_callback = std::move(callback);
 }
 
 // --------------------------------------------------------------------------------------------------
@@ -347,10 +207,7 @@ HRESULT __stdcall Render::IDirect3DDevice9Hook::Present(CONST RECT* const source
 {
     if (_orig_interface == _device_interface && !_reset_status)
     {
-        for (const auto& render_callback : _render_callbacks)
-        {
-            if (render_callback != nullptr) render_callback();
-        }
+        if (_render_callback != nullptr) _render_callback();
     }
 
     return _orig_interface->Present(source_rect, dest_rect, dest_window_override, dirty_region);
@@ -376,10 +233,7 @@ ULONG __stdcall Render::IDirect3DDevice9Hook::Release() noexcept
     {
         if (_orig_interface == _device_interface)
         {
-            for (const auto& device_free_callback : _device_free_callbacks)
-            {
-                if (device_free_callback != nullptr) device_free_callback();
-            }
+            if (_device_free_callback != nullptr) _device_free_callback();
 
             _device_mutex.lock();
             _direct_interface = nullptr;
@@ -467,10 +321,7 @@ HRESULT __stdcall Render::IDirect3DDevice9Hook::Reset(D3DPRESENT_PARAMETERS* con
 {
     if (_orig_interface == _device_interface && !_reset_status)
     {
-        for (const auto& before_reset_callback : _before_reset_callbacks)
-        {
-            if (before_reset_callback != nullptr) before_reset_callback();
-        }
+        if (_before_reset_callback != nullptr) _before_reset_callback();
     }
 
     _reset_status = true;
@@ -485,10 +336,8 @@ HRESULT __stdcall Render::IDirect3DDevice9Hook::Reset(D3DPRESENT_PARAMETERS* con
 
         if (_reset_status)
         {
-            for (const auto& after_reset_callback : _after_reset_callbacks)
-            {
-                if (after_reset_callback != nullptr) after_reset_callback(_device_interface, _device_parameters);
-            }
+            if (_after_reset_callback != nullptr)
+                _after_reset_callback(_device_interface, _device_parameters);
         }
 
         _reset_status = false;
@@ -645,10 +494,7 @@ HRESULT __stdcall Render::IDirect3DDevice9Hook::BeginScene() noexcept
     {
         if (!_scene_status)
         {
-            for (const auto& begin_scene_callback : _begin_scene_callbacks)
-            {
-                if (begin_scene_callback != nullptr) begin_scene_callback();
-            }
+            if (_begin_scene_callback != nullptr) _begin_scene_callback();
         }
 
         _scene_status = true;
@@ -663,10 +509,7 @@ HRESULT __stdcall Render::IDirect3DDevice9Hook::EndScene() noexcept
     {
         if (_scene_status)
         {
-            for (const auto& end_scene_callback : _end_scene_callbacks)
-            {
-                if (end_scene_callback != nullptr) end_scene_callback();
-            }
+            if (_end_scene_callback != nullptr) _end_scene_callback();
         }
 
         _scene_status = false;
@@ -1232,10 +1075,7 @@ HRESULT __stdcall Render::IDirect3D9Hook::CreateDevice(const UINT adapter, const
 
     if (_direct_interface != nullptr)
     {
-        for (const auto& device_free_callback : _device_free_callbacks)
-        {
-            if (device_free_callback != nullptr) device_free_callback();
-        }
+        if (_device_free_callback != nullptr) _device_free_callback();
     }
 
     _device_mutex.lock();
@@ -1244,11 +1084,8 @@ HRESULT __stdcall Render::IDirect3D9Hook::CreateDevice(const UINT adapter, const
     _device_parameters = *presentation_parameters;
     _device_mutex.unlock();
 
-    for (const auto& device_init_callback : _device_init_callbacks)
-    {
-        if (device_init_callback != nullptr) device_init_callback
-            (_direct_interface, _device_interface, _device_parameters);
-    }
+    if (_device_init_callback != nullptr)
+        _device_init_callback(_direct_interface, _device_interface, _device_parameters);
 
     *out_returned_device_interface = hook_device;
 
@@ -1287,12 +1124,12 @@ IDirect3D9*           Render::_direct_interface = nullptr;
 IDirect3DDevice9*     Render::_device_interface = nullptr;
 D3DPRESENT_PARAMETERS Render::_device_parameters {};
 
-std::vector<Render::DeviceInitCallback>  Render::_device_init_callbacks;
-std::vector<Render::BeforeResetCallback> Render::_before_reset_callbacks;
-std::vector<Render::BeginSceneCallback>  Render::_begin_scene_callbacks;
-std::vector<Render::RenderCallback>      Render::_render_callbacks;
-std::vector<Render::EndSceneCallback>    Render::_end_scene_callbacks;
-std::vector<Render::AfterResetCallback>  Render::_after_reset_callbacks;
-std::vector<Render::DeviceFreeCallback>  Render::_device_free_callbacks;
+Render::DeviceInitCallback  Render::_device_init_callback;
+Render::BeforeResetCallback Render::_before_reset_callback;
+Render::BeginSceneCallback  Render::_begin_scene_callback;
+Render::RenderCallback      Render::_render_callback;
+Render::EndSceneCallback    Render::_end_scene_callback;
+Render::AfterResetCallback  Render::_after_reset_callback;
+Render::DeviceFreeCallback  Render::_device_free_callback;
 
 Memory::JumpHook Render::_hook_direct3d_create9;

@@ -47,11 +47,8 @@ public:
 
 public:
 
-    static std::size_t AddLoadCallback(LoadCallback callback) noexcept;
-    static std::size_t AddExitCallback(ExitCallback callback) noexcept;
-
-    static void RemoveLoadCallback(std::size_t callback) noexcept;
-    static void RemoveExitCallback(std::size_t callback) noexcept;
+    static void SetLoadCallback(LoadCallback&& callback) noexcept;
+    static void SetExitCallback(ExitCallback&& callback) noexcept;
 
 private:
 
@@ -63,8 +60,8 @@ private:
     static bool _init_status;
     static bool _load_status;
 
-    static std::vector<LoadCallback> _load_callbacks;
-    static std::vector<ExitCallback> _exit_callbacks;
+    static LoadCallback _load_callback;
+    static ExitCallback _exit_callback;
 
     static Memory::JumpHook _hook_samp_init;
     static Memory::JumpHook _hook_samp_free;

@@ -13,356 +13,348 @@
 
 #include <util/Render.h>
 
-bool PluginConfig::Load(const std::string& configFilePath)
+bool PluginConfig::Load(const std::string& path)
 {
-    constexpr auto kFileMode = std::ios::in | std::ios::binary;
+    std::fstream file { path, std::ios::in | std::ios::binary };
+    if (!file || !file.is_open()) return false;
 
-    std::ifstream configFile { configFilePath, kFileMode };
+    Reset();
 
-    if (!configFile || !configFile.is_open())
+    if (int config_version; !file.read(reinterpret_cast<char*>(&config_version),
+        sizeof(config_version)) || config_version != kConfigVersion)
+    {
         return false;
+    }
 
-    PluginConfig::Reset();
+    return _load_status =
 
-    if (int configVersion { -1 };
-        !configFile.read(reinterpret_cast<char*>(&configVersion), sizeof(configVersion)) ||
-        configVersion != kConfigVersion) return false;
+        file.read(reinterpret_cast<char*>(&_playback_loaded),       sizeof(_playback_loaded))       &&
+        file.read(reinterpret_cast<char*>(&_speaker_loaded),        sizeof(_speaker_loaded))        &&
+        file.read(reinterpret_cast<char*>(&_record_loaded),         sizeof(_record_loaded))         &&
+        file.read(reinterpret_cast<char*>(&_micro_loaded),          sizeof(_micro_loaded))          &&
 
-    return PluginConfig::loadStatus =
+        file.read(reinterpret_cast<char*>(&_sound_enable),          sizeof(_sound_enable))          &&
+        file.read(reinterpret_cast<char*>(&_sound_volume),          sizeof(_sound_volume))          &&
+        file.read(reinterpret_cast<char*>(&_sound_balancer),        sizeof(_sound_balancer))        &&
+        file.read(reinterpret_cast<char*>(&_sound_filter),          sizeof(_sound_filter))          &&
 
-        configFile.read(reinterpret_cast<char*>(&playbackLoaded),     sizeof(playbackLoaded))     &&
-        configFile.read(reinterpret_cast<char*>(&speakerLoaded),      sizeof(speakerLoaded))      &&
-        configFile.read(reinterpret_cast<char*>(&recordLoaded),       sizeof(recordLoaded))       &&
-        configFile.read(reinterpret_cast<char*>(&microLoaded),        sizeof(microLoaded))        &&
+        file.read(reinterpret_cast<char*>(&_speaker_icon_scale),    sizeof(_speaker_icon_scale))    &&
+        file.read(reinterpret_cast<char*>(&_speaker_icon_offset_x), sizeof(_speaker_icon_offset_x)) &&
+        file.read(reinterpret_cast<char*>(&_speaker_icon_offset_y), sizeof(_speaker_icon_offset_y)) &&
 
-        configFile.read(reinterpret_cast<char*>(&soundEnable),        sizeof(soundEnable))        &&
-        configFile.read(reinterpret_cast<char*>(&soundVolume),        sizeof(soundVolume))        &&
-        configFile.read(reinterpret_cast<char*>(&soundBalancer),      sizeof(soundBalancer))      &&
-        configFile.read(reinterpret_cast<char*>(&soundFilter),        sizeof(soundFilter))        &&
+        file.read(reinterpret_cast<char*>(&_micro_enable),          sizeof(_micro_enable))          &&
+        file.read(reinterpret_cast<char*>(&_micro_volume),          sizeof(_micro_volume))          &&
+        std::getline(file, _device_name, '\0')                                                      &&
 
-        configFile.read(reinterpret_cast<char*>(&speakerIconScale),   sizeof(speakerIconScale))   &&
-        configFile.read(reinterpret_cast<char*>(&speakerIconOffsetX), sizeof(speakerIconOffsetX)) &&
-        configFile.read(reinterpret_cast<char*>(&speakerIconOffsetY), sizeof(speakerIconOffsetY)) &&
-
-        configFile.read(reinterpret_cast<char*>(&microEnable),        sizeof(microEnable))        &&
-        configFile.read(reinterpret_cast<char*>(&microVolume),        sizeof(microVolume))        &&
-        std::getline(configFile, deviceName, '\0')                                                &&
-
-        configFile.read(reinterpret_cast<char*>(&microIconScale),     sizeof(microIconScale))     &&
-        configFile.read(reinterpret_cast<char*>(&microIconPositionX), sizeof(microIconPositionX)) &&
-        configFile.read(reinterpret_cast<char*>(&microIconPositionY), sizeof(microIconPositionY)) &&
-        configFile.read(reinterpret_cast<char*>(&microIconColor),     sizeof(microIconColor))     &&
-        configFile.read(reinterpret_cast<char*>(&microIconAngle),     sizeof(microIconAngle))     ;
+        file.read(reinterpret_cast<char*>(&_micro_icon_scale),      sizeof(_micro_icon_scale))      &&
+        file.read(reinterpret_cast<char*>(&_micro_icon_position_x), sizeof(_micro_icon_position_x)) &&
+        file.read(reinterpret_cast<char*>(&_micro_icon_position_y), sizeof(_micro_icon_position_y)) &&
+        file.read(reinterpret_cast<char*>(&_micro_icon_color),      sizeof(_micro_icon_color))      &&
+        file.read(reinterpret_cast<char*>(&_micro_icon_angle),      sizeof(_micro_icon_angle))      ;
 }
 
-bool PluginConfig::Save(const std::string& configFilePath)
+bool PluginConfig::Save(const std::string& path)
 {
-    constexpr auto kFileMode = std::ios::out | std::ios::binary | std::ios::trunc;
+    std::fstream file { path, std::ios::out | std::ios::binary | std::ios::trunc };
+    if (!file || !file.is_open()) return false;
 
-    std::ofstream configFile { configFilePath, kFileMode };
+    return file.write(reinterpret_cast<const char*>(&kConfigVersion),         sizeof(kConfigVersion))         &&
 
-    if (!configFile || !configFile.is_open())
-        return false;
+           file.write(reinterpret_cast<const char*>(&_playback_loaded),       sizeof(_playback_loaded))       &&
+           file.write(reinterpret_cast<const char*>(&_speaker_loaded),        sizeof(_speaker_loaded))        &&
+           file.write(reinterpret_cast<const char*>(&_record_loaded),         sizeof(_record_loaded))         &&
+           file.write(reinterpret_cast<const char*>(&_micro_loaded),          sizeof(_micro_loaded))          &&
 
-    const auto configVersion { kConfigVersion };
+           file.write(reinterpret_cast<const char*>(&_sound_enable),          sizeof(_sound_enable))          &&
+           file.write(reinterpret_cast<const char*>(&_sound_volume),          sizeof(_sound_volume))          &&
+           file.write(reinterpret_cast<const char*>(&_sound_balancer),        sizeof(_sound_balancer))        &&
+           file.write(reinterpret_cast<const char*>(&_sound_filter),          sizeof(_sound_filter))          &&
 
-    return configFile.write(reinterpret_cast<const char*>(&configVersion),      sizeof(configVersion))      &&
+           file.write(reinterpret_cast<const char*>(&_speaker_icon_scale),    sizeof(_speaker_icon_scale))    &&
+           file.write(reinterpret_cast<const char*>(&_speaker_icon_offset_x), sizeof(_speaker_icon_offset_x)) &&
+           file.write(reinterpret_cast<const char*>(&_speaker_icon_offset_y), sizeof(_speaker_icon_offset_y)) &&
 
-           configFile.write(reinterpret_cast<const char*>(&playbackLoaded),     sizeof(playbackLoaded))     &&
-           configFile.write(reinterpret_cast<const char*>(&speakerLoaded),      sizeof(speakerLoaded))      &&
-           configFile.write(reinterpret_cast<const char*>(&recordLoaded),       sizeof(recordLoaded))       &&
-           configFile.write(reinterpret_cast<const char*>(&microLoaded),        sizeof(microLoaded))        &&
+           file.write(reinterpret_cast<const char*>(&_micro_enable),          sizeof(_micro_enable))          &&
+           file.write(reinterpret_cast<const char*>(&_micro_volume),          sizeof(_micro_volume))          &&
+           file.write(_device_name.data(),                                    _device_name.size() + 1)        &&
 
-           configFile.write(reinterpret_cast<const char*>(&soundEnable),        sizeof(soundEnable))        &&
-           configFile.write(reinterpret_cast<const char*>(&soundVolume),        sizeof(soundVolume))        &&
-           configFile.write(reinterpret_cast<const char*>(&soundBalancer),      sizeof(soundBalancer))      &&
-           configFile.write(reinterpret_cast<const char*>(&soundFilter),        sizeof(soundFilter))        &&
-
-           configFile.write(reinterpret_cast<const char*>(&speakerIconScale),   sizeof(speakerIconScale))   &&
-           configFile.write(reinterpret_cast<const char*>(&speakerIconOffsetX), sizeof(speakerIconOffsetX)) &&
-           configFile.write(reinterpret_cast<const char*>(&speakerIconOffsetY), sizeof(speakerIconOffsetY)) &&
-
-           configFile.write(reinterpret_cast<const char*>(&microEnable),        sizeof(microEnable))        &&
-           configFile.write(reinterpret_cast<const char*>(&microVolume),        sizeof(microVolume))        &&
-           configFile.write(deviceName.data(),                                  deviceName.size() + 1)      &&
-
-           configFile.write(reinterpret_cast<const char*>(&microIconScale),     sizeof(microIconScale))     &&
-           configFile.write(reinterpret_cast<const char*>(&microIconPositionX), sizeof(microIconPositionX)) &&
-           configFile.write(reinterpret_cast<const char*>(&microIconPositionY), sizeof(microIconPositionY)) &&
-           configFile.write(reinterpret_cast<const char*>(&microIconColor),     sizeof(microIconColor))     &&
-           configFile.write(reinterpret_cast<const char*>(&microIconAngle),     sizeof(microIconAngle))     ;
+           file.write(reinterpret_cast<const char*>(&_micro_icon_scale),      sizeof(_micro_icon_scale))      &&
+           file.write(reinterpret_cast<const char*>(&_micro_icon_position_x), sizeof(_micro_icon_position_x)) &&
+           file.write(reinterpret_cast<const char*>(&_micro_icon_position_y), sizeof(_micro_icon_position_y)) &&
+           file.write(reinterpret_cast<const char*>(&_micro_icon_color),      sizeof(_micro_icon_color))      &&
+           file.write(reinterpret_cast<const char*>(&_micro_icon_angle),      sizeof(_micro_icon_angle))      ;
 }
 
 void PluginConfig::Reset() noexcept
 {
-    PluginConfig::loadStatus = false;
+    _load_status = false;
 
-    PluginConfig::playbackLoaded = false;
-    PluginConfig::speakerLoaded = false;
-    PluginConfig::recordLoaded = false;
-    PluginConfig::microLoaded = false;
+    _playback_loaded = false;
+    _speaker_loaded = false;
+    _record_loaded = false;
+    _micro_loaded = false;
 
-    PluginConfig::soundEnable = kDefValSoundEnable;
-    PluginConfig::soundVolume = kDefValSoundVolume;
-    PluginConfig::soundBalancer = kDefValSoundBalancer;
-    PluginConfig::soundFilter = kDefValSoundFilter;
+    _sound_enable = kDefValSoundEnable;
+    _sound_volume = kDefValSoundVolume;
+    _sound_balancer = kDefValSoundBalancer;
+    _sound_filter = kDefValSoundFilter;
 
-    PluginConfig::speakerIconScale = kDefValSpeakerIconScale;
-    PluginConfig::speakerIconOffsetX = kDefValSpeakerIconOffsetX;
-    PluginConfig::speakerIconOffsetY = kDefValSpeakerIconOffsetY;
+    _speaker_icon_scale = kDefValSpeakerIconScale;
+    _speaker_icon_offset_x = kDefValSpeakerIconOffsetX;
+    _speaker_icon_offset_y = kDefValSpeakerIconOffsetY;
 
-    PluginConfig::microEnable = kDefValMicroEnable;
-    PluginConfig::microVolume = kDefValMicroVolume;
-    PluginConfig::deviceName.clear();
+    _micro_enable = kDefValMicroEnable;
+    _micro_volume = kDefValMicroVolume;
+    _device_name.clear();
 
-    PluginConfig::microIconScale = kDefValMicroIconScale;
-    PluginConfig::microIconPositionX = kDefValMicroIconPositionX;
-    PluginConfig::microIconPositionY = kDefValMicroIconPositionY;
-    PluginConfig::microIconColor = kDefValMicroIconColor;
-    PluginConfig::microIconAngle = kDefValMicroIconAngle;
+    _micro_icon_scale = kDefValMicroIconScale;
+    _micro_icon_position_x = kDefValMicroIconPositionX;
+    _micro_icon_position_y = kDefValMicroIconPositionY;
+    _micro_icon_color = kDefValMicroIconColor;
+    _micro_icon_angle = kDefValMicroIconAngle;
 }
 
 bool PluginConfig::IsLoaded() noexcept
 {
-    return PluginConfig::loadStatus;
+    return _load_status;
 }
 
 bool PluginConfig::IsPlaybackLoaded() noexcept
 {
-    return PluginConfig::playbackLoaded;
+    return _playback_loaded;
 }
 
 bool PluginConfig::IsSpeakerLoaded() noexcept
 {
-    return PluginConfig::speakerLoaded;
+    return _speaker_loaded;
 }
 
 bool PluginConfig::IsRecordLoaded() noexcept
 {
-    return PluginConfig::recordLoaded;
+    return _record_loaded;
 }
 
 bool PluginConfig::IsMicroLoaded() noexcept
 {
-    return PluginConfig::microLoaded;
+    return _micro_loaded;
 }
 
-void PluginConfig::SetPlaybackLoaded(const bool status) noexcept
+void PluginConfig::SetPlaybackLoaded(const bool value) noexcept
 {
-    PluginConfig::playbackLoaded = status;
+    _playback_loaded = value;
 }
 
-void PluginConfig::SetSpeakerLoaded(const bool status) noexcept
+void PluginConfig::SetSpeakerLoaded(const bool value) noexcept
 {
-    PluginConfig::speakerLoaded = status;
+    _speaker_loaded = value;
 }
 
-void PluginConfig::SetRecordLoaded(const bool status) noexcept
+void PluginConfig::SetRecordLoaded(const bool value) noexcept
 {
-    PluginConfig::recordLoaded = status;
+    _record_loaded = value;
 }
 
-void PluginConfig::SetMicroLoaded(const bool status) noexcept
+void PluginConfig::SetMicroLoaded(const bool value) noexcept
 {
-    PluginConfig::microLoaded = status;
+    _micro_loaded = value;
 }
 
 bool PluginConfig::GetSoundEnable() noexcept
 {
-    return PluginConfig::soundEnable;
+    return _sound_enable;
 }
 
 int PluginConfig::GetSoundVolume() noexcept
 {
-    return PluginConfig::soundVolume;
+    return _sound_volume;
 }
 
 bool PluginConfig::GetSoundBalancer() noexcept
 {
-    return PluginConfig::soundBalancer;
+    return _sound_balancer;
 }
 
 bool PluginConfig::GetSoundFilter() noexcept
 {
-    return PluginConfig::soundFilter;
+    return _sound_filter;
 }
 
 float PluginConfig::GetSpeakerIconScale() noexcept
 {
-    return PluginConfig::speakerIconScale;
+    return _speaker_icon_scale;
 }
 
 int PluginConfig::GetSpeakerIconOffsetX() noexcept
 {
-    float screenValue { 0.f };
+    if (float screen_value; Render::ConvertBaseXValueToScreenXValue(_speaker_icon_offset_x, screen_value))
+    {
+        return std::roundf(screen_value);
+    }
 
-    return Render::ConvertBaseXValueToScreenXValue(PluginConfig::speakerIconOffsetX, screenValue)
-        ? std::roundf(screenValue) : kDefValSpeakerIconOffsetX;
+    return kDefValSpeakerIconOffsetX;
 }
 
 int PluginConfig::GetSpeakerIconOffsetY() noexcept
 {
-    float screenValue { 0.f };
+    if (float screen_value; Render::ConvertBaseYValueToScreenYValue(_speaker_icon_offset_y, screen_value))
+    {
+        return std::roundf(screen_value);
+    }
 
-    return Render::ConvertBaseYValueToScreenYValue(PluginConfig::speakerIconOffsetY, screenValue)
-        ? std::roundf(screenValue) : kDefValSpeakerIconOffsetY;
+    return kDefValSpeakerIconOffsetY;
 }
 
 bool PluginConfig::GetMicroEnable() noexcept
 {
-    return PluginConfig::microEnable;
+    return _micro_enable;
 }
 
 int PluginConfig::GetMicroVolume() noexcept
 {
-    return PluginConfig::microVolume;
+    return _micro_volume;
 }
 
 const std::string& PluginConfig::GetDeviceName() noexcept
 {
-    return PluginConfig::deviceName;
+    return _device_name;
 }
 
 float PluginConfig::GetMicroIconScale() noexcept
 {
-    return PluginConfig::microIconScale;
+    return _micro_icon_scale;
 }
 
 int PluginConfig::GetMicroIconPositionX() noexcept
 {
-    float screenValue { 0.f };
+    if (float screen_value; Render::ConvertBaseXValueToScreenXValue(_micro_icon_position_x, screen_value))
+    {
+        return std::roundf(screen_value);
+    }
 
-    return Render::ConvertBaseXValueToScreenXValue(PluginConfig::microIconPositionX, screenValue)
-        ? std::roundf(screenValue) : kDefValMicroIconPositionX;
+    return kDefValMicroIconPositionX;
 }
 
 int PluginConfig::GetMicroIconPositionY() noexcept
 {
-    float screenValue { 0.f };
+    if (float screen_value; Render::ConvertBaseYValueToScreenYValue(_micro_icon_position_y, screen_value))
+    {
+        return std::roundf(screen_value);
+    }
 
-    return Render::ConvertBaseYValueToScreenYValue(PluginConfig::microIconPositionY, screenValue)
-        ? std::roundf(screenValue) : kDefValMicroIconPositionY;
+    return kDefValMicroIconPositionY;
 }
 
 D3DCOLOR PluginConfig::GetMicroIconColor() noexcept
 {
-    return PluginConfig::microIconColor;
+    return _micro_icon_color;
 }
 
 float PluginConfig::GetMicroIconAngle() noexcept
 {
-    return PluginConfig::microIconAngle;
+    return _micro_icon_angle;
 }
 
-void PluginConfig::SetSoundEnable(const bool soundEnable) noexcept
+void PluginConfig::SetSoundEnable(const bool value) noexcept
 {
-    PluginConfig::soundEnable = soundEnable;
+    _sound_enable = value;
 }
 
-void PluginConfig::SetSoundVolume(const int soundVolume) noexcept
+void PluginConfig::SetSoundVolume(const int value) noexcept
 {
-    PluginConfig::soundVolume = soundVolume;
+    _sound_volume = value;
 }
 
-void PluginConfig::SetSoundBalancer(const bool soundBalancer) noexcept
+void PluginConfig::SetSoundBalancer(const bool value) noexcept
 {
-    PluginConfig::soundBalancer = soundBalancer;
+    _sound_balancer = value;
 }
 
-void PluginConfig::SetSoundFilter(const bool soundFilter) noexcept
+void PluginConfig::SetSoundFilter(const bool value) noexcept
 {
-    PluginConfig::soundFilter = soundFilter;
+    _sound_filter = value;
 }
 
-void PluginConfig::SetSpeakerIconScale(const float speakerIconScale) noexcept
+void PluginConfig::SetSpeakerIconScale(const float value) noexcept
 {
-    PluginConfig::speakerIconScale = speakerIconScale;
+    _speaker_icon_scale = value;
 }
 
-void PluginConfig::SetSpeakerIconOffsetX(const int speakerIconOffsetX) noexcept
+void PluginConfig::SetSpeakerIconOffsetX(const int value) noexcept
 {
-    float baseValue { 0.f };
-
-    if (Render::ConvertScreenXValueToBaseXValue(speakerIconOffsetX, baseValue))
-        PluginConfig::speakerIconOffsetX = std::roundf(baseValue);
+    if (float base_value; Render::ConvertScreenXValueToBaseXValue(value, base_value))
+        _speaker_icon_offset_x = std::roundf(base_value);
 }
 
-void PluginConfig::SetSpeakerIconOffsetY(const int speakerIconOffsetY) noexcept
+void PluginConfig::SetSpeakerIconOffsetY(const int value) noexcept
 {
-    float baseValue { 0.f };
-
-    if (Render::ConvertScreenYValueToBaseYValue(speakerIconOffsetY, baseValue))
-        PluginConfig::speakerIconOffsetY = std::roundf(baseValue);
+    if (float base_value; Render::ConvertScreenYValueToBaseYValue(value, base_value))
+        _speaker_icon_offset_y = std::roundf(base_value);
 }
 
-void PluginConfig::SetMicroEnable(const bool microEnable) noexcept
+void PluginConfig::SetMicroEnable(const bool value) noexcept
 {
-    PluginConfig::microEnable = microEnable;
+    _micro_enable = value;
 }
 
-void PluginConfig::SetMicroVolume(const int microVolume) noexcept
+void PluginConfig::SetMicroVolume(const int value) noexcept
 {
-    PluginConfig::microVolume = microVolume;
+    _micro_volume = value;
 }
 
-void PluginConfig::SetDeviceName(std::string deviceName) noexcept
+void PluginConfig::SetDeviceName(std::string value) noexcept
 {
-    PluginConfig::deviceName = std::move(deviceName);
+    _device_name = std::move(value);
 }
 
-void PluginConfig::SetMicroIconScale(const float microIconScale) noexcept
+void PluginConfig::SetMicroIconScale(const float value) noexcept
 {
-    PluginConfig::microIconScale = microIconScale;
+    _micro_icon_scale = value;
 }
 
-void PluginConfig::SetMicroIconPositionX(const int microIconPositionX) noexcept
+void PluginConfig::SetMicroIconPositionX(const int value) noexcept
 {
-    float baseValue { 0.f };
-
-    if (Render::ConvertScreenXValueToBaseXValue(microIconPositionX, baseValue))
-        PluginConfig::microIconPositionX = std::roundf(baseValue);
+    if (float base_value; Render::ConvertScreenXValueToBaseXValue(value, base_value))
+        _micro_icon_position_x = std::roundf(base_value);
 }
 
-void PluginConfig::SetMicroIconPositionY(const int microIconPositionY) noexcept
+void PluginConfig::SetMicroIconPositionY(const int value) noexcept
 {
-    float baseValue { 0.f };
-
-    if (Render::ConvertScreenYValueToBaseYValue(microIconPositionY, baseValue))
-        PluginConfig::microIconPositionY = std::roundf(baseValue);
+    if (float base_value; Render::ConvertScreenYValueToBaseYValue(value, base_value))
+        _micro_icon_position_y = std::roundf(base_value);
 }
 
-void PluginConfig::SetMicroIconColor(const D3DCOLOR microIconColor) noexcept
+void PluginConfig::SetMicroIconColor(const D3DCOLOR value) noexcept
 {
-    PluginConfig::microIconColor = microIconColor;
+    _micro_icon_color = value;
 }
 
-void PluginConfig::SetMicroIconAngle(const float microIconAngle) noexcept
+void PluginConfig::SetMicroIconAngle(const float value) noexcept
 {
-    PluginConfig::microIconAngle = microIconAngle;
+    _micro_icon_angle = value;
 }
 
-bool PluginConfig::loadStatus { false };
+bool PluginConfig::_load_status = false;
 
-bool PluginConfig::playbackLoaded { false };
-bool PluginConfig::speakerLoaded { false };
-bool PluginConfig::recordLoaded { false };
-bool PluginConfig::microLoaded { false };
+bool PluginConfig::_playback_loaded = false;
+bool PluginConfig::_speaker_loaded = false;
+bool PluginConfig::_record_loaded = false;
+bool PluginConfig::_micro_loaded = false;
 
-bool PluginConfig::soundEnable { kDefValSoundEnable };
-int PluginConfig::soundVolume { kDefValSoundVolume };
-bool PluginConfig::soundBalancer { kDefValSoundBalancer };
-bool PluginConfig::soundFilter { kDefValSoundFilter };
+bool PluginConfig::_sound_enable = kDefValSoundEnable;
+int  PluginConfig::_sound_volume = kDefValSoundVolume;
+bool PluginConfig::_sound_balancer = kDefValSoundBalancer;
+bool PluginConfig::_sound_filter = kDefValSoundFilter;
 
-float PluginConfig::speakerIconScale { kDefValSpeakerIconScale };
-int PluginConfig::speakerIconOffsetX { kDefValSpeakerIconOffsetX };
-int PluginConfig::speakerIconOffsetY { kDefValSpeakerIconOffsetY };
+float PluginConfig::_speaker_icon_scale = kDefValSpeakerIconScale;
+int   PluginConfig::_speaker_icon_offset_x = kDefValSpeakerIconOffsetX;
+int   PluginConfig::_speaker_icon_offset_y = kDefValSpeakerIconOffsetY;
 
-bool PluginConfig::microEnable { kDefValMicroEnable };
-int PluginConfig::microVolume { kDefValMicroVolume };
-std::string PluginConfig::deviceName;
+bool        PluginConfig::_micro_enable = kDefValMicroEnable;
+int         PluginConfig::_micro_volume = kDefValMicroVolume;
+std::string PluginConfig::_device_name;
 
-float PluginConfig::microIconScale { kDefValMicroIconScale };
-int PluginConfig::microIconPositionX { kDefValMicroIconPositionX };
-int PluginConfig::microIconPositionY { kDefValMicroIconPositionY };
-D3DCOLOR PluginConfig::microIconColor { kDefValMicroIconColor };
-float PluginConfig::microIconAngle { kDefValMicroIconAngle };
+float    PluginConfig::_micro_icon_scale = kDefValMicroIconScale;
+int      PluginConfig::_micro_icon_position_x = kDefValMicroIconPositionX;
+int      PluginConfig::_micro_icon_position_y = kDefValMicroIconPositionY;
+D3DCOLOR PluginConfig::_micro_icon_color = kDefValMicroIconColor;
+float    PluginConfig::_micro_icon_angle = kDefValMicroIconAngle;

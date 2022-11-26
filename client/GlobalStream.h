@@ -9,16 +9,16 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 
 #include <d3d9.h>
 
 #include "Stream.h"
 
-class GlobalStream : public Stream {
+struct GlobalStream : public Stream {
 
     GlobalStream() = delete;
+    ~GlobalStream() noexcept = default;
     GlobalStream(const GlobalStream&) = delete;
     GlobalStream(GlobalStream&&) = delete;
     GlobalStream& operator=(const GlobalStream&) = delete;
@@ -26,11 +26,6 @@ class GlobalStream : public Stream {
 
 public:
 
-    explicit GlobalStream(D3DCOLOR color, std::string name) noexcept;
-
-    ~GlobalStream() noexcept = default;
+    GlobalStream(D3DCOLOR color, std::string name) noexcept;
 
 };
-
-using GlobalStreamPtr = std::unique_ptr<GlobalStream>;
-#define MakeGlobalStream std::make_unique<GlobalStream>

@@ -14,38 +14,36 @@
 #include <samp/CNetGame.h>
 #include <util/Logger.h>
 
-BlackList::LockedPlayer::LockedPlayer(std::string playerName, const WORD playerId) noexcept
-    : playerName(std::move(playerName)), playerId(playerId) {}
+BlackList::LockedPlayer::LockedPlayer(std::string player_name, const WORD player_id) noexcept
+    : player_name { std::move(player_name) }
+    , player_id   { player_id }
+{}
 
-bool BlackList::Load(const std::string& filePath)
+bool BlackList::Load(const std::string& path)
 {
-    constexpr auto kFileMode = std::ios::in;
+    std::fstream file { path, std::ios::in };
+    if (!file || !file.is_open()) return false;
 
-    std::ifstream blackListFile { filePath, kFileMode };
-
-    if (!blackListFile || !blackListFile.is_open())
-        return false;
-
-    BlackList::blackList.clear();
+    _black_list.clear();
 
     {
-        std::string nickName;
+        std::string nickname;
 
-        while (std::getline(blackListFile, nickName) && !nickName.empty())
+        while (std::getline(file, nickname) && !nickname.empty())
         {
-            WORD playerId { SV::kNonePlayer };
+            WORD player_id = SV::kNonePlayer;
 
-            if (const auto pNetGame = SAMP::pNetGame(); pNetGame != nullptr)
+            if (const auto net_game = SAMP::pNetGame(); net_game != nullptr)
             {
-                if (const auto pPlayerPool = pNetGame->GetPlayerPool(); pPlayerPool != nullptr)
+                if (const auto player_pool = net_game->GetPlayerPool(); player_pool != nullptr)
                 {
-                    for (WORD iPlayerId { 0 }; iPlayerId < MAX_PLAYERS; ++iPlayerId)
+                    for (WORD i = 0; i < MAX_PLAYERS; ++i)
                     {
-                        if (const auto playerName = pPlayerPool->GetName(iPlayerId); playerName != nullptr)
+                        if (const auto player_name = player_pool->GetName(i); player_name != nullptr)
                         {
-                            if (nickName == playerName)
+                            if (nickname == player_name)
                             {
-                                playerId = iPlayerId;
+                                player_id = i;
                                 break;
                             }
                         }
@@ -53,152 +51,135 @@ bool BlackList::Load(const std::string& filePath)
                 }
             }
 
-            BlackList::blackList.emplace_back(std::move(nickName), playerId);
+            _black_list.emplace_back(std::move(nickname), player_id);
         }
     }
 
     return true;
 }
 
-bool BlackList::Save(const std::string& filePath)
+bool BlackList::Save(const std::string& path)
 {
-    constexpr auto kFileMode = std::ios::out | std::ios::trunc;
+    std::fstream file { path, std::ios::out | std::ios::trunc };
+    if (!file || !file.is_open()) return false;
 
-    std::ofstream blackListFile { filePath, kFileMode };
-
-    if (!blackListFile || !blackListFile.is_open())
-        return false;
-
-    for (const auto& playerInfo : BlackList::blackList)
+    for (const auto& player_info : _black_list)
     {
-        blackListFile << playerInfo.playerName << std::endl;
+        file << player_info.player_name << std::endl;
     }
 
     return true;
 }
 
-bool BlackList::Init(const AddressesBase& addrBase) noexcept
+bool BlackList::Init(const AddressesBase& addr_base) noexcept
 {
-    if (BlackList::initStatus)
-        return false;
+    if (_init_status) return false;
 
     Logger::LogToFile("[sv:dbg:blacklist:init] : module initializing...");
 
-    try
-    {
-        BlackList::deletePlayerInPoolHook = MakeJumpHook(addrBase.GetDeletePlayerFromPoolFunc(),
-                                                         BlackList::DeletePlayerFromPoolHook);
-        BlackList::createPlayerInPoolHook = MakeJumpHook(addrBase.GetCreatePlayerInPoolFunc(),
-                                                         BlackList::CreatePlayerInPoolHook);
-    }
-    catch (const std::exception& exception)
-    {
-        Logger::LogToFile("[sv:err:blacklist:init] : failed to create function hooks");
-        BlackList::createPlayerInPoolHook.reset();
-        BlackList::deletePlayerInPoolHook.reset();
-        return false;
-    }
+    _delete_player_in_pool_hook = { (LPVOID)(addr_base.GetDeletePlayerFromPoolFunc()), &DeletePlayerFromPoolHook };
+    _create_player_in_pool_hook = { (LPVOID)(addr_base.GetCreatePlayerInPoolFunc()), &CreatePlayerInPoolHook };
 
     Logger::LogToFile("[sv:dbg:blacklist:init] : module initialized");
 
-    BlackList::initStatus = true;
+    _init_status = true;
 
     return true;
 }
 
 void BlackList::Free() noexcept
 {
-    if (!BlackList::initStatus)
-        return;
+    if (_init_status)
+    {
+        Logger::LogToFile("[sv:dbg:blacklist:free] : module releasing...");
 
-    Logger::LogToFile("[sv:dbg:blacklist:free] : module releasing...");
+        _create_player_in_pool_hook = {};
+        _delete_player_in_pool_hook = {};
 
-    BlackList::createPlayerInPoolHook.reset();
-    BlackList::deletePlayerInPoolHook.reset();
+        _black_list.clear();
 
-    BlackList::blackList.clear();
+        Logger::LogToFile("[sv:dbg:blacklist:free] : module released");
 
-    Logger::LogToFile("[sv:dbg:blacklist:free] : module released");
-
-    BlackList::initStatus = false;
+        _init_status = false;
+    }
 }
 
-void BlackList::LockPlayer(const WORD playerId)
+void BlackList::LockPlayer(const WORD player_id)
 {
-    if (playerId != SV::kNonePlayer)
+    if (player_id != SV::kNonePlayer)
     {
-        if (const auto pNetGame = SAMP::pNetGame();
-            pNetGame != nullptr)
+        if (const auto net_game = SAMP::pNetGame(); net_game != nullptr)
         {
-            if (const auto pPlayerPool = pNetGame->GetPlayerPool();
-                pPlayerPool != nullptr)
+            if (const auto player_pool = net_game->GetPlayerPool(); player_pool != nullptr)
             {
-                if (const auto playerName = pPlayerPool->GetName(playerId);
-                    playerName != nullptr)
+                if (const auto player_name = player_pool->GetName(player_id); player_name != nullptr)
                 {
-                    for (const auto& playerInfo : BlackList::blackList)
+                    for (const auto& player_info : _black_list)
                     {
-                        if (playerInfo.playerName == playerName)
-                            return;
+                        if (player_info.player_name == player_name) return;
                     }
 
                     Logger::LogToFile("[sv:dbg:blacklist:lockplayer] : adding player "
-                        "(id:%hu;nick:%s) to blacklist...", playerId, playerName);
+                        "(id:%hu;nick:%s) to blacklist...", player_id, player_name);
 
-                    BlackList::blackList.emplace_front(playerName, playerId);
+                    _black_list.emplace_front(player_name, player_id);
                 }
             }
         }
     }
 }
 
-void BlackList::UnlockPlayer(const WORD playerId)
+void BlackList::UnlockPlayer(const WORD player_id)
 {
     Logger::LogToFile("[sv:dbg:blacklist:unlockplayer] : removing "
-        "player (%hu) from blacklist...", playerId);
+        "player (%hu) from blacklist...", player_id);
 
-    BlackList::blackList.remove_if([&playerId](const auto& object)
+    _black_list.remove_if([&player_id](const auto& object)
     {
-        return playerId == object.playerId;
+        return player_id == object.player_id;
     });
 }
 
-void BlackList::UnlockPlayer(const std::string& playerName)
+void BlackList::UnlockPlayer(const std::string& player_name)
 {
     Logger::LogToFile("[sv:dbg:blacklist:unlockplayer] : removing "
-        "player (%s) from blacklist...", playerName.c_str());
+        "player (%s) from blacklist...", player_name.c_str());
 
-    BlackList::blackList.remove_if([&playerName](const auto& object)
+    _black_list.remove_if([&player_name](const auto& object)
     {
-        return playerName == object.playerName;
+        return player_name == object.player_name;
     });
 }
 
 const std::list<BlackList::LockedPlayer>& BlackList::RequestBlackList() noexcept
 {
-    return BlackList::blackList;
+    return _black_list;
 }
 
-bool BlackList::IsPlayerBlocked(const WORD playerId) noexcept
+bool BlackList::IsPlayerBlocked(const WORD player_id) noexcept
 {
-    if (playerId != SV::kNonePlayer)
+    if (player_id != SV::kNonePlayer)
     {
-        for (const auto& playerInfo : BlackList::blackList)
+        for (const auto& player_info : _black_list)
         {
-            if (playerInfo.playerId == playerId)
+            if (player_info.player_id == player_id)
+            {
                 return true;
+            }
         }
     }
 
     return false;
 }
 
-bool BlackList::IsPlayerBlocked(const std::string& playerName) noexcept
+bool BlackList::IsPlayerBlocked(const std::string& player_name) noexcept
 {
-    for (const auto& playerInfo : BlackList::blackList)
+    for (const auto& player_info : _black_list)
     {
-        if (playerInfo.playerName == playerName)
+        if (player_info.player_name == player_name)
+        {
             return true;
+        }
     }
 
     return false;
@@ -207,49 +188,49 @@ bool BlackList::IsPlayerBlocked(const std::string& playerName) noexcept
 BOOL __thiscall BlackList::CreatePlayerInPoolHook(SAMP::CPlayerPool* const _this,
     const SAMP::ID nId, const char* const szName, const BOOL bIsNPC) noexcept
 {
-    BlackList::createPlayerInPoolHook->Disable();
-    const auto retStatus = static_cast<BOOL(__thiscall*)(SAMP::CPlayerPool*, SAMP::ID, const char*, BOOL)>
-        (BlackList::createPlayerInPoolHook->GetPatch().memAddr)(_this, nId, szName, bIsNPC);
-    BlackList::createPlayerInPoolHook->Enable();
+    _create_player_in_pool_hook->Disable();
+    const auto result = static_cast<BOOL(__thiscall*)(SAMP::CPlayerPool*, SAMP::ID, const char*, BOOL)>
+        (_create_player_in_pool_hook->GetPatch().GetAddr())(_this, nId, szName, bIsNPC);
+    _create_player_in_pool_hook->Enable();
 
-    if (retStatus == TRUE && bIsNPC == FALSE)
+    if (result == TRUE && bIsNPC == FALSE)
     {
-        for (auto& playerInfo : BlackList::blackList)
+        for (auto& player_info : _black_list)
         {
-            if (playerInfo.playerName == szName)
+            if (player_info.player_name == szName)
             {
-                playerInfo.playerId = nId;
+                player_info.player_id = nId;
                 break;
             }
         }
     }
 
-    return retStatus;
+    return result;
 }
 
 BOOL __thiscall BlackList::DeletePlayerFromPoolHook(SAMP::CPlayerPool* const _this,
     const SAMP::ID nId, const int nReason) noexcept
 {
-    for (auto& playerInfo : BlackList::blackList)
+    for (auto& player_info : _black_list)
     {
-        if (playerInfo.playerId == nId)
+        if (player_info.player_id == nId)
         {
-            playerInfo.playerId = SV::kNonePlayer;
+            player_info.player_id = SV::kNonePlayer;
             break;
         }
     }
 
-    BlackList::deletePlayerInPoolHook->Disable();
-    const auto retStatus = static_cast<BOOL(__thiscall*)(SAMP::CPlayerPool*, SAMP::ID, int)>
-        (BlackList::deletePlayerInPoolHook->GetPatch().memAddr)(_this, nId, nReason);
-    BlackList::deletePlayerInPoolHook->Enable();
+    _delete_player_in_pool_hook->Disable();
+    const auto result = static_cast<BOOL(__thiscall*)(SAMP::CPlayerPool*, SAMP::ID, int)>
+        (_delete_player_in_pool_hook->GetPatch().GetAddr())(_this, nId, nReason);
+    _delete_player_in_pool_hook->Enable();
 
-    return retStatus;
+    return result;
 }
 
-bool BlackList::initStatus { false };
+bool BlackList::_init_status = false;
 
-std::list<BlackList::LockedPlayer> BlackList::blackList;
+std::list<BlackList::LockedPlayer> BlackList::_black_list;
 
-Memory::JumpHookPtr BlackList::createPlayerInPoolHook { nullptr };
-Memory::JumpHookPtr BlackList::deletePlayerInPoolHook { nullptr };
+Memory::JumpHook BlackList::_create_player_in_pool_hook;
+Memory::JumpHook BlackList::_delete_player_in_pool_hook;

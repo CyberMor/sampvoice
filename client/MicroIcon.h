@@ -14,7 +14,7 @@
 #include <util/Resource.h>
 #include <util/Texture.h>
 
-class MicroIcon {
+struct MicroIcon {
 
     MicroIcon() = delete;
     ~MicroIcon() = delete;
@@ -25,15 +25,17 @@ class MicroIcon {
 
 private:
 
-    static constexpr float kBaseIconSize = 35.f;
-    static constexpr float kBaseIconPadding = 15.f;
-    static constexpr int kAlphaLevelIncrementDeviation = 12;
-    static constexpr int kAlphaLevelDecrementDeviation = -12;
+    static constexpr float kBaseIconSize                 =  35.f;
+    static constexpr float kBaseIconPadding              =  15.f;
+    static constexpr int   kAlphaLevelIncrementDeviation =  12;
+    static constexpr int   kAlphaLevelDecrementDeviation = -12;
 
 public:
 
-    static bool Init(IDirect3DDevice9* pDevice, const Resource& rPassiveIcon,
-        const Resource& rActiveIcon, const Resource& rMutedIcon) noexcept;
+    static bool Init(IDirect3DDevice9* device,
+        const Resource& resource_passive_icon,
+        const Resource& resource_active_icon,
+        const Resource& resource_muted_icon) noexcept;
     static void Free() noexcept;
 
     static void Show() noexcept;
@@ -69,19 +71,19 @@ public:
 
 private:
 
-    static bool initStatus;
-    static bool showStatus;
+    static bool    _init_status;
+    static bool    _show_status;
 
-    static int alphaLevelPassiveIcon;
-    static int alphaLevelDeviationPassiveIcon;
-    static TexturePtr tPassiveIcon;
+    static int     _alpha_level_passive_icon;
+    static int     _alpha_level_deviation_passive_icon;
+    static Texture _texture_passive_icon;
 
-    static int alphaLevelActiveIcon;
-    static int alphaLevelDeviationActiveIcon;
-    static TexturePtr tActiveIcon;
+    static int     _alpha_level_active_icon;
+    static int     _alpha_level_deviation_active_icon;
+    static Texture _texture_active_icon;
 
-    static int alphaLevelMutedIcon;
-    static int alphaLevelDeviationMutedIcon;
-    static TexturePtr tMutedIcon;
+    static int     _alpha_level_muted_icon;
+    static int     _alpha_level_deviation_muted_icon;
+    static Texture _texture_muted_icon;
 
 };

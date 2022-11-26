@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <array>
 #include <vector>
 #include <string>
 
@@ -18,7 +17,7 @@
 
 #include "Header.h"
 
-class Record {
+struct Record {
 
     Record() = delete;
     ~Record() = delete;
@@ -43,15 +42,15 @@ public:
     static bool IsChecking() noexcept;
     static void StopChecking() noexcept;
 
-    static DWORD GetFrame(BYTE* bufferPtr, DWORD bufferSize) noexcept;
+    static DWORD GetFrame(BYTE* buffer_ptr, DWORD buffer_size) noexcept;
 
     static bool GetMicroEnable() noexcept;
     static int GetMicroVolume() noexcept;
     static int GetMicroDevice() noexcept;
 
-    static void SetMicroEnable(bool microEnable) noexcept;
-    static void SetMicroVolume(int microVolume) noexcept;
-    static void SetMicroDevice(int deviceIndex) noexcept;
+    static void SetMicroEnable(bool micro_enable) noexcept;
+    static void SetMicroVolume(int micro_volume) noexcept;
+    static void SetMicroDevice(int device_index) noexcept;
 
     static void SyncConfigs() noexcept;
     static void ResetConfigs() noexcept;
@@ -61,18 +60,18 @@ public:
 
 private:
 
-    static bool initStatus;
+    static bool                     _init_status;
 
-    static bool checkStatus;
-    static bool recordStatus;
+    static bool                     _check_status;
+    static bool                     _record_status;
 
-    static HRECORD recordChannel;
-    static OpusEncoder* encoder;
-    static std::array<opus_int16, SV::kFrameSizeInSamples> encBuffer;
-    static HSTREAM checkChannel;
+    static HRECORD                  _record_channel;
+    static OpusEncoder*             _encoder;
+    static opus_int16               _enc_buffer[SV::kFrameSizeInSamples];
+    static HSTREAM                  _check_channel;
 
-    static int usedDeviceIndex;
-    static std::vector<std::string> deviceNamesList;
-    static std::vector<int> deviceNumbersList;
+    static int                      _used_device_index;
+    static std::vector<std::string> _device_names_list;
+    static std::vector<int>         _device_numbers_list;
 
 };

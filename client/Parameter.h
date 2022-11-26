@@ -1,14 +1,13 @@
 #pragma once
 
-#include <memory>
-
 #include <Windows.h>
 
 #include "Channel.h"
 
-class Parameter {
+struct Parameter {
 
     Parameter() = delete;
+    virtual ~Parameter() noexcept = default;
     Parameter(const Parameter&) = delete;
     Parameter(Parameter&&) = delete;
     Parameter& operator=(const Parameter&) = delete;
@@ -16,20 +15,14 @@ class Parameter {
 
 protected:
 
-    explicit Parameter(DWORD parameter) noexcept;
+    Parameter(DWORD parameter) noexcept;
 
 public:
 
-    virtual ~Parameter() noexcept = default;
-
-public:
-
-    virtual void Apply(const Channel& channel) const noexcept = 0;
+    virtual void Apply(const Channel& channel) noexcept = 0;
 
 protected:
 
-    const DWORD parameter;
+    DWORD _parameter;
 
 };
-
-using ParameterPtr = std::unique_ptr<Parameter>;

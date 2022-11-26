@@ -21,7 +21,7 @@ namespace SV
     // Strings
     // --------------------------------------------
 
-    constexpr auto kLogFileName = "svlog.txt";
+    constexpr auto kLogFileName    = "svlog.txt";
     constexpr auto kConfigFileName = "svconfig.bin";
 
     // Constants
@@ -103,8 +103,8 @@ namespace SV
     struct ConnectPacket
     {
         UINT32 signature;
-        UINT8 version;
-        UINT8 micro;
+        UINT8  version;
+        UINT8  micro;
     };
 
     struct ServerInfoPacket
@@ -116,7 +116,7 @@ namespace SV
     struct PluginInitPacket
     {
         UINT32 bitrate;
-        UINT8 mute;
+        UINT8  mute;
     };
 
     struct AddKeyPacket
@@ -133,36 +133,36 @@ namespace SV
     {
         UINT32 stream;
         UINT32 color;
-        CHAR name[];
+        CHAR   name[];
     };
 
     struct CreateLPStreamPacket
     {
-        UINT32 stream;
-        FLOAT distance;
+        UINT32  stream;
+        FLOAT   distance;
         CVector position;
-        UINT32 color;
-        CHAR name[];
+        UINT32  color;
+        CHAR    name[];
     };
 
     struct CreateLStreamAtPacket
     {
         UINT32 stream;
-        FLOAT distance;
+        FLOAT  distance;
         UINT32 target;
         UINT32 color;
-        CHAR name[];
+        CHAR   name[];
     };
 
     struct UpdateLStreamDistancePacket
     {
         UINT32 stream;
-        FLOAT distance;
+        FLOAT  distance;
     };
 
     struct UpdateLPStreamPositionPacket
     {
-        UINT32 stream;
+        UINT32  stream;
         CVector position;
     };
 
@@ -188,15 +188,15 @@ namespace SV
     {
         UINT32 stream;
         UINT32 parameter;
-        FLOAT value;
+        FLOAT  value;
     };
 
     struct SlideStreamParameterPacket
     {
         UINT32 stream;
         UINT32 parameter;
-        FLOAT startvalue;
-        FLOAT endvalue;
+        FLOAT  startvalue;
+        FLOAT  endvalue;
         UINT32 time;
     };
 
@@ -205,8 +205,8 @@ namespace SV
         UINT32 stream;
         UINT32 effect;
         UINT32 number;
-        INT32 priority;
-        UINT8 params[];
+        INT32  priority;
+        UINT8  params[];
     };
 
     struct DeleteEffectPacket

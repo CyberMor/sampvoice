@@ -24,7 +24,7 @@
 
 #include "Stream.h"
 
-class SpeakerList {
+struct SpeakerList {
 
     SpeakerList() = delete;
     ~SpeakerList() = delete;
@@ -35,15 +35,15 @@ class SpeakerList {
 
 private:
 
-    static constexpr int kBaseLinesCount = 12;
+    static constexpr int   kBaseLinesCount = 12;
     static constexpr float kBaseLeftIndent = 37.f;
-    static constexpr float kBaseIconSize = 36.f;
-    static constexpr float kBaseFontSize = 7.5f;
+    static constexpr float kBaseIconSize   = 36.f;
+    static constexpr float kBaseFontSize   = 7.5f;
 
 public:
 
-    static bool Init(IDirect3DDevice9* pDevice, const AddressesBase& addrBase,
-        const Resource& rSpeakerIcon, const Resource& rSpeakerFont) noexcept;
+    static bool Init(IDirect3DDevice9* device, const Resource& resource_speaker_icon,
+        const Resource& resource_speaker_font) noexcept;
     static void Free() noexcept;
 
     static void Show() noexcept;
@@ -56,9 +56,9 @@ public:
     static int GetSpeakerIconOffsetY() noexcept;
     static float GetSpeakerIconScale() noexcept;
 
-    static void SetSpeakerIconOffsetX(int speakerIconOffsetX) noexcept;
-    static void SetSpeakerIconOffsetY(int speakerIconOffsetY) noexcept;
-    static void SetSpeakerIconScale(float speakerIconScale) noexcept;
+    static void SetSpeakerIconOffsetX(int speaker_icon_offset_x) noexcept;
+    static void SetSpeakerIconOffsetY(int speaker_icon_offset_y) noexcept;
+    static void SetSpeakerIconScale(float speaker_icon_scale) noexcept;
 
     static void SyncConfigs() noexcept;
     static void ResetConfigs() noexcept;
@@ -70,12 +70,13 @@ public:
 
 private:
 
-    static bool initStatus;
-    static bool showStatus;
+    static bool    _init_status;
+    static bool    _show_status;
 
-    static ImFont* pSpeakerFont;
-    static TexturePtr tSpeakerIcon;
+    static ImFont* _speaker_font;
+    static Texture _speaker_icon;
 
-    static std::array<std::unordered_map<Stream*, StreamInfo>, MAX_PLAYERS> playerStreams;
+    static std::array<std::unordered_map<Stream*, StreamInfo>, MAX_PLAYERS>
+                   _player_streams;
 
 };

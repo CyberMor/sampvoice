@@ -17,231 +17,226 @@
 
 #include "PluginConfig.h"
 
-bool MicroIcon::Init(IDirect3DDevice9* const pDevice, const Resource& rPassiveIcon,
-    const Resource& rActiveIcon, const Resource& rMutedIcon) noexcept
+bool MicroIcon::Init(IDirect3DDevice9* const device, const Resource& resource_passive_icon,
+    const Resource& resource_active_icon, const Resource& resource_muted_icon) noexcept
 {
-    if (pDevice == nullptr)
-        return false;
+    if (device == nullptr) return false;
 
-    if (MicroIcon::initStatus)
-        return false;
+    if (_init_status) return false;
 
-    try
-    {
-        MicroIcon::tPassiveIcon = MakeTexture(pDevice, rPassiveIcon);
-        MicroIcon::tActiveIcon = MakeTexture(pDevice, rActiveIcon);
-        MicroIcon::tMutedIcon = MakeTexture(pDevice, rMutedIcon);
-    }
-    catch (const std::exception& exception)
+    _texture_passive_icon = { device, resource_passive_icon };
+    _texture_active_icon = { device, resource_active_icon };
+    _texture_muted_icon = { device, resource_muted_icon };
+
+    if (!_texture_passive_icon.Valid() ||
+        !_texture_active_icon.Valid() ||
+        !_texture_muted_icon.Valid())
     {
         Logger::LogToFile("[sv:err:microicon:init] : failed to create icons");
-        MicroIcon::tPassiveIcon.reset();
-        MicroIcon::tActiveIcon.reset();
-        MicroIcon::tMutedIcon.reset();
+        _texture_passive_icon = {};
+        _texture_active_icon = {};
+        _texture_muted_icon = {};
         return false;
     }
 
-    MicroIcon::SetPassiveIcon();
+    SetPassiveIcon();
 
     if (!PluginConfig::IsMicroLoaded())
     {
         PluginConfig::SetMicroLoaded(true);
-        MicroIcon::ResetConfigs();
+        ResetConfigs();
     }
 
-    MicroIcon::initStatus = true;
-    MicroIcon::SyncConfigs();
+    _init_status = true;
+    SyncConfigs();
 
     return true;
 }
 
 void MicroIcon::Free() noexcept
 {
-    if (!MicroIcon::initStatus)
-        return;
+    if (_init_status)
+    {
+        _texture_passive_icon = {};
+        _texture_active_icon = {};
+        _texture_muted_icon = {};
 
-    MicroIcon::tPassiveIcon.reset();
-    MicroIcon::tActiveIcon.reset();
-    MicroIcon::tMutedIcon.reset();
-
-    MicroIcon::initStatus = false;
+        _init_status = false;
+    }
 }
 
 void MicroIcon::Show() noexcept
 {
-    MicroIcon::showStatus = true;
+    _show_status = true;
 }
 
 bool MicroIcon::IsShowed() noexcept
 {
-    return MicroIcon::showStatus;
+    return _show_status;
 }
 
 void MicroIcon::Hide() noexcept
 {
-    MicroIcon::showStatus = false;
+    _show_status = false;
 }
 
 void MicroIcon::SetPassiveIcon() noexcept
 {
-    MicroIcon::alphaLevelActiveIcon = 0;
-    MicroIcon::alphaLevelDeviationActiveIcon = 0;
-    MicroIcon::alphaLevelMutedIcon = 0;
-    MicroIcon::alphaLevelDeviationMutedIcon = 0;
+    _alpha_level_active_icon            = 0;
+    _alpha_level_deviation_active_icon  = 0;
+    _alpha_level_muted_icon             = 0;
+    _alpha_level_deviation_muted_icon   = 0;
 
-    MicroIcon::alphaLevelPassiveIcon = 255;
-    MicroIcon::alphaLevelDeviationPassiveIcon = 0;
+    _alpha_level_passive_icon           = 255;
+    _alpha_level_deviation_passive_icon = 0;
 }
 
 void MicroIcon::SetActiveIcon() noexcept
 {
-    MicroIcon::alphaLevelPassiveIcon = 0;
-    MicroIcon::alphaLevelDeviationPassiveIcon = 0;
-    MicroIcon::alphaLevelMutedIcon = 0;
-    MicroIcon::alphaLevelDeviationMutedIcon = 0;
+    _alpha_level_passive_icon           = 0;
+    _alpha_level_deviation_passive_icon = 0;
+    _alpha_level_muted_icon             = 0;
+    _alpha_level_deviation_muted_icon   = 0;
 
-    MicroIcon::alphaLevelActiveIcon = 255;
-    MicroIcon::alphaLevelDeviationActiveIcon = 0;
+    _alpha_level_active_icon            = 255;
+    _alpha_level_deviation_active_icon  = 0;
 }
 
 void MicroIcon::SetMutedIcon() noexcept
 {
-    MicroIcon::alphaLevelPassiveIcon = 0;
-    MicroIcon::alphaLevelDeviationPassiveIcon = 0;
-    MicroIcon::alphaLevelActiveIcon = 0;
-    MicroIcon::alphaLevelDeviationActiveIcon = 0;
+    _alpha_level_passive_icon           = 0;
+    _alpha_level_deviation_passive_icon = 0;
+    _alpha_level_active_icon            = 0;
+    _alpha_level_deviation_active_icon  = 0;
 
-    MicroIcon::alphaLevelMutedIcon = 255;
-    MicroIcon::alphaLevelDeviationMutedIcon = 0;
+    _alpha_level_muted_icon             = 255;
+    _alpha_level_deviation_muted_icon   = 0;
 }
 
 void MicroIcon::SwitchToPassiveIcon() noexcept
 {
-    MicroIcon::alphaLevelDeviationActiveIcon = kAlphaLevelDecrementDeviation;
-    MicroIcon::alphaLevelDeviationMutedIcon = kAlphaLevelDecrementDeviation;
+    _alpha_level_deviation_active_icon  = kAlphaLevelDecrementDeviation;
+    _alpha_level_deviation_muted_icon   = kAlphaLevelDecrementDeviation;
 
-    MicroIcon::alphaLevelDeviationPassiveIcon = kAlphaLevelIncrementDeviation;
+    _alpha_level_deviation_passive_icon = kAlphaLevelIncrementDeviation;
 }
 
 void MicroIcon::SwitchToActiveIcon() noexcept
 {
-    MicroIcon::alphaLevelDeviationPassiveIcon = kAlphaLevelDecrementDeviation;
-    MicroIcon::alphaLevelDeviationMutedIcon = kAlphaLevelDecrementDeviation;
+    _alpha_level_deviation_passive_icon = kAlphaLevelDecrementDeviation;
+    _alpha_level_deviation_muted_icon   = kAlphaLevelDecrementDeviation;
 
-    MicroIcon::alphaLevelDeviationActiveIcon = kAlphaLevelIncrementDeviation;
+    _alpha_level_deviation_active_icon  = kAlphaLevelIncrementDeviation;
 }
 
 void MicroIcon::SwitchToMutedIcon() noexcept
 {
-    MicroIcon::alphaLevelDeviationPassiveIcon = kAlphaLevelDecrementDeviation;
-    MicroIcon::alphaLevelDeviationActiveIcon = kAlphaLevelDecrementDeviation;
+    _alpha_level_deviation_passive_icon = kAlphaLevelDecrementDeviation;
+    _alpha_level_deviation_active_icon  = kAlphaLevelDecrementDeviation;
 
-    MicroIcon::alphaLevelDeviationMutedIcon = kAlphaLevelIncrementDeviation;
+    _alpha_level_deviation_muted_icon   = kAlphaLevelIncrementDeviation;
 }
 
 void MicroIcon::Render() noexcept
 {
-    if (!MicroIcon::initStatus)
-        return;
-
-    if (!MicroIcon::showStatus)
-        return;
-
-    float vIconSize { 0.f };
-
-    if (!Render::ConvertBaseYValueToScreenYValue(kBaseIconSize, vIconSize))
-        return;
-
-    vIconSize *= PluginConfig::GetMicroIconScale();
-
-    float vIconX = PluginConfig::GetMicroIconPositionX();
-    float vIconY = PluginConfig::GetMicroIconPositionY();
-
-    if (vIconX < 0.f || vIconY < 0.f)
+    if (_init_status && _show_status)
     {
-        CRect radarRect;
+        float icon_size = 0.f;
 
-        if (!GameUtil::GetRadarRect(radarRect))
+        if (!Render::ConvertBaseYValueToScreenYValue(kBaseIconSize, icon_size))
             return;
 
-        float vIconPadding { 0.f };
+        icon_size *= PluginConfig::GetMicroIconScale();
 
-        if (!Render::ConvertBaseYValueToScreenYValue(kBaseIconPadding, vIconPadding))
-            return;
+        float icon_x = PluginConfig::GetMicroIconPositionX();
+        float icon_y = PluginConfig::GetMicroIconPositionY();
 
-        vIconX = radarRect.left + (radarRect.right - radarRect.left) / 2.f;
-        vIconY = radarRect.top - (vIconPadding + vIconSize / 2.f);
-    }
+        if (icon_x < 0.f || icon_y < 0.f)
+        {
+            CRect radar_rect;
 
-    vIconX -= vIconSize / 2.f;
-    vIconY -= vIconSize / 2.f;
+            if (!GameUtil::GetRadarRect(radar_rect))
+                return;
 
-    if (MicroIcon::alphaLevelPassiveIcon > 0)
-    {
-        MicroIcon::tPassiveIcon->Draw(vIconX, vIconY, vIconSize, vIconSize, (PluginConfig::GetMicroIconColor() &
-            0x00ffffff) | (MicroIcon::alphaLevelPassiveIcon << 24), PluginConfig::GetMicroIconAngle());
-    }
+            float icon_padding = 0.f;
 
-    if (MicroIcon::alphaLevelActiveIcon > 0)
-    {
-        MicroIcon::tActiveIcon->Draw(vIconX, vIconY, vIconSize, vIconSize, (PluginConfig::GetMicroIconColor() &
-            0x00ffffff) | (MicroIcon::alphaLevelActiveIcon << 24), PluginConfig::GetMicroIconAngle());
-    }
+            if (!Render::ConvertBaseYValueToScreenYValue(kBaseIconPadding, icon_padding))
+                return;
 
-    if (MicroIcon::alphaLevelMutedIcon > 0)
-    {
-        MicroIcon::tMutedIcon->Draw(vIconX, vIconY, vIconSize, vIconSize, (PluginConfig::GetMicroIconColor() &
-            0x00ffffff) | (MicroIcon::alphaLevelMutedIcon << 24), PluginConfig::GetMicroIconAngle());
+            icon_x = radar_rect.left + (radar_rect.right - radar_rect.left) / 2.f;
+            icon_y = radar_rect.top - (icon_padding + icon_size / 2.f);
+        }
+
+        icon_x -= icon_size / 2.f;
+        icon_y -= icon_size / 2.f;
+
+        if (_alpha_level_passive_icon > 0)
+        {
+            _texture_passive_icon->Draw(icon_x, icon_y, icon_size, icon_size, (PluginConfig::GetMicroIconColor() &
+                0x00ffffff) | (_alpha_level_passive_icon << 24), PluginConfig::GetMicroIconAngle());
+        }
+
+        if (_alpha_level_active_icon > 0)
+        {
+            _texture_active_icon->Draw(icon_x, icon_y, icon_size, icon_size, (PluginConfig::GetMicroIconColor() &
+                0x00ffffff) | (_alpha_level_active_icon << 24), PluginConfig::GetMicroIconAngle());
+        }
+
+        if (_alpha_level_muted_icon > 0)
+        {
+            _texture_muted_icon->Draw(icon_x, icon_y, icon_size, icon_size, (PluginConfig::GetMicroIconColor() &
+                0x00ffffff) | (_alpha_level_muted_icon << 24), PluginConfig::GetMicroIconAngle());
+        }
     }
 }
 
 void MicroIcon::Update() noexcept
 {
-    if (MicroIcon::alphaLevelDeviationPassiveIcon != 0)
+    if (_alpha_level_deviation_passive_icon != 0)
     {
-        MicroIcon::alphaLevelPassiveIcon += MicroIcon::alphaLevelDeviationPassiveIcon;
+        _alpha_level_passive_icon += _alpha_level_deviation_passive_icon;
 
-        if (MicroIcon::alphaLevelPassiveIcon < 0)
+        if (_alpha_level_passive_icon < 0)
         {
-            MicroIcon::alphaLevelDeviationPassiveIcon = 0;
-            MicroIcon::alphaLevelPassiveIcon = 0;
+            _alpha_level_deviation_passive_icon = 0;
+            _alpha_level_passive_icon = 0;
         }
-        else if (MicroIcon::alphaLevelPassiveIcon > 255)
+        else if (_alpha_level_passive_icon > 255)
         {
-            MicroIcon::alphaLevelDeviationPassiveIcon = 0;
-            MicroIcon::alphaLevelPassiveIcon = 255;
+            _alpha_level_deviation_passive_icon = 0;
+            _alpha_level_passive_icon = 255;
         }
     }
 
-    if (MicroIcon::alphaLevelDeviationActiveIcon != 0)
+    if (_alpha_level_deviation_active_icon != 0)
     {
-        MicroIcon::alphaLevelActiveIcon += MicroIcon::alphaLevelDeviationActiveIcon;
+        _alpha_level_active_icon += _alpha_level_deviation_active_icon;
 
-        if (MicroIcon::alphaLevelActiveIcon < 0)
+        if (_alpha_level_active_icon < 0)
         {
-            MicroIcon::alphaLevelDeviationActiveIcon = 0;
-            MicroIcon::alphaLevelActiveIcon = 0;
+            _alpha_level_deviation_active_icon = 0;
+            _alpha_level_active_icon = 0;
         }
-        else if (MicroIcon::alphaLevelActiveIcon > 255)
+        else if (_alpha_level_active_icon > 255)
         {
-            MicroIcon::alphaLevelDeviationActiveIcon = 0;
-            MicroIcon::alphaLevelActiveIcon = 255;
+            _alpha_level_deviation_active_icon = 0;
+            _alpha_level_active_icon = 255;
         }
     }
 
-    if (MicroIcon::alphaLevelDeviationMutedIcon != 0)
+    if (_alpha_level_deviation_muted_icon != 0)
     {
-        MicroIcon::alphaLevelMutedIcon += MicroIcon::alphaLevelDeviationMutedIcon;
+        _alpha_level_muted_icon += _alpha_level_deviation_muted_icon;
 
-        if (MicroIcon::alphaLevelMutedIcon < 0)
+        if (_alpha_level_muted_icon < 0)
         {
-            MicroIcon::alphaLevelDeviationMutedIcon = 0;
-            MicroIcon::alphaLevelMutedIcon = 0;
+            _alpha_level_deviation_muted_icon = 0;
+            _alpha_level_muted_icon = 0;
         }
-        else if (MicroIcon::alphaLevelMutedIcon > 255)
+        else if (_alpha_level_muted_icon > 255)
         {
-            MicroIcon::alphaLevelDeviationMutedIcon = 0;
-            MicroIcon::alphaLevelMutedIcon = 255;
+            _alpha_level_deviation_muted_icon = 0;
+            _alpha_level_muted_icon = 255;
         }
     }
 }
@@ -313,24 +308,24 @@ void MicroIcon::ResetConfigs() noexcept
 
 void MicroIcon::SyncConfigs() noexcept
 {
-    MicroIcon::SetMicroIconScale(PluginConfig::GetMicroIconScale());
-    MicroIcon::SetMicroIconPositionX(PluginConfig::GetMicroIconPositionX());
-    MicroIcon::SetMicroIconPositionY(PluginConfig::GetMicroIconPositionY());
-    MicroIcon::SetMicroIconColor(PluginConfig::GetMicroIconColor());
-    MicroIcon::SetMicroIconAngle(PluginConfig::GetMicroIconAngle());
+    SetMicroIconScale(PluginConfig::GetMicroIconScale());
+    SetMicroIconPositionX(PluginConfig::GetMicroIconPositionX());
+    SetMicroIconPositionY(PluginConfig::GetMicroIconPositionY());
+    SetMicroIconColor(PluginConfig::GetMicroIconColor());
+    SetMicroIconAngle(PluginConfig::GetMicroIconAngle());
 }
 
-bool MicroIcon::initStatus { false };
-bool MicroIcon::showStatus { false };
+bool    MicroIcon::_init_status = false;
+bool    MicroIcon::_show_status = false;
 
-int MicroIcon::alphaLevelPassiveIcon { 0 };
-int MicroIcon::alphaLevelDeviationPassiveIcon { 0 };
-TexturePtr MicroIcon::tPassiveIcon { nullptr };
+int     MicroIcon::_alpha_level_passive_icon = 0;
+int     MicroIcon::_alpha_level_deviation_passive_icon = 0;
+Texture MicroIcon::_texture_passive_icon;
 
-int MicroIcon::alphaLevelActiveIcon { 0 };
-int MicroIcon::alphaLevelDeviationActiveIcon { 0 };
-TexturePtr MicroIcon::tActiveIcon { nullptr };
+int     MicroIcon::_alpha_level_active_icon = 0;
+int     MicroIcon::_alpha_level_deviation_active_icon = 0;
+Texture MicroIcon::_texture_active_icon;
 
-int MicroIcon::alphaLevelMutedIcon { 0 };
-int MicroIcon::alphaLevelDeviationMutedIcon { 0 };
-TexturePtr MicroIcon::tMutedIcon { nullptr };
+int     MicroIcon::_alpha_level_muted_icon = 0;
+int     MicroIcon::_alpha_level_deviation_muted_icon = 0;
+Texture MicroIcon::_texture_muted_icon;

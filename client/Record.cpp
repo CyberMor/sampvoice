@@ -17,182 +17,171 @@
 
 bool Record::Init(const DWORD bitrate) noexcept
 {
-    if (Record::initStatus)
-        return false;
-
-    if (BASS_IsStarted() == FALSE)
-        return false;
+    if (_init_status) return false;
+    if (BASS_IsStarted() == FALSE) return false;
 
     Logger::LogToFile("[sv:dbg:record:init] : module initializing...");
 
-    Record::deviceNamesList.clear();
-    Record::deviceNumbersList.clear();
+    _device_names_list.clear();
+    _device_numbers_list.clear();
 
     {
-        BASS_DEVICEINFO devInfo {};
+        BASS_DEVICEINFO dev_info;
 
-        for (int devNumber { 0 }; BASS_RecordGetDeviceInfo(devNumber, &devInfo); ++devNumber)
+        for (int dev_number = 0; BASS_RecordGetDeviceInfo(dev_number, &dev_info); ++dev_number)
         {
-            const bool deviceEnabled = devInfo.flags & BASS_DEVICE_ENABLED;
-            const bool deviceLoopback = devInfo.flags & BASS_DEVICE_LOOPBACK;
-            const DWORD deviceType = devInfo.flags & BASS_DEVICE_TYPE_MASK;
+            const bool device_enabled = dev_info.flags & BASS_DEVICE_ENABLED;
+            const bool device_loopback = dev_info.flags & BASS_DEVICE_LOOPBACK;
+            const DWORD device_type = dev_info.flags & BASS_DEVICE_TYPE_MASK;
 
             Logger::LogToFile("[sv:dbg:record:init] : device detect "
                 "[ id(%d) enabled(%hhu) loopback(%hhu) name(%s) type(0x%x) ]",
-                devNumber, deviceEnabled, deviceLoopback, devInfo.name != nullptr
-                ? devInfo.name : "none", deviceType);
+                dev_number, device_enabled, device_loopback, dev_info.name != nullptr
+                ? dev_info.name : "none", device_type);
 
-            if (deviceEnabled && !deviceLoopback && devInfo.name != nullptr)
+            if (device_enabled && !device_loopback && dev_info.name != nullptr)
             {
-                try
-                {
-                    Record::deviceNumbersList.emplace_back(devNumber);
-                    Record::deviceNamesList.emplace_back(devInfo.name);
-                }
-                catch (const std::exception& exception)
-                {
-                    Logger::LogToFile("[sv:err:record:init] : failed to add device");
-                    return false;
-                }
+                _device_numbers_list.emplace_back(dev_number);
+                _device_names_list.emplace_back(dev_info.name);
             }
         }
     }
 
-    Memory::ScopeExit deviceListsResetScope { [] { Record::usedDeviceIndex = -1;
-                                                   Record::deviceNamesList.clear();
-                                                   Record::deviceNumbersList.clear(); } };
+    Memory::ScopeExit deviceListsResetScope { []{ _used_device_index = -1;
+                                                  _device_names_list.clear();
+                                                  _device_numbers_list.clear(); } };
 
-    if (Record::deviceNamesList.empty() || Record::deviceNumbersList.empty())
+    if (_device_names_list.empty() || _device_numbers_list.empty())
     {
         Logger::LogToFile("[sv:inf:record:init] : failed to find microphone");
         return false;
     }
 
     {
-        int opusErrorCode { -1 };
+        int opusErrorCode = -1;
 
-        Record::encoder = opus_encoder_create(SV::kFrequency, 1,
+        _encoder = opus_encoder_create(SV::kFrequency, 1,
             OPUS_APPLICATION_VOIP, &opusErrorCode);
 
-        if (Record::encoder == nullptr || opusErrorCode < 0)
+        if (_encoder == nullptr || opusErrorCode < 0)
         {
             Logger::LogToFile("[sv:err:record:init] : failed to "
-                "create encoder (code:%d)", opusErrorCode);
+                "create _encoder (code:%d)", opusErrorCode);
             return false;
         }
     }
 
-    Memory::ScopeExit encoderResetScope { [] { opus_encoder_destroy(Record::encoder); } };
+    Memory::ScopeExit encoderResetScope { []{ opus_encoder_destroy(_encoder); } };
 
-    if (const auto error = opus_encoder_ctl(Record::encoder,
+    if (const auto error = opus_encoder_ctl(_encoder,
         OPUS_SET_BITRATE(bitrate)); error < 0)
     {
         Logger::LogToFile("[sv:err:record:init] : failed to "
-            "set bitrate for encoder (code:%d)", error);
+            "set bitrate for _encoder (code:%d)", error);
         return false;
     }
 
-    if (const auto error = opus_encoder_ctl(Record::encoder,
+    if (const auto error = opus_encoder_ctl(_encoder,
         OPUS_SET_SIGNAL(OPUS_SIGNAL_VOICE)); error < 0)
     {
         Logger::LogToFile("[sv:err:record:init] : failed to "
-            "set audiosignal type for encoder (code:%d)", error);
+            "set audiosignal type for _encoder (code:%d)", error);
         return false;
     }
 
-    if (const auto error = opus_encoder_ctl(Record::encoder,
+    if (const auto error = opus_encoder_ctl(_encoder,
         OPUS_SET_COMPLEXITY(10)); error < 0)
     {
         Logger::LogToFile("[sv:err:record:init] : failed to "
-            "set complexity for encoder (code:%d)", error);
+            "set complexity for _encoder (code:%d)", error);
         return false;
     }
 
-    if (const auto error = opus_encoder_ctl(Record::encoder,
+    if (const auto error = opus_encoder_ctl(_encoder,
         OPUS_SET_PREDICTION_DISABLED(FALSE)); error < 0)
     {
         Logger::LogToFile("[sv:err:record:init] : failed to "
-            "enable prediction for encoder (code:%d)", error);
+            "enable prediction for _encoder (code:%d)", error);
         return false;
     }
 
-    if (const auto error = opus_encoder_ctl(Record::encoder,
+    if (const auto error = opus_encoder_ctl(_encoder,
         OPUS_SET_LSB_DEPTH(16)); error < 0)
     {
         Logger::LogToFile("[sv:err:record:init] : failed to "
-            "set lsb depth for encoder (code:%d)", error);
+            "set lsb depth for _encoder (code:%d)", error);
         return false;
     }
 
-    if (const auto error = opus_encoder_ctl(Record::encoder,
+    if (const auto error = opus_encoder_ctl(_encoder,
         OPUS_SET_FORCE_CHANNELS(TRUE)); error < 0)
     {
         Logger::LogToFile("[sv:err:record:init] : failed to "
-            "set count channels for encoder (code:%d)", error);
+            "set count channels for _encoder (code:%d)", error);
         return false;
     }
 
-    if (const auto error = opus_encoder_ctl(Record::encoder,
+    if (const auto error = opus_encoder_ctl(_encoder,
         OPUS_SET_DTX(FALSE)); error < 0)
     {
         Logger::LogToFile("[sv:err:record:init] : failed to "
-            "set dtx for encoder (code:%d)", error);
+            "set dtx for _encoder (code:%d)", error);
         return false;
     }
 
-    if (const auto error = opus_encoder_ctl(Record::encoder,
+    if (const auto error = opus_encoder_ctl(_encoder,
         OPUS_SET_INBAND_FEC(TRUE)); error < 0)
     {
         Logger::LogToFile("[sv:err:record:init] : failed to "
-            "set inband fec for encoder (code:%d)", error);
+            "set inband fec for _encoder (code:%d)", error);
         return false;
     }
 
-    if (const auto error = opus_encoder_ctl(Record::encoder,
+    if (const auto error = opus_encoder_ctl(_encoder,
         OPUS_SET_PACKET_LOSS_PERC(10)); error < 0)
     {
         Logger::LogToFile("[sv:err:record:init] : failed to set "
-            "packet loss percent for encoder (code:%d)", error);
+            "packet loss percent for _encoder (code:%d)", error);
         return false;
     }
 
-    Record::usedDeviceIndex = -1;
+    _used_device_index = -1;
 
     if (PluginConfig::IsRecordLoaded() && !PluginConfig::GetDeviceName().empty())
     {
-        for (std::size_t i { 0 }; i < Record::deviceNamesList.size(); ++i)
+        for (std::size_t i = 0; i < _device_names_list.size(); ++i)
         {
-            if (Record::deviceNamesList[i] == PluginConfig::GetDeviceName())
+            if (_device_names_list[i] == PluginConfig::GetDeviceName())
             {
-                Record::usedDeviceIndex = i;
+                _used_device_index = i;
                 break;
             }
         }
     }
 
-    bool initRecordStatus = BASS_RecordInit(Record::usedDeviceIndex != -1 ?
-                            Record::deviceNumbersList[Record::usedDeviceIndex] : -1);
+    bool initRecordStatus = BASS_RecordInit(_used_device_index != -1 ?
+                            _device_numbers_list[_used_device_index] : -1);
 
-    if (!initRecordStatus && Record::usedDeviceIndex != -1)
+    if (!initRecordStatus && _used_device_index != -1)
     {
-        initRecordStatus = BASS_RecordInit(Record::usedDeviceIndex = -1);
+        initRecordStatus = BASS_RecordInit(_used_device_index = -1);
     }
 
-    if (initRecordStatus && Record::usedDeviceIndex == -1)
+    if (initRecordStatus && _used_device_index == -1)
     {
-        for (std::size_t i { 0 }; i < Record::deviceNumbersList.size(); ++i)
+        for (std::size_t i = 0; i < _device_numbers_list.size(); ++i)
         {
-            if (Record::deviceNumbersList[i] == BASS_RecordGetDevice())
+            if (_device_numbers_list[i] == BASS_RecordGetDevice())
             {
-                Record::usedDeviceIndex = i;
+                _used_device_index = i;
                 break;
             }
         }
     }
 
-    Memory::ScopeExit recordResetScope { [] { BASS_RecordFree(); } };
+    Memory::ScopeExit recordResetScope { []{ BASS_RecordFree(); } };
 
-    if (!initRecordStatus || Record::usedDeviceIndex == -1)
+    if (!initRecordStatus || _used_device_index == -1)
     {
         Logger::LogToFile("[sv:err:record:init] : failed to "
             "init device (code:%d)", BASS_ErrorGetCode());
@@ -201,37 +190,37 @@ bool Record::Init(const DWORD bitrate) noexcept
 
     if (!PluginConfig::IsRecordLoaded())
     {
-        PluginConfig::SetDeviceName(Record::deviceNamesList[Record::usedDeviceIndex]);
+        PluginConfig::SetDeviceName(_device_names_list[_used_device_index]);
     }
 
-    Record::recordChannel = BASS_RecordStart(SV::kFrequency, 1,
+    _record_channel = BASS_RecordStart(SV::kFrequency, 1,
         BASS_RECORD_PAUSE, nullptr, nullptr);
 
-    if (Record::recordChannel == NULL)
+    if (_record_channel == NULL)
     {
         Logger::LogToFile("[sv:err:record:init] : failed to create record "
             "stream (code:%d)", BASS_ErrorGetCode());
         return false;
     }
 
-    Memory::ScopeExit channelResetScope { [] { BASS_ChannelStop(Record::recordChannel); } };
+    Memory::ScopeExit channelResetScope { []{ BASS_ChannelStop(_record_channel); } };
 
-    Record::checkChannel = BASS_StreamCreate(SV::kFrequency, 1,
+    _check_channel = BASS_StreamCreate(SV::kFrequency, 1,
         NULL, STREAMPROC_PUSH, nullptr);
 
-    if (Record::checkChannel == NULL)
+    if (_check_channel == NULL)
     {
         Logger::LogToFile("[sv:err:record:init] : failed to create "
             "check stream (code:%d)", BASS_ErrorGetCode());
         return false;
     }
 
-    BASS_ChannelSetAttribute(Record::checkChannel, BASS_ATTRIB_VOL, 4.f);
+    BASS_ChannelSetAttribute(_check_channel, BASS_ATTRIB_VOL, 4.f);
 
     if (!PluginConfig::IsRecordLoaded())
     {
         PluginConfig::SetRecordLoaded(true);
-        Record::ResetConfigs();
+        ResetConfigs();
     }
 
     deviceListsResetScope.Release();
@@ -241,80 +230,80 @@ bool Record::Init(const DWORD bitrate) noexcept
 
     Logger::LogToFile("[sv:dbg:record:init] : module initialized");
 
-    Record::initStatus = true;
-    Record::SyncConfigs();
+    _init_status = true;
+    SyncConfigs();
 
     return true;
 }
 
 void Record::Free() noexcept
 {
-    if (!Record::initStatus)
-        return;
+    if (_init_status)
+    {
+        Logger::LogToFile("[sv:dbg:record:free] : module releasing...");
 
-    Logger::LogToFile("[sv:dbg:record:free] : module releasing...");
+        StopRecording();
+        BASS_ChannelStop(_record_channel);
+        BASS_RecordFree();
 
-    Record::StopRecording();
-    BASS_ChannelStop(Record::recordChannel);
-    BASS_RecordFree();
+        StopChecking();
+        BASS_StreamFree(_check_channel);
 
-    Record::StopChecking();
-    BASS_StreamFree(Record::checkChannel);
+        opus_encoder_destroy(_encoder);
 
-    opus_encoder_destroy(Record::encoder);
+        _used_device_index = -1;
+        _device_numbers_list.clear();
+        _device_names_list.clear();
 
-    Record::usedDeviceIndex = -1;
-    Record::deviceNumbersList.clear();
-    Record::deviceNamesList.clear();
+        Logger::LogToFile("[sv:dbg:record:free] : module released");
 
-    Logger::LogToFile("[sv:dbg:record:free] : module released");
-
-    Record::initStatus = false;
+        _init_status = false;
+    }
 }
 
 void Record::Tick() noexcept
 {
-    if (Record::initStatus && Record::checkStatus)
+    if (_init_status && _check_status)
     {
-        if (const auto bufferSize = BASS_ChannelGetData(Record::recordChannel,
-            nullptr, BASS_DATA_AVAILABLE); bufferSize != -1 && bufferSize != 0)
+        if (const auto buffer_size = BASS_ChannelGetData(_record_channel, nullptr, BASS_DATA_AVAILABLE);
+            buffer_size != -1 && buffer_size != 0)
         {
-            if (const auto readDataSize = BASS_ChannelGetData(Record::recordChannel, Record::encBuffer.data(),
-                std::clamp(bufferSize, 0ul, SV::kFrameSizeInBytes)); readDataSize != -1 && readDataSize != 0)
+            if (const auto read_data_size = BASS_ChannelGetData(_record_channel, _enc_buffer,
+                std::clamp(buffer_size, 0ul, SV::kFrameSizeInBytes));
+                read_data_size != -1 && read_data_size != 0)
             {
-                BASS_StreamPutData(Record::checkChannel, Record::encBuffer.data(), readDataSize);
+                BASS_StreamPutData(_check_channel, _enc_buffer, read_data_size);
             }
         }
     }
 }
 
-DWORD Record::GetFrame(BYTE* const bufferPtr, const DWORD bufferSize) noexcept
+DWORD Record::GetFrame(BYTE* const buffer_ptr, const DWORD buffer_size) noexcept
 {
-    if (!Record::initStatus || !Record::recordStatus || Record::checkStatus)
-        return NULL;
+    if (!_init_status || !_record_status || _check_status) return NULL;
 
-    const auto cBufferSize = BASS_ChannelGetData(Record::recordChannel, nullptr, BASS_DATA_AVAILABLE);
-    if (cBufferSize == -1 || cBufferSize < SV::kFrameSizeInBytes) return NULL;
+    const auto channel_buffer_size = BASS_ChannelGetData(_record_channel, nullptr, BASS_DATA_AVAILABLE);
+    if (channel_buffer_size == -1 || channel_buffer_size < SV::kFrameSizeInBytes) return NULL;
 
-    if (BASS_ChannelGetData(Record::recordChannel, Record::encBuffer.data(),
+    if (BASS_ChannelGetData(_record_channel, _enc_buffer,
         SV::kFrameSizeInBytes) != SV::kFrameSizeInBytes) return NULL;
 
-    const auto encDataLength = opus_encode(Record::encoder, Record::encBuffer.data(),
-        SV::kFrameSizeInSamples, bufferPtr, bufferSize);
+    const auto enc_data_length = opus_encode(_encoder, _enc_buffer,
+        SV::kFrameSizeInSamples, buffer_ptr, buffer_size);
 
-    return encDataLength > 0 ? static_cast<DWORD>(encDataLength) : NULL;
+    return enc_data_length > 0 ? static_cast<DWORD>(enc_data_length) : 0;
 }
 
 bool Record::HasMicro() noexcept
 {
-    BASS_DEVICEINFO devInfo {};
+    BASS_DEVICEINFO dev_info;
 
-    for (DWORD devNumber { 0 }; BASS_RecordGetDeviceInfo(devNumber, &devInfo); ++devNumber)
+    for (DWORD dev_number = 0; BASS_RecordGetDeviceInfo(dev_number, &dev_info); ++dev_number)
     {
-        const bool deviceEnabled = devInfo.flags & BASS_DEVICE_ENABLED;
-        const bool deviceLoopback = devInfo.flags & BASS_DEVICE_LOOPBACK;
+        const bool device_enabled = dev_info.flags & BASS_DEVICE_ENABLED;
+        const bool device_loopback = dev_info.flags & BASS_DEVICE_LOOPBACK;
 
-        if (deviceEnabled && !deviceLoopback && devInfo.name != nullptr)
+        if (device_enabled && !device_loopback && dev_info.name != nullptr)
             return true;
     }
 
@@ -323,7 +312,7 @@ bool Record::HasMicro() noexcept
 
 bool Record::StartRecording() noexcept
 {
-    if (!Record::initStatus || Record::recordStatus || Record::checkStatus)
+    if (!_init_status || _record_status || _check_status)
         return false;
 
     if (!PluginConfig::GetMicroEnable())
@@ -331,70 +320,71 @@ bool Record::StartRecording() noexcept
 
     Logger::LogToFile("[sv:dbg:record:startrecording] : channel recording starting...");
 
-    BASS_ChannelPlay(Record::recordChannel, FALSE);
-    Record::recordStatus = true;
+    BASS_ChannelPlay(_record_channel, FALSE);
+    _record_status = true;
 
     return true;
 }
 
 bool Record::IsRecording() noexcept
 {
-    return Record::recordStatus;
+    return _record_status;
 }
 
 void Record::StopRecording() noexcept
 {
-    if (!Record::initStatus)
-        return;
+    if (_init_status)
+    {
+        _record_status = false;
 
-    Record::recordStatus = false;
+        if (!_check_status)
+        {
+            BASS_ChannelPause(_record_channel);
+            opus_encoder_ctl(_encoder, OPUS_RESET_STATE);
 
-    if (Record::checkStatus)
-        return;
+            Logger::LogToFile("[sv:dbg:record:stoprecording] : channel recording stoped");
 
-    BASS_ChannelPause(Record::recordChannel);
-    opus_encoder_ctl(Record::encoder, OPUS_RESET_STATE);
-
-    Logger::LogToFile("[sv:dbg:record:stoprecording] : channel recording stoped");
-
-    const auto bufferSize = BASS_ChannelGetData(Record::recordChannel, nullptr, BASS_DATA_AVAILABLE);
-    if (bufferSize == -1 && bufferSize == 0) return;
-
-    BASS_ChannelGetData(Record::recordChannel, nullptr, bufferSize);
+            const auto buffer_size = BASS_ChannelGetData(_record_channel, nullptr, BASS_DATA_AVAILABLE);
+            if (buffer_size != -1 && buffer_size != 0)
+            {
+                BASS_ChannelGetData(_record_channel, nullptr, buffer_size);
+            }
+        }
+    }
 }
 
 bool Record::StartChecking() noexcept
 {
-    if (!Record::initStatus || Record::checkStatus)
+    if (!_init_status || _check_status)
         return false;
 
     if (!PluginConfig::GetMicroEnable())
         return false;
 
-    Record::StopRecording();
+    StopRecording();
 
     Logger::LogToFile("[sv:dbg:record:startchecking] : checking device starting...");
 
-    BASS_ChannelPlay(Record::checkChannel, TRUE);
-    BASS_ChannelPlay(Record::recordChannel, TRUE);
-    Record::checkStatus = true;
+    BASS_ChannelPlay(_check_channel, TRUE);
+    BASS_ChannelPlay(_record_channel, TRUE);
+    _check_status = true;
 
     return true;
 }
 
 bool Record::IsChecking() noexcept
 {
-    return Record::checkStatus;
+    return _check_status;
 }
 
 void Record::StopChecking() noexcept
 {
-    if (Record::initStatus && Record::checkStatus)
+    if (_init_status && _check_status)
     {
         Logger::LogToFile("[sv:dbg:record:stopchecking] : checking device stoped");
 
-        BASS_ChannelStop(Record::checkChannel);
-        Record::checkStatus = false;
+        BASS_ChannelStop(_check_channel);
+        _check_status = false;
     }
 }
 
@@ -410,67 +400,62 @@ int Record::GetMicroVolume() noexcept
 
 int Record::GetMicroDevice() noexcept
 {
-    return Record::usedDeviceIndex;
+    return _used_device_index;
 }
 
-void Record::SetMicroEnable(const bool microEnable) noexcept
+void Record::SetMicroEnable(const bool micro_enable) noexcept
 {
-    if (!Record::initStatus)
-        return;
-
-    PluginConfig::SetMicroEnable(microEnable);
-
-    if (!PluginConfig::GetMicroEnable())
+    if (_init_status)
     {
-        Record::StopRecording();
-        Record::StopChecking();
+        PluginConfig::SetMicroEnable(micro_enable);
+        if (!PluginConfig::GetMicroEnable())
+        {
+            StopRecording();
+            StopChecking();
+        }
     }
 }
 
-void Record::SetMicroVolume(const int microVolume) noexcept
+void Record::SetMicroVolume(const int micro_volume) noexcept
 {
-    if (!Record::initStatus)
-        return;
-
-    PluginConfig::SetMicroVolume(std::clamp(microVolume, 0, 100));
-
-    BASS_RecordSetInput(-1, BASS_INPUT_ON, static_cast<float>
-        (PluginConfig::GetMicroVolume()) / 100.f);
+    if (_init_status)
+    {
+        PluginConfig::SetMicroVolume(std::clamp(micro_volume, 0, 100));
+        BASS_RecordSetInput(-1, BASS_INPUT_ON, static_cast<float>
+            (PluginConfig::GetMicroVolume()) / 100.f);
+    }
 }
 
-void Record::SetMicroDevice(const int deviceIndex) noexcept
+void Record::SetMicroDevice(const int device_index) noexcept
 {
-    if (!Record::initStatus)
-        return;
+    if (_init_status)
+    {
+        if (device_index >= 0 && device_index < std::min(_device_names_list.size(), _device_numbers_list.size()))
+        {
+            if (device_index != _used_device_index)
+            {
+                BASS_ChannelStop(_record_channel);
+                BASS_RecordFree();
 
-    const auto devNamesCount = Record::deviceNamesList.size();
-    const auto devNumbersCount = Record::deviceNumbersList.size();
+                const auto old_device_index = _used_device_index;
 
-    if (deviceIndex < 0 || deviceIndex >= min(devNamesCount, devNumbersCount))
-        return;
+                if (BASS_RecordInit(_device_numbers_list[_used_device_index = device_index]) == FALSE &&
+                    BASS_RecordInit(_device_numbers_list[_used_device_index = old_device_index]) == FALSE)
+                    return;
 
-    if (deviceIndex == Record::usedDeviceIndex)
-        return;
+                _record_channel = BASS_RecordStart(SV::kFrequency, 1, !_record_status &&
+                    !_check_status ? BASS_RECORD_PAUSE : NULL, nullptr, nullptr);
 
-    BASS_ChannelStop(Record::recordChannel);
-    BASS_RecordFree();
-
-    const auto oldDevIndex = Record::usedDeviceIndex;
-
-    if (BASS_RecordInit(Record::deviceNumbersList[Record::usedDeviceIndex = deviceIndex]) == FALSE &&
-        BASS_RecordInit(Record::deviceNumbersList[Record::usedDeviceIndex = oldDevIndex]) == FALSE)
-        return;
-
-    Record::recordChannel = BASS_RecordStart(SV::kFrequency, 1, !Record::recordStatus &&
-        !Record::checkStatus ? BASS_RECORD_PAUSE : NULL, nullptr, nullptr);
-
-    PluginConfig::SetDeviceName(Record::deviceNamesList[Record::usedDeviceIndex]);
+                PluginConfig::SetDeviceName(_device_names_list[_used_device_index]);
+            }
+        }
+    }
 }
 
 void Record::SyncConfigs() noexcept
 {
-    Record::SetMicroEnable(PluginConfig::GetMicroEnable());
-    Record::SetMicroVolume(PluginConfig::GetMicroVolume());
+    SetMicroEnable(PluginConfig::GetMicroEnable());
+    SetMicroVolume(PluginConfig::GetMicroVolume());
 }
 
 void Record::ResetConfigs() noexcept
@@ -481,26 +466,21 @@ void Record::ResetConfigs() noexcept
 
 const std::vector<std::string>& Record::GetDeviceNamesList() noexcept
 {
-    return Record::deviceNamesList;
+    return _device_names_list;
 }
 
 const std::vector<int>& Record::GetDeviceNumbersList() noexcept
 {
-    return Record::deviceNumbersList;
+    return _device_numbers_list;
 }
 
-bool Record::initStatus { false };
-
-bool Record::checkStatus { false };
-bool Record::recordStatus { false };
-
-HRECORD Record::recordChannel { NULL };
-OpusEncoder* Record::encoder { nullptr };
-
-std::array<opus_int16, SV::kFrameSizeInSamples> Record::encBuffer {};
-
-HSTREAM Record::checkChannel { NULL };
-
-int Record::usedDeviceIndex { -1 };
-std::vector<std::string> Record::deviceNamesList;
-std::vector<int> Record::deviceNumbersList;
+bool                     Record::_init_status = false;
+bool                     Record::_check_status = false;
+bool                     Record::_record_status = false;
+HRECORD                  Record::_record_channel = NULL;
+OpusEncoder*             Record::_encoder = nullptr;
+opus_int16               Record::_enc_buffer[SV::kFrameSizeInSamples];
+HSTREAM                  Record::_check_channel = NULL;
+int                      Record::_used_device_index = -1;
+std::vector<std::string> Record::_device_names_list;
+std::vector<int>         Record::_device_numbers_list;

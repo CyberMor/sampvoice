@@ -51,17 +51,11 @@ public:
 
 public:
 
-    static std::size_t AddConnectCallback(ConnectCallback callback) noexcept;
-    static std::size_t AddReceiveCallback(ReceiveCallback callback) noexcept;
-    static std::size_t AddSendCallback(SendCallback callback) noexcept;
-    static std::size_t AddRpcCallback(RpcCallback callback) noexcept;
-    static std::size_t AddDisconnectCallback(DisconnectCallback callback) noexcept;
-
-    static void RemoveConnectCallback(std::size_t callback) noexcept;
-    static void RemoveReceiveCallback(std::size_t callback) noexcept;
-    static void RemoveSendCallback(std::size_t callback) noexcept;
-    static void RemoveRpcCallback(std::size_t callback) noexcept;
-    static void RemoveDisconnectCallback(std::size_t callback) noexcept;
+    static void SetConnectCallback(ConnectCallback&& callback) noexcept;
+    static void SetReceiveCallback(ReceiveCallback&& callback) noexcept;
+    static void SetSendCallback(SendCallback&& callback) noexcept;
+    static void SetRpcCallback(RpcCallback&& callback) noexcept;
+    static void SetDisconnectCallback(DisconnectCallback&& callback) noexcept;
 
 private:
 
@@ -153,11 +147,11 @@ private:
 
     static bool _connect_status;
 
-    static std::vector<ConnectCallback>    _connect_callbacks;
-    static std::vector<ReceiveCallback>    _receive_callbacks;
-    static std::vector<SendCallback>       _send_callbacks;
-    static std::vector<RpcCallback>        _rpc_callbacks;
-    static std::vector<DisconnectCallback> _disconnect_callbacks;
+    static ConnectCallback    _connect_callback;
+    static ReceiveCallback    _receive_callback;
+    static SendCallback       _send_callback;
+    static RpcCallback        _rpc_callback;
+    static DisconnectCallback _disconnect_callback;
 
     static RakClientInterface*  _rak_client_interface;
     static RakClientInterface** _rak_client_interface_ptr;

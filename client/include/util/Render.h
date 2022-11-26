@@ -57,21 +57,13 @@ public:
 
 public:
 
-    static std::size_t AddDeviceInitCallback(DeviceInitCallback callback) noexcept;
-    static std::size_t AddBeforeResetCallback(BeforeResetCallback callback) noexcept;
-    static std::size_t AddBeginSceneCallback(BeginSceneCallback callback) noexcept;
-    static std::size_t AddRenderCallback(RenderCallback callback) noexcept;
-    static std::size_t AddEndSceneCallback(EndSceneCallback callback) noexcept;
-    static std::size_t AddAfterResetCallback(AfterResetCallback callback) noexcept;
-    static std::size_t AddDeviceFreeCallback(DeviceFreeCallback callback) noexcept;
-
-    static void RemoveDeviceInitCallback(std::size_t callback) noexcept;
-    static void RemoveBeforeResetCallback(std::size_t callback) noexcept;
-    static void RemoveBeginSceneCallback(std::size_t callback) noexcept;
-    static void RemoveRenderCallback(std::size_t callback) noexcept;
-    static void RemoveEndSceneCallback(std::size_t callback) noexcept;
-    static void RemoveAfterResetCallback(std::size_t callback) noexcept;
-    static void RemoveDeviceFreeCallback(std::size_t callback) noexcept;
+    static void SetDeviceInitCallback(DeviceInitCallback&& callback) noexcept;
+    static void SetBeforeResetCallback(BeforeResetCallback&& callback) noexcept;
+    static void SetBeginSceneCallback(BeginSceneCallback&& callback) noexcept;
+    static void SetRenderCallback(RenderCallback&& callback) noexcept;
+    static void SetEndSceneCallback(EndSceneCallback&& callback) noexcept;
+    static void SetAfterResetCallback(AfterResetCallback&& callback) noexcept;
+    static void SetDeviceFreeCallback(DeviceFreeCallback&& callback) noexcept;
 
 private:
 
@@ -271,13 +263,13 @@ private:
     static IDirect3DDevice9*     _device_interface;
     static D3DPRESENT_PARAMETERS _device_parameters;
 
-    static std::vector<DeviceInitCallback>  _device_init_callbacks;
-    static std::vector<BeforeResetCallback> _before_reset_callbacks;
-    static std::vector<BeginSceneCallback>  _begin_scene_callbacks;
-    static std::vector<RenderCallback>      _render_callbacks;
-    static std::vector<EndSceneCallback>    _end_scene_callbacks;
-    static std::vector<AfterResetCallback>  _after_reset_callbacks;
-    static std::vector<DeviceFreeCallback>  _device_free_callbacks;
+    static DeviceInitCallback  _device_init_callback;
+    static BeforeResetCallback _before_reset_callback;
+    static BeginSceneCallback  _begin_scene_callback;
+    static RenderCallback      _render_callback;
+    static EndSceneCallback    _end_scene_callback;
+    static AfterResetCallback  _after_reset_callback;
+    static DeviceFreeCallback  _device_free_callback;
 
     static Memory::JumpHook _hook_direct3d_create9;
 

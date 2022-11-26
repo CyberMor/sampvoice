@@ -13,7 +13,7 @@
 
 #include <d3d9.h>
 
-class PluginConfig {
+struct PluginConfig {
 
     PluginConfig() = delete;
     ~PluginConfig() = delete;
@@ -47,8 +47,8 @@ public:
 
 public:
 
-    static bool Load(const std::string& configFilePath);
-    static bool Save(const std::string& configFilePath);
+    static bool Load(const std::string& path);
+    static bool Save(const std::string& path);
 
     static void Reset() noexcept;
     static bool IsLoaded() noexcept;
@@ -58,10 +58,10 @@ public:
     static bool IsRecordLoaded() noexcept;
     static bool IsMicroLoaded() noexcept;
 
-    static void SetPlaybackLoaded(bool status) noexcept;
-    static void SetSpeakerLoaded(bool status) noexcept;
-    static void SetRecordLoaded(bool status) noexcept;
-    static void SetMicroLoaded(bool status) noexcept;
+    static void SetPlaybackLoaded(bool value) noexcept;
+    static void SetSpeakerLoaded(bool value) noexcept;
+    static void SetRecordLoaded(bool value) noexcept;
+    static void SetMicroLoaded(bool value) noexcept;
 
     static bool GetSoundEnable() noexcept;
     static int GetSoundVolume() noexcept;
@@ -79,48 +79,48 @@ public:
     static D3DCOLOR GetMicroIconColor() noexcept;
     static float GetMicroIconAngle() noexcept;
 
-    static void SetSoundEnable(bool soundEnable) noexcept;
-    static void SetSoundVolume(int soundVolume) noexcept;
-    static void SetSoundBalancer(bool soundBalancer) noexcept;
-    static void SetSoundFilter(bool soundFilter) noexcept;
-    static void SetSpeakerIconScale(float speakerIconScale) noexcept;
-    static void SetSpeakerIconOffsetX(int speakerIconOffsetX) noexcept;
-    static void SetSpeakerIconOffsetY(int speakerIconOffsetY) noexcept;
-    static void SetMicroEnable(bool microEnable) noexcept;
-    static void SetMicroVolume(int microVolume) noexcept;
-    static void SetDeviceName(std::string deviceName) noexcept;
-    static void SetMicroIconScale(float microIconScale) noexcept;
-    static void SetMicroIconPositionX(int microIconPositionX) noexcept;
-    static void SetMicroIconPositionY(int microIconPositionY) noexcept;
-    static void SetMicroIconColor(D3DCOLOR microIconColor) noexcept;
-    static void SetMicroIconAngle(float microIconAngle) noexcept;
+    static void SetSoundEnable(bool value) noexcept;
+    static void SetSoundVolume(int value) noexcept;
+    static void SetSoundBalancer(bool value) noexcept;
+    static void SetSoundFilter(bool value) noexcept;
+    static void SetSpeakerIconScale(float value) noexcept;
+    static void SetSpeakerIconOffsetX(int value) noexcept;
+    static void SetSpeakerIconOffsetY(int value) noexcept;
+    static void SetMicroEnable(bool value) noexcept;
+    static void SetMicroVolume(int value) noexcept;
+    static void SetDeviceName(std::string value) noexcept;
+    static void SetMicroIconScale(float value) noexcept;
+    static void SetMicroIconPositionX(int value) noexcept;
+    static void SetMicroIconPositionY(int value) noexcept;
+    static void SetMicroIconColor(D3DCOLOR value) noexcept;
+    static void SetMicroIconAngle(float value) noexcept;
 
 private:
 
-    static bool loadStatus;
+    static bool        _load_status;
 
-    static bool playbackLoaded;
-    static bool speakerLoaded;
-    static bool recordLoaded;
-    static bool microLoaded;
+    static bool        _playback_loaded;
+    static bool        _speaker_loaded;
+    static bool        _record_loaded;
+    static bool        _micro_loaded;
 
-    static bool soundEnable;
-    static int soundVolume;
-    static bool soundBalancer;
-    static bool soundFilter;
+    static bool        _sound_enable;
+    static int         _sound_volume;
+    static bool        _sound_balancer;
+    static bool        _sound_filter;
 
-    static float speakerIconScale;
-    static int speakerIconOffsetX;
-    static int speakerIconOffsetY;
+    static float       _speaker_icon_scale;
+    static int         _speaker_icon_offset_x;
+    static int         _speaker_icon_offset_y;
 
-    static bool microEnable;
-    static int microVolume;
-    static std::string deviceName;
+    static bool        _micro_enable;
+    static int         _micro_volume;
+    static std::string _device_name;
 
-    static float microIconScale;
-    static int microIconPositionX;
-    static int microIconPositionY;
-    static D3DCOLOR microIconColor;
-    static float microIconAngle;
+    static float       _micro_icon_scale;
+    static int         _micro_icon_position_x;
+    static int         _micro_icon_position_y;
+    static D3DCOLOR    _micro_icon_color;
+    static float       _micro_icon_angle;
 
 };

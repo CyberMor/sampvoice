@@ -30,14 +30,14 @@ bool RakNet::Init(const AddressesBase& addr_base) noexcept
 
     Logger::LogToFile("[dbg:raknet:init] : finded rakclient interface offset (value:0x%x)", rak_client_offset);
 
-    _samp_destruct_hook   = Memory::JumpHook((LPVOID)(addr_base.GetSampDestructAddr()), &HookSampDestruct);
-    _rak_client_init_hook = Memory::JumpHook((LPVOID)(addr_base.GetRcInitAddr()), &HookRaknetInit);
+    _samp_destruct_hook   = { (LPVOID)(addr_base.GetSampDestructAddr()), &HookSampDestruct };
+    _rak_client_init_hook = { (LPVOID)(addr_base.GetRcInitAddr()), &HookRaknetInit };
 
-    _connect_callbacks.clear();
-    _receive_callbacks.clear();
-    _send_callbacks.clear();
-    _rpc_callbacks.clear();
-    _disconnect_callbacks.clear();
+    _connect_callback = nullptr;
+    _receive_callback = nullptr;
+    _send_callback = nullptr;
+    _rpc_callback = nullptr;
+    _disconnect_callback = nullptr;
 
     _connect_status = false;
     _load_status = false;
@@ -70,19 +70,16 @@ void RakNet::Free() noexcept
 
         if (_connect_status)
         {
-            for (const auto& disconnect_callback : _disconnect_callbacks)
-            {
-                if (disconnect_callback != nullptr) disconnect_callback();
-            }
+            if (_disconnect_callback != nullptr) _disconnect_callback();
         }
 
         _connect_status = false;
 
-        _connect_callbacks.clear();
-        _receive_callbacks.clear();
-        _send_callbacks.clear();
-        _rpc_callbacks.clear();
-        _disconnect_callbacks.clear();
+        _connect_callback = nullptr;
+        _receive_callback = nullptr;
+        _send_callback = nullptr;
+        _rpc_callback = nullptr;
+        _disconnect_callback = nullptr;
 
         if (_load_status)
         {
@@ -113,129 +110,29 @@ bool RakNet::Send(BitStream* const bit_stream) noexcept
         (bit_stream, PacketPriority::MEDIUM_PRIORITY, PacketReliability::RELIABLE_ORDERED, '\0');
 }
 
-std::size_t RakNet::AddConnectCallback(ConnectCallback callback) noexcept
+void RakNet::SetConnectCallback(ConnectCallback&& callback) noexcept
 {
-    if (!_init_status) return -1;
-
-    for (std::size_t i = 0; i < _connect_callbacks.size(); ++i)
-    {
-        if (_connect_callbacks[i] == nullptr)
-        {
-            _connect_callbacks[i] = std::move(callback);
-            return i;
-        }
-    }
-
-    _connect_callbacks.emplace_back(std::move(callback));
-    return _connect_callbacks.size() - 1;
+    if (_init_status) _connect_callback = std::move(callback);
 }
 
-std::size_t RakNet::AddReceiveCallback(ReceiveCallback callback) noexcept
+void RakNet::SetReceiveCallback(ReceiveCallback&& callback) noexcept
 {
-    if (!_init_status) return -1;
-
-    for (std::size_t i = 0; i < _receive_callbacks.size(); ++i)
-    {
-        if (_receive_callbacks[i] == nullptr)
-        {
-            _receive_callbacks[i] = std::move(callback);
-            return i;
-        }
-    }
-
-    _receive_callbacks.emplace_back(std::move(callback));
-    return _receive_callbacks.size() - 1;
+    if (_init_status) _receive_callback = std::move(callback);
 }
 
-std::size_t RakNet::AddSendCallback(SendCallback callback) noexcept
+void RakNet::SetSendCallback(SendCallback&& callback) noexcept
 {
-    if (!_init_status) return -1;
-
-    for (std::size_t i = 0; i < _send_callbacks.size(); ++i)
-    {
-        if (_send_callbacks[i] == nullptr)
-        {
-            _send_callbacks[i] = std::move(callback);
-            return i;
-        }
-    }
-
-    _send_callbacks.emplace_back(std::move(callback));
-    return _send_callbacks.size() - 1;
+    if (_init_status) _send_callback = std::move(callback);
 }
 
-std::size_t RakNet::AddRpcCallback(RpcCallback callback) noexcept
+void RakNet::SetRpcCallback(RpcCallback&& callback) noexcept
 {
-    if (!_init_status) return -1;
-
-    for (std::size_t i = 0; i < _rpc_callbacks.size(); ++i)
-    {
-        if (_rpc_callbacks[i] == nullptr)
-        {
-            _rpc_callbacks[i] = std::move(callback);
-            return i;
-        }
-    }
-
-    _rpc_callbacks.emplace_back(std::move(callback));
-    return _rpc_callbacks.size() - 1;
+    if (_init_status) _rpc_callback = std::move(callback);
 }
 
-std::size_t RakNet::AddDisconnectCallback(DisconnectCallback callback) noexcept
+void RakNet::SetDisconnectCallback(DisconnectCallback&& callback) noexcept
 {
-    if (!_init_status) return -1;
-
-    for (std::size_t i = 0; i < _disconnect_callbacks.size(); ++i)
-    {
-        if (_disconnect_callbacks[i] == nullptr)
-        {
-            _disconnect_callbacks[i] = std::move(callback);
-            return i;
-        }
-    }
-
-    _disconnect_callbacks.emplace_back(std::move(callback));
-    return _disconnect_callbacks.size() - 1;
-}
-
-void RakNet::RemoveConnectCallback(const std::size_t callback) noexcept
-{
-    if (_init_status && callback < _connect_callbacks.size())
-    {
-        _connect_callbacks[callback] = nullptr;
-    }
-}
-
-void RakNet::RemoveReceiveCallback(const std::size_t callback) noexcept
-{
-    if (_init_status && callback < _receive_callbacks.size())
-    {
-        _receive_callbacks[callback] = nullptr;
-    }
-}
-
-void RakNet::RemoveSendCallback(const std::size_t callback) noexcept
-{
-    if (_init_status && callback < _send_callbacks.size())
-    {
-        _send_callbacks[callback] = nullptr;
-    }
-}
-
-void RakNet::RemoveRpcCallback(const std::size_t callback) noexcept
-{
-    if (_init_status && callback < _rpc_callbacks.size())
-    {
-        _rpc_callbacks[callback] = nullptr;
-    }
-}
-
-void RakNet::RemoveDisconnectCallback(const std::size_t callback) noexcept
-{
-    if (_init_status && callback < _disconnect_callbacks.size())
-    {
-        _disconnect_callbacks[callback] = nullptr;
-    }
+    if (_init_status) _disconnect_callback = std::move(callback);
 }
 
 RakNet::RakClientHookInterface::RakClientHookInterface(RakClientInterface* const orig_interface) noexcept
@@ -248,12 +145,9 @@ bool RakNet::RakClientHookInterface::RPC(int* const rpcIdPointer, BitStream* con
 {
     bool break_status = false;
 
-    for (const auto& rpc_callback : _rpc_callbacks)
+    if (_rpc_callback != nullptr && !_rpc_callback(*rpcIdPointer, *parameters))
     {
-        if (rpc_callback != nullptr && !rpc_callback(*rpcIdPointer, *parameters))
-        {
-            break_status = true;
-        }
+        break_status = true;
     }
 
     if (break_status) return true;
@@ -266,12 +160,9 @@ bool RakNet::RakClientHookInterface::Send(BitStream* const bit_stream, const Pac
 {
     bool break_status = false;
 
-    for (const auto& send_callback : _send_callbacks)
+    if (_send_callback != nullptr && !_send_callback(*bit_stream))
     {
-        if (send_callback != nullptr && !send_callback(*bit_stream))
-        {
-            break_status = true;
-        }
+        break_status = true;
     }
 
     if (break_status) return true;
@@ -287,12 +178,9 @@ Packet* RakNet::RakClientHookInterface::Receive() noexcept
     {
         bool break_status = true;
 
-        for (const auto& receive_callback : _receive_callbacks)
+        if (_receive_callback != nullptr && !_receive_callback(*packet_pointer))
         {
-            if (receive_callback != nullptr && !receive_callback(*packet_pointer))
-            {
-                break_status = false;
-            }
+            break_status = false;
         }
 
         if (break_status) break;
@@ -313,10 +201,7 @@ bool RakNet::RakClientHookInterface::Connect(const char* const hostIp, const uin
     {
         Logger::LogToFile("[dbg:raknet:client:connect] : connected");
 
-        for (const auto& connect_callback : _connect_callbacks)
-        {
-            if (connect_callback != nullptr) connect_callback(hostIp, serverPort);
-        }
+        if (_connect_callback != nullptr) _connect_callback(hostIp, serverPort);
     }
 
     return _connect_status;
@@ -328,10 +213,7 @@ void RakNet::RakClientHookInterface::Disconnect(const uint32_t blockDuration, co
 
     if (_connect_status)
     {
-        for (const auto& disconnect_callback : _disconnect_callbacks)
-        {
-            if (disconnect_callback != nullptr) disconnect_callback();
-        }
+        if (_disconnect_callback != nullptr) _disconnect_callback();
     }
 
     _connect_status = false;
@@ -361,12 +243,9 @@ bool RakNet::RakClientHookInterface::Send(const char* const dataPointer, const i
 
     bool break_status = false;
 
-    for (const auto& send_callback : _send_callbacks)
+    if (_send_callback != nullptr && !_send_callback(bit_stream))
     {
-        if (send_callback != nullptr && !send_callback(bit_stream))
-        {
-            break_status = true;
-        }
+        break_status = true;
     }
 
     if (break_status) return true;
@@ -465,12 +344,9 @@ bool RakNet::RakClientHookInterface::RPC(int* const rpcIdPointer, const char* co
 
     bool break_status = false;
 
-    for (const auto& rpc_callback : _rpc_callbacks)
+    if (_rpc_callback != nullptr && !_rpc_callback(*rpcIdPointer, bit_stream))
     {
-        if (rpc_callback != nullptr && !rpc_callback(*rpcIdPointer, bit_stream))
-        {
-            break_status = true;
-        }
+        break_status = true;
     }
 
     if (break_status) return true;
@@ -623,12 +499,9 @@ bool RakNet::RakClientHookInterface::RPC_(int* const rpcIdPointer, BitStream* co
 {
     bool break_status = false;
 
-    for (const auto& rpc_callback : _rpc_callbacks)
+    if (_rpc_callback != nullptr && !_rpc_callback(*rpcIdPointer, *bit_stream))
     {
-        if (rpc_callback != nullptr && !rpc_callback(*rpcIdPointer, *bit_stream))
-        {
-            break_status = true;
-        }
+        break_status = true;
     }
 
     if (break_status) return true;
@@ -713,11 +586,11 @@ bool RakNet::_load_status = false;
 
 bool RakNet::_connect_status = false;
 
-std::vector<RakNet::ConnectCallback>    RakNet::_connect_callbacks;
-std::vector<RakNet::ReceiveCallback>    RakNet::_receive_callbacks;
-std::vector<RakNet::SendCallback>       RakNet::_send_callbacks;
-std::vector<RakNet::RpcCallback>        RakNet::_rpc_callbacks;
-std::vector<RakNet::DisconnectCallback> RakNet::_disconnect_callbacks;
+RakNet::ConnectCallback    RakNet::_connect_callback;
+RakNet::ReceiveCallback    RakNet::_receive_callback;
+RakNet::SendCallback       RakNet::_send_callback;
+RakNet::RpcCallback        RakNet::_rpc_callback;
+RakNet::DisconnectCallback RakNet::_disconnect_callback;
 
 RakClientInterface*  RakNet::_rak_client_interface     = nullptr;
 RakClientInterface** RakNet::_rak_client_interface_ptr = nullptr;

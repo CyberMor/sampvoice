@@ -27,7 +27,7 @@
 #include "VoicePacket.h"
 #include "Header.h"
 
-class Network {
+struct Network {
 
     Network() = delete;
     ~Network() = delete;
@@ -38,19 +38,19 @@ class Network {
 
 public:
 
-    static constexpr BYTE kRaknetPacketId = 222;
-    static constexpr int kRaknetConnectRcpId = 25;
-    static constexpr DWORD kMaxVoicePacketSize = 1400;
-    static constexpr DWORD kMaxVoiceDataSize = kMaxVoicePacketSize - sizeof(VoicePacket);
-    static constexpr DWORD kRecvBufferSize = 2 * 1024 * 1024;
-    static constexpr DWORD kSendBufferSize = 64 * 1024;
-    static constexpr Timer::time_t kKeepAliveInterval = 2000;
+    static constexpr BYTE          kRaknetPacketId     = 222;
+    static constexpr int           kRaknetConnectRcpId = 25;
+    static constexpr DWORD         kMaxVoicePacketSize = 1400;
+    static constexpr DWORD         kMaxVoiceDataSize   = kMaxVoicePacketSize - sizeof(VoicePacket);
+    static constexpr DWORD         kRecvBufferSize     = 1 * 1024 * 1024;
+    static constexpr DWORD         kSendBufferSize     = 64 * 1024;
+    static constexpr Timer::time_t kKeepAliveInterval  = 2000;
 
 private:
 
-    using ConnectCallback = std::function<void(const std::string&, WORD)>;
-    using SvConnectCallback = std::function<void(SV::ConnectPacket&)>;
-    using SvInitCallback = std::function<bool(const SV::PluginInitPacket&)>;
+    using ConnectCallback    = std::function<void(const std::string&, WORD)>;
+    using SvConnectCallback  = std::function<void(SV::ConnectPacket&)>;
+    using SvInitCallback     = std::function<bool(const SV::PluginInitPacket&)>;
     using DisconnectCallback = std::function<void()>;
 
 private:
@@ -68,23 +68,21 @@ private:
 
 public:
 
-    static bool Init(const AddressesBase& addrBase) noexcept;
+    static bool Init(const AddressesBase& addr_base) noexcept;
     static void Free() noexcept;
 
-    static bool SendControlPacket(WORD packet, LPCVOID dataAddr = nullptr, WORD dataSize = 0) noexcept;
-    static bool SendVoicePacket(LPCVOID dataAddr, WORD dataSize) noexcept;
+    static bool SendControlPacket(WORD packet, LPCVOID data = nullptr, WORD size = 0) noexcept;
+    static bool SendVoicePacket(LPCVOID data, WORD size) noexcept;
     static void EndSequence() noexcept;
-    static ControlPacketContainerPtr ReceiveControlPacket() noexcept;
-    static VoicePacketContainerPtr ReceiveVoicePacket() noexcept;
+    static bool ReceiveControlPacket(ControlPacketContainer& buffer) noexcept;
+    static bool ReceiveVoicePacket(VoicePacketContainer& buffer) noexcept;
 
-    static std::size_t AddConnectCallback(ConnectCallback callback) noexcept;
-    static std::size_t AddSvConnectCallback(SvConnectCallback callback) noexcept;
-    static std::size_t AddSvInitCallback(SvInitCallback callback) noexcept;
-    static std::size_t AddDisconnectCallback(DisconnectCallback callback) noexcept;
-    static void RemoveConnectCallback(std::size_t callback) noexcept;
-    static void RemoveSvConnectCallback(std::size_t callback) noexcept;
-    static void RemoveSvInitCallback(std::size_t callback) noexcept;
-    static void RemoveDisconnectCallback(std::size_t callback) noexcept;
+public:
+
+    static void SetConnectCallback(ConnectCallback&& callback) noexcept;
+    static void SetSvConnectCallback(SvConnectCallback&& callback) noexcept;
+    static void SetSvInitCallback(SvInitCallback&& callback) noexcept;
+    static void SetDisconnectCallback(DisconnectCallback&& callback) noexcept;
 
 private:
 
@@ -97,23 +95,23 @@ private:
 
 private:
 
-    static bool initStatus;
+    static bool _init_status;
 
-    static SOCKET socketHandle;
-    static int connectionStatus;
-    static std::thread voiceThread;
-    static std::string serverIp;
-    static DWORD serverKey;
+    static SOCKET      _socket_handle;
+    static int         _connect_status;
+    static std::thread _voice_thread;
+    static std::string _server_ip;
+    static DWORD       _server_key;
 
-    static std::vector<ConnectCallback> connectCallbacks;
-    static std::vector<SvConnectCallback> svConnectCallbacks;
-    static std::vector<SvInitCallback> svInitCallbacks;
-    static std::vector<DisconnectCallback> disconnectCallbacks;
+    static ConnectCallback    _connect_callback;
+    static SvConnectCallback  _sv_connect_callback;
+    static SvInitCallback     _sv_init_callback;
+    static DisconnectCallback _disconnect_callback;
 
-    static SPSCQueue<ControlPacketContainerPtr> controlQueue;
-    static SPSCQueue<VoicePacketContainerPtr> voiceQueue;
+    static SPSCQueue<ControlPacketContainer> _control_queue;
+    static SPSCQueue<VoicePacketContainer>   _voice_queue;
 
-    static VoicePacketContainer inputVoicePacket;
-    static VoicePacketContainer outputVoicePacket;
+    static VoicePacketContainer _input_voice_packet;
+    static VoicePacketContainer _output_voice_packet;
 
 };

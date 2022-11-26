@@ -2,40 +2,42 @@
 
 #include <util/Logger.h>
 
-Effect::Effect(const DWORD type, const int priority,
-               const void* const paramPtr, const DWORD paramSize)
-    : type(type), priority(priority), params(paramSize)
-{
-    std::memcpy(this->params.data(), paramPtr, paramSize);
-}
-
 Effect::~Effect() noexcept
 {
-    for (const auto& fxHandle : this->fxHandles)
+    for (const auto& fx_handle : _fx_handles)
     {
-        BASS_ChannelRemoveFX(fxHandle.first, fxHandle.second);
+        BASS_ChannelRemoveFX(fx_handle.first, fx_handle.second);
     }
+}
+
+Effect::Effect(const DWORD type, const int priority,
+               const void* const param_data, const DWORD param_size)
+    : _type     { type }
+    , _priority { priority }
+    , _params   ( param_size )
+{
+    std::memcpy(_params.data(), param_data, param_size);
 }
 
 void Effect::Apply(const Channel& channel)
 {
-    if (const auto fxHandle = BASS_ChannelSetFX(channel.GetHandle(),
-        this->type, this->priority); fxHandle != NULL)
+    if (const auto fx_handle  = BASS_ChannelSetFX(channel.GetHandle(), _type, _priority);
+                   fx_handle != NULL)
     {
-        if (BASS_FXSetParameters(fxHandle, this->params.data()) == FALSE)
+        if (BASS_FXSetParameters(fx_handle, _params.data()) == FALSE)
         {
-            Logger::LogToFile("[sv:err:effect:apply] : failed "
-                "to set parameters (code:%d)", BASS_ErrorGetCode());
-            BASS_ChannelRemoveFX(channel.GetHandle(), fxHandle);
+            Logger::LogToFile("[sv:err:effect:apply] : failed to set parameters (code:%d)",
+                BASS_ErrorGetCode());
+            BASS_ChannelRemoveFX(channel.GetHandle(), fx_handle);
         }
         else
         {
-            this->fxHandles[channel.GetHandle()] = fxHandle;
+            _fx_handles[channel.GetHandle()] = fx_handle;
         }
     }
     else
     {
-        Logger::LogToFile("[sv:err:effect:apply] : failed to create "
-            "effect (code:%d)", BASS_ErrorGetCode());
+        Logger::LogToFile("[sv:err:effect:apply] : failed to create effect (code:%d)",
+            BASS_ErrorGetCode());
     }
 }

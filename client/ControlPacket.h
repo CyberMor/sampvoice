@@ -19,7 +19,7 @@ struct ControlPacket
 {
     UINT16 packet;
     UINT16 length;
-    UINT8 data[];
+    UINT8  data[];
 
     DWORD GetFullSize() const noexcept;
 };
@@ -27,5 +27,3 @@ struct ControlPacket
 #pragma pack(pop)
 
 using ControlPacketContainer = Memory::ObjectContainer<ControlPacket>;
-using ControlPacketContainerPtr = Memory::ObjectContainerPtr<ControlPacket>;
-#define MakeControlPacketContainer MakeObjectContainer(ControlPacket)
