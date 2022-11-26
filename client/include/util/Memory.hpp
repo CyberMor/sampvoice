@@ -70,8 +70,8 @@ namespace Memory
 
     public:
 
-        ObjectContainer(const DWORD extra_size)
-            : _bytes ( sizeof(Type) + extra_size )
+        ObjectContainer(const DWORD extra)
+            : _bytes ( sizeof(Type) + extra )
         {}
 
         ObjectContainer(const LPCVOID addr, const DWORD size)
@@ -91,18 +91,6 @@ namespace Memory
         }
 
         Type* operator->() noexcept
-        {
-            return reinterpret_cast<Type*>(_bytes.data());
-        }
-
-    public:
-
-        const Type* operator&() const noexcept
-        {
-            return reinterpret_cast<const Type*>(_bytes.data());
-        }
-
-        Type* operator&() noexcept
         {
             return reinterpret_cast<Type*>(_bytes.data());
         }
@@ -267,8 +255,8 @@ namespace Memory
             : _addr    { object._addr }
             , _enabled { object._enabled }
         {
-            std::memcpy(_patch_data, object._patch_data, Size);
-            std::memcpy(_orig_data, object._orig_data, Size);
+            std::memcpy(_patch_bytes, object._patch_bytes, Size);
+            std::memcpy(_orig_bytes, object._orig_bytes, Size);
 
             object._addr    = nullptr;
             object._enabled = FALSE;
@@ -284,8 +272,8 @@ namespace Memory
                 _addr    = object._addr;
                 _enabled = object._enabled;
 
-                std::memcpy(_patch_data, object._patch_data, Size);
-                std::memcpy(_orig_data, object._orig_data, Size);
+                std::memcpy(_patch_bytes, object._patch_bytes, Size);
+                std::memcpy(_orig_bytes, object._orig_bytes, Size);
 
                 object._addr    = nullptr;
                 object._enabled = FALSE;
@@ -302,8 +290,8 @@ namespace Memory
             assert(addr  != nullptr);
             assert(patch != nullptr);
 
-            std::memcpy(_patch_data, patch, Size);
-            std::memcpy(_orig_data, addr, Size);
+            std::memcpy(_patch_bytes, patch, Size);
+            std::memcpy(_orig_bytes, addr, Size);
 
             if (enabled) Enable();
         }
@@ -315,9 +303,8 @@ namespace Memory
             if (_enabled == FALSE)
             {
                 assert(_addr != nullptr);
-
                 const UnprotectScope scope { _addr, Size };
-                std::memcpy(_addr, _patch_data, Size);
+                std::memcpy(_addr, _patch_bytes, Size);
             }
 
             _enabled = TRUE;
@@ -328,9 +315,8 @@ namespace Memory
             if (_enabled == TRUE)
             {
                 assert(_addr != nullptr);
-
                 const UnprotectScope scope { _addr, Size };
-                std::memcpy(_addr, _orig_data, Size);
+                std::memcpy(_addr, _orig_bytes, Size);
             }
 
             _enabled = FALSE;
@@ -355,8 +341,8 @@ namespace Memory
 
         BOOL   _enabled = FALSE;
 
-        BYTE   _patch_data[Size];
-        BYTE   _orig_data[Size];
+        BYTE   _patch_bytes[Size];
+        BYTE   _orig_bytes[Size];
 
     };
 
@@ -399,11 +385,11 @@ namespace Memory
 
     public:
 
-        JumpHook(const LPVOID inject_addr, const LPCVOID hook_addr, const bool enabled = true) noexcept
-            : _patch { inject_addr, &JumpInstruction((DWORD)(hook_addr) -
-                ((DWORD)(inject_addr) + sizeof(JumpInstruction))), enabled }
+        JumpHook(const LPVOID inject, const LPCVOID hook, const bool enabled = true) noexcept
+            : _patch { inject, &JumpInstruction((DWORD)(hook) - ((DWORD)(inject)
+                + sizeof(JumpInstruction))), enabled }
         {
-            assert(hook_addr != nullptr);
+            assert(hook != nullptr);
         }
 
     public:
@@ -470,13 +456,13 @@ namespace Memory
 
     public:
 
-        CallHook(const LPVOID inject_addr, const LPCVOID hook_addr, const bool enabled = true) noexcept
-            : _call_func_addr { (LPVOID)(((DWORD)(inject_addr) + sizeof(CallInstruction)) +
-                ((CallInstruction*)(inject_addr))->offset) }
-            , _patch { inject_addr, &CallInstruction((DWORD)(hook_addr) -
-                ((DWORD)(inject_addr) + sizeof(CallInstruction))), enabled }
+        CallHook(const LPVOID inject, const LPCVOID hook, const bool enabled = true) noexcept
+            : _call_func_addr { (LPVOID)(((DWORD)(inject) + sizeof(CallInstruction)) +
+                ((CallInstruction*)(inject))->offset) }
+            , _patch { inject, &CallInstruction((DWORD)(hook) -
+                ((DWORD)(inject) + sizeof(CallInstruction))), enabled }
         {
-            assert(hook_addr != nullptr);
+            assert(hook != nullptr);
         }
 
     public:
@@ -522,8 +508,8 @@ namespace Memory
 
     public:
 
-        DllFuncHook(const char* const module, const char* const function, const LPCVOID hook_addr, const bool enabled = true) noexcept
-            : _hook { GetProcAddress(GetModuleHandle(module), function), hook_addr, enabled }
+        DllFuncHook(const char* const module, const char* const function, const LPCVOID hook, const bool enabled = true) noexcept
+            : _hook { GetProcAddress(GetModuleHandle(module), function), hook, enabled }
         {}
 
     public:
@@ -576,6 +562,9 @@ namespace Memory
         {
             assert(pattern != nullptr);
             assert(mask    != nullptr);
+
+            assert(_addr != nullptr);
+            assert(_size != 0);
 
             PCCH current_byte = (PCCH)(_addr);
             PCCH last_byte = (PCCH)((DWORD)(_addr) + _size - std::strlen(mask));

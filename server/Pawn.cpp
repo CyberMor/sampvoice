@@ -100,7 +100,7 @@ void Pawn::RegisterScript(AMX* const amx)
 #undef  DefineNativeFunction
     };
 
-    amx_Register(amx, nativesList, SizeOfArray(nativesList));
+    amx_Register(amx, nativesList, GetArraySize(nativesList));
 
     int tmpIndex { -1 };
 

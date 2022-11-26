@@ -1,9 +1,9 @@
 #pragma once
 
 #include <atomic>
-#include <cstdint>
+#include <chrono>
 
-class Timer {
+struct Timer {
 
     Timer() = delete;
     ~Timer() = delete;
@@ -14,7 +14,7 @@ class Timer {
 
 public:
 
-    using time_t = std::int64_t;
+    using time_t = std::chrono::milliseconds::rep;
 
 public:
 
@@ -23,6 +23,6 @@ public:
 
 private:
 
-    static std::atomic<time_t> timestamp;
+    static std::atomic<time_t> _timestamp;
 
 };

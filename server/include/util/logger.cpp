@@ -9,34 +9,26 @@
 
 #include "logger.h"
 
-bool Logger::Init(const char* const logFile, const logprintf_t logFunc) noexcept
+bool Logger::Init(const char* const log_file, const logprintf_t log_func) noexcept
 {
-    if (logFile == nullptr || *logFile == '\0' || logFunc == nullptr)
-        return false;
+    assert(log_file != nullptr && *log_file != '\0');
+    assert(log_func != nullptr);
 
-    const std::lock_guard<std::mutex> lockFile { Logger::logFileMutex };
-    const std::lock_guard<std::mutex> lockConsole { Logger::logConsoleMutex };
-
-    if (Logger::logFile != nullptr || Logger::logFunc != nullptr)
-        return false;
-
-    return (Logger::logFile = std::fopen(logFile, "wt")) != nullptr &&
-           (Logger::logFunc = logFunc) != nullptr;
+    return _log_file == nullptr && _log_func == nullptr &&
+          (_log_file = std::fopen(log_file, "w")) != nullptr &&
+          (_log_func = log_func) != nullptr;
 }
 
 void Logger::Free() noexcept
 {
-    const std::lock_guard<std::mutex> lockFile { Logger::logFileMutex };
-    const std::lock_guard<std::mutex> lockConsole { Logger::logConsoleMutex };
+    std::fclose(_log_file);
 
-    if (Logger::logFile != nullptr) std::fclose(Logger::logFile);
-
-    Logger::logFile = nullptr;
-    Logger::logFunc = nullptr;
+    _log_file = nullptr;
+    _log_func = nullptr;
 }
 
-FILE* Logger::logFile { nullptr };
-logprintf_t Logger::logFunc { nullptr };
+std::FILE*  Logger::_log_file = nullptr;
+logprintf_t Logger::_log_func = nullptr;
 
-std::mutex Logger::logFileMutex;
-std::mutex Logger::logConsoleMutex;
+std::mutex  Logger::_log_file_mutex;
+std::mutex  Logger::_log_console_mutex;
