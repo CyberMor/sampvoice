@@ -1,0 +1,23 @@
+{
+    "user": "RizkyLimit",
+    "repo": "sampvoice",
+    "resources": [
+        {
+            "name": "^sv_server_037-(.*).zip$",
+            "platform": "linux",
+            "archive": true,
+            "includes": ["pawno/include"],
+            "plugins": ["plugins/sampvoice.so"]
+        },
+        {
+            "name": "^sv_server_037-(.*).zip$",
+            "platform": "windows",
+            "archive": true,
+            "includes": ["pawno/include"],
+            "plugins": ["plugins/sampvoice.dll"]
+        }
+    ],
+    "runtime": {
+        "plugins": ["RizkyLimit/sampvoice"]
+    }
+}
