@@ -167,6 +167,7 @@ cd sampvoice
 ---------------------------------
 Для того, чтобы собрать серверную часть плагина под платформу *Linux x86* выполните следующие инструкции:
 ```sh
+apt-get install gcc-9 g++-9 gcc-9-multilib g++-9-multilib
 cd server
 make
 ```
