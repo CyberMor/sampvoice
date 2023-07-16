@@ -17,13 +17,13 @@
 #include <memory/allocators/system_allocator.hpp>
 #include <memory/allocators/object_allocator.hpp>
 
-#define ListRemove(iterator, list, condition, action)        \
-    for (auto iterator  = (list).Begin();                    \
-              iterator != (list).End();)                     \
-    {                                                        \
-        const auto next = (list).Next(iterator);             \
-        if (condition) { action; (list).Destroy(iterator); } \
-        iterator = next;                                     \
+#define ListRemove(iterator, list, condition, ...)                  \
+    for (auto iterator  = (list).Begin();                           \
+              iterator != (list).End();)                            \
+    {                                                               \
+        const auto next = (list).Next(iterator);                    \
+        if (condition) { __VA_ARGS__##; (list).Destroy(iterator); } \
+        iterator = next;                                            \
     }
 
 template <class Type, class Allocator = SystemAllocator>
