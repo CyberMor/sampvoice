@@ -325,7 +325,7 @@ static void VoiceWorker() noexcept
                         {
                             gStreams[stream].listeners.ForEach([&](const size_t listener) noexcept -> void
                             {
-                                // if (listener != sender) // don't send traffic back to sender
+                                if (listener != sender) // don't send traffic back to sender
                                 {
                                     if (gPlayers.Acquire(listener))
                                     {
