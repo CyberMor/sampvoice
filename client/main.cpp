@@ -223,9 +223,10 @@ static void OnStopStream(const uword_t player, const uword_t stream) noexcept
 {
     // Logger::Instance().LogToChat(0xFFFF0000, "StopStream : player(%hu), stream(%hu)", player, stream);
 
+    SpeakerList::Instance().Stop(player, stream);
+
     if (gStreams.Acquire<0>(stream))
     {
-        SpeakerList::Instance().Stop(player, stream);
         gStreams[stream].Stop(player);
     }
 }
