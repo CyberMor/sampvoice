@@ -162,6 +162,7 @@ public:
         IPv4TcpSocket listener;
         {
             if (!listener.Initialize(false)) return false;
+            if (!listener.SetOption(SOL_SOCKET, SO_REUSEADDR, 1)) return false;
             if (!listener.Bind(command)) return false;
             if (!listener.Listen(1)) return false;
         }
@@ -172,6 +173,7 @@ public:
             while (socket.Invalid() || (!control.IsEmpty() && address != control));
         }
 
+        if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1)) return false;
         if (!socket.SetOption(IPPROTO_TCP, TCP_NODELAY, 1)) return false;
         if (!socket.Shutdown(SHUT_WR)) return false;
 

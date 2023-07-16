@@ -25,7 +25,10 @@ struct Socket {
     ~Socket() noexcept
     {
         if (_handle != INVALID_SOCKET)
+        {
+            shutdown(_handle, SHUT_RDWR);
             CloseSocket(_handle);
+        }
     }
 
     Socket(const Socket&) = delete;
@@ -41,7 +44,10 @@ struct Socket {
         if (&object != this)
         {
             if (_handle != INVALID_SOCKET)
+            {
+                shutdown(_handle, SHUT_RDWR);
                 CloseSocket(_handle);
+            }
 
             _handle = object._handle;
 
@@ -112,7 +118,10 @@ public:
     bool Initialize(const bool nonblock) noexcept
     {
         if (_handle != INVALID_SOCKET)
+        {
+            shutdown(_handle, SHUT_RDWR);
             CloseSocket(_handle);
+        }
 #ifdef _WIN32
         _handle = socket(Domain, Type, Protocol);
         if (nonblock)
@@ -136,6 +145,7 @@ public:
     {
         if (_handle != INVALID_SOCKET)
         {
+            shutdown(_handle, SHUT_RDWR);
             CloseSocket(_handle);
             _handle = INVALID_SOCKET;
         }

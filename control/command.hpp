@@ -163,6 +163,7 @@ public:
         IPv4TcpSocket socket;
 
         if (!socket.Initialize(false)) return false;
+        if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1)) return false;
         if (!socket.SetOption(IPPROTO_TCP, TCP_NODELAY, 1)) return false;
         if (!socket.Bind(control)) return false;
 

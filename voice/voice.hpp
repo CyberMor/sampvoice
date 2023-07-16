@@ -520,6 +520,7 @@ public:
         IPv4UdpSocket socket;
 
         if (!socket.Initialize(false)) return false;
+        if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1)) return false;
         if (int size; socket.GetOption(SOL_SOCKET, SO_SNDBUF, size) == 1)
             do size *= 2; while (size <= kSndBufferSize && socket.SetOption(SOL_SOCKET, SO_SNDBUF, size));
         if (int size; socket.GetOption(SOL_SOCKET, SO_RCVBUF, size) == 1)

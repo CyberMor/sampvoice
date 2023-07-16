@@ -134,6 +134,7 @@ public:
         IPv4UdpSocket socket;
 
         if (!socket.Initialize(true)) return false;
+        if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1)) return false;
         if (!socket.Connect(_address)) return false;
 
         _socket = std::move(socket);
