@@ -11,6 +11,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "control", "control\control.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "documents", "documents", "{899155FD-CCC4-43AF-9DE7-18A727538493}"
 	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		LICENSE = LICENSE
 		README.md = README.md
 		documents\sampvoice.inc = documents\sampvoice.inc
 	EndProjectSection
