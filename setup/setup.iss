@@ -1,13 +1,12 @@
-#define MyAppName "SAMPVOICE"
-#define MyAppVersion "3.0"
+#define MyAppName "SampVoice"
+#define MyAppVersion "4.0"
 #define MyAppPublisher "Daniel Mor"
-#define MyAppURL "https://vk.com/sampvoicecom"
+#define MyAppURL "https://github.com/CyberMor/sampvoice"
 
 [Setup]
 AppId={{01EA93A6-5255-44FE-ADB9-FDC3EFE89675}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
@@ -25,21 +24,22 @@ UninstallDisplayIcon=icon.ico
 
 DefaultDirName={code:GetPathGTA}
 DefaultGroupName={#MyAppName}
-LanguageDetectionMethod=uilanguage
+LanguageDetectionMethod=none
 AllowNoIcons=yes
-OutputDir=..\bin
-OutputBaseFilename=sv_setup
+OutputDir=..\binaries
+OutputBaseFilename=installer
 SetupIconFile=icon.ico
 Compression=lzma
 SolidCompression=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 
 [Files]
-Source: "files\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs uninsneveruninstall
-Source: "..\bin\sampvoice.asi"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\binaries\sampvoice.asi"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\client\files\binaries\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs uninsneveruninstall
+Source: "..\client\files\languages\*"; DestDir: "{app}\sampvoice\languages"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\client\files\resources\*"; DestDir: "{app}\sampvoice\resources"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Code]
 
@@ -52,7 +52,7 @@ begin
 	then
 		begin
 			p := Pos('gta_sa.exe', path)
-			result := Copy(path, 1, p-1)
+			result := Copy(path, 1, p - 1)
 		end
 	else result := '';
 end;
@@ -62,9 +62,7 @@ begin
 	if not FileExists((WizardDirValue() + '\gta_sa.exe'))
 	then
 		begin
-			if ActiveLanguage() = 'russian'
-			then MsgBox('Выберите директорию с GTA!', mbInformation, MB_OK)
-			else MsgBox('Select a directory with the GTA!', mbInformation, MB_OK);
+			MsgBox('Select a directory with the GTA San Andreas', mbInformation, MB_OK)
 			result := False
 		end
 	else
@@ -82,17 +80,8 @@ var
 begin
 	Page := PageFromID(wpSelectDir);
 	
-	if ActiveLanguage() = 'russian'
-	then
-		begin
-			Page.Caption := 'Местоположение GTA:SA'
-			Page.Description := 'Для продолжения установки выберите папку с игрой.'
-		end
-	else
-		begin
-			Page.Caption := 'Location GTA:SA'
-			Page.Description := 'To continue the installation, select the folder with the game.'
-		end;
+	Page.Caption := 'Location GTA San Andreas'
+  Page.Description := 'To continue the installation, select the folder with the game.'
 	
 	Page.OnNextButtonClick := @NextCheck;
 end;

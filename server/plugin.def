@@ -1,9 +1,0 @@
-﻿LIBRARY sampvoice
-VERSION 3.1
-EXPORTS
-	Load
-	Unload
-	AmxLoad
-	AmxUnload
-	ProcessTick
-	Supports

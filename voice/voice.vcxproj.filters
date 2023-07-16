@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Исходные файлы">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Исходные файлы\files">
+      <UniqueIdentifier>{74e998cc-16d7-446c-b9e9-01c06b80ebb8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\service">
+      <UniqueIdentifier>{340e2e2f-b69a-4086-8674-ed0b8de3734c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="main.hpp">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="voice.hpp">
+      <Filter>Исходные файлы\service</Filter>
+    </ClInclude>
+    <ClInclude Include="command.hpp">
+      <Filter>Исходные файлы\service</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="voice.cfg">
+      <Filter>Исходные файлы\files</Filter>
+    </None>
+    <None Include="Makefile">
+      <Filter>Исходные файлы\files</Filter>
+    </None>
+  </ItemGroup>
+</Project>

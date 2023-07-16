@@ -1,8 +1,10 @@
-.vscode/
 .vs/
-bin/
-client/temp/
-server/temp/
+
+binaries/
+
+client/build/
+control/build/
+voice/build/
+
 *.lck
 *.gch
-*.so

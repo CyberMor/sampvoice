@@ -1,26 +1,120 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.452
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "client", "client\client.vcxproj", "{A9EA3167-BD8C-4101-A146-6CF48611EEDF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "client", "client\client.vcxproj", "{8B89346F-DC9D-4CAD-84D9-B3D78901210E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server", "server\server.vcxproj", "{658FA649-71EA-4E35-BDF6-71AD941F8761}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "voice", "voice\voice.vcxproj", "{C3766E8F-FE44-4393-9999-8BFC2B65EA89}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "control", "control\control.vcxproj", "{FC14CA56-B65C-41B7-B821-06FB5EC56A1A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "documents", "documents", "{899155FD-CCC4-43AF-9DE7-18A727538493}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		documents\sampvoice.inc = documents\sampvoice.inc
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "common", "{ED221D15-D8EB-4A7A-978D-DF5D4E081913}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "execution", "execution", "{2E00279A-2449-4CFA-A924-9CF505883F99}"
+	ProjectSection(SolutionItems) = preProject
+		common\execution\scope_exit.hpp = common\execution\scope_exit.hpp
+		common\execution\spinlock.hpp = common\execution\spinlock.hpp
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "memory", "memory", "{D2FA1F64-0A01-46C7-8AE5-0FC6377C4DD5}"
+	ProjectSection(SolutionItems) = preProject
+		common\memory\block.hpp = common\memory\block.hpp
+		common\memory\packet.hpp = common\memory\packet.hpp
+		common\memory\types.hpp = common\memory\types.hpp
+		common\memory\view.hpp = common\memory\view.hpp
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "network", "network", "{72E921AD-707C-4A14-B0DE-A5934B3549BB}"
+	ProjectSection(SolutionItems) = preProject
+		common\network\address.hpp = common\network\address.hpp
+		common\network\header.hpp = common\network\header.hpp
+		common\network\poll.hpp = common\network\poll.hpp
+		common\network\socket.hpp = common\network\socket.hpp
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "other", "other", "{1B49494B-A2BB-4E10-A4A9-56485A69BCCC}"
+	ProjectSection(SolutionItems) = preProject
+		common\other\config.hpp = common\other\config.hpp
+		common\other\utils.hpp = common\other\utils.hpp
+		common\other\version.hpp = common\other\version.hpp
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "system", "system", "{6AC27975-BA50-47FA-BC41-920D595B235B}"
+	ProjectSection(SolutionItems) = preProject
+		common\system\clock.hpp = common\system\clock.hpp
+		common\system\file.hpp = common\system\file.hpp
+		common\system\time.hpp = common\system\time.hpp
+		common\system\types.hpp = common\system\types.hpp
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "allocators", "allocators", "{9EFEFF9A-A175-4E01-B2FC-B644925F6511}"
+	ProjectSection(SolutionItems) = preProject
+		common\memory\allocators\fixed_pool_allocator.hpp = common\memory\allocators\fixed_pool_allocator.hpp
+		common\memory\allocators\growing_pool_allocator.hpp = common\memory\allocators\growing_pool_allocator.hpp
+		common\memory\allocators\object_allocator.hpp = common\memory\allocators\object_allocator.hpp
+		common\memory\allocators\proxy_allocator.hpp = common\memory\allocators\proxy_allocator.hpp
+		common\memory\allocators\system_allocator.hpp = common\memory\allocators\system_allocator.hpp
+		common\memory\allocators\threaded_allocator.hpp = common\memory\allocators\threaded_allocator.hpp
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "hacks", "hacks", "{570CF963-7DF8-427A-AE71-4037F1A74382}"
+	ProjectSection(SolutionItems) = preProject
+		common\memory\hacks\call_hook.hpp = common\memory\hacks\call_hook.hpp
+		common\memory\hacks\jump_hook.hpp = common\memory\hacks\jump_hook.hpp
+		common\memory\hacks\patch.hpp = common\memory\hacks\patch.hpp
+		common\memory\hacks\scanner.hpp = common\memory\hacks\scanner.hpp
+		common\memory\hacks\unprotect_scope.hpp = common\memory\hacks\unprotect_scope.hpp
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "structures", "structures", "{8B6FCEFD-043A-4E3C-8D01-91BD440BFA0A}"
+	ProjectSection(SolutionItems) = preProject
+		common\memory\structures\array.hpp = common\memory\structures\array.hpp
+		common\memory\structures\bitset.hpp = common\memory\structures\bitset.hpp
+		common\memory\structures\list.hpp = common\memory\structures\list.hpp
+		common\memory\structures\pool.hpp = common\memory\structures\pool.hpp
+		common\memory\structures\queue.hpp = common\memory\structures\queue.hpp
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A9EA3167-BD8C-4101-A146-6CF48611EEDF}.Release|x86.ActiveCfg = Release|Win32
-		{A9EA3167-BD8C-4101-A146-6CF48611EEDF}.Release|x86.Build.0 = Release|Win32
-		{658FA649-71EA-4E35-BDF6-71AD941F8761}.Release|x86.ActiveCfg = Release|Win32
-		{658FA649-71EA-4E35-BDF6-71AD941F8761}.Release|x86.Build.0 = Release|Win32
+		{8B89346F-DC9D-4CAD-84D9-B3D78901210E}.Debug|x86.ActiveCfg = Debug|Win32
+		{8B89346F-DC9D-4CAD-84D9-B3D78901210E}.Debug|x86.Build.0 = Debug|Win32
+		{8B89346F-DC9D-4CAD-84D9-B3D78901210E}.Release|x86.ActiveCfg = Release|Win32
+		{8B89346F-DC9D-4CAD-84D9-B3D78901210E}.Release|x86.Build.0 = Release|Win32
+		{C3766E8F-FE44-4393-9999-8BFC2B65EA89}.Debug|x86.ActiveCfg = Debug|Win32
+		{C3766E8F-FE44-4393-9999-8BFC2B65EA89}.Debug|x86.Build.0 = Debug|Win32
+		{C3766E8F-FE44-4393-9999-8BFC2B65EA89}.Release|x86.ActiveCfg = Release|Win32
+		{C3766E8F-FE44-4393-9999-8BFC2B65EA89}.Release|x86.Build.0 = Release|Win32
+		{FC14CA56-B65C-41B7-B821-06FB5EC56A1A}.Debug|x86.ActiveCfg = Debug|Win32
+		{FC14CA56-B65C-41B7-B821-06FB5EC56A1A}.Debug|x86.Build.0 = Debug|Win32
+		{FC14CA56-B65C-41B7-B821-06FB5EC56A1A}.Release|x86.ActiveCfg = Release|Win32
+		{FC14CA56-B65C-41B7-B821-06FB5EC56A1A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2E00279A-2449-4CFA-A924-9CF505883F99} = {ED221D15-D8EB-4A7A-978D-DF5D4E081913}
+		{D2FA1F64-0A01-46C7-8AE5-0FC6377C4DD5} = {ED221D15-D8EB-4A7A-978D-DF5D4E081913}
+		{72E921AD-707C-4A14-B0DE-A5934B3549BB} = {ED221D15-D8EB-4A7A-978D-DF5D4E081913}
+		{1B49494B-A2BB-4E10-A4A9-56485A69BCCC} = {ED221D15-D8EB-4A7A-978D-DF5D4E081913}
+		{6AC27975-BA50-47FA-BC41-920D595B235B} = {ED221D15-D8EB-4A7A-978D-DF5D4E081913}
+		{9EFEFF9A-A175-4E01-B2FC-B644925F6511} = {D2FA1F64-0A01-46C7-8AE5-0FC6377C4DD5}
+		{570CF963-7DF8-427A-AE71-4037F1A74382} = {D2FA1F64-0A01-46C7-8AE5-0FC6377C4DD5}
+		{8B6FCEFD-043A-4E3C-8D01-91BD440BFA0A} = {D2FA1F64-0A01-46C7-8AE5-0FC6377C4DD5}
+	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {317B980E-658F-4585-A830-091DBDA5DC3F}
+		SolutionGuid = {7D2776DE-ECB5-43FF-8028-571008BFDFC5}
 	EndGlobalSection
 EndGlobal

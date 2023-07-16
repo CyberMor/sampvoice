@@ -1,0 +1,126 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Исходные файлы">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Исходные файлы\libraries">
+      <UniqueIdentifier>{de7e5c4c-ad76-423b-a093-db9866e30fd6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\libraries\pawn">
+      <UniqueIdentifier>{2dd90adb-6fa3-472a-a724-f64888fbbb0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\libraries\raknet">
+      <UniqueIdentifier>{9892e89e-2667-48fc-9463-86990851122d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\libraries\util">
+      <UniqueIdentifier>{c9ac6b93-3434-4773-a5c6-82e8363b709c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\libraries\ysf">
+      <UniqueIdentifier>{3425bb2b-4187-4134-8ef4-eb6a72aff95b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\libraries\pawn\amx">
+      <UniqueIdentifier>{de0b4063-def6-4973-b017-25c237245c59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\libraries\ysf\utils">
+      <UniqueIdentifier>{19ede6ed-a9ba-48b7-8beb-789312d44765}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\files">
+      <UniqueIdentifier>{2dca6ff0-120e-4aaa-8f10-c408eb180e81}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\service">
+      <UniqueIdentifier>{70b3fd6a-aab5-452b-97b0-642b339dbcf3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\pawn\amxplugin.cpp">
+      <Filter>Исходные файлы\libraries\pawn</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\raknet\bitstream.cpp">
+      <Filter>Исходные файлы\libraries\raknet</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\ysf\ysf.cpp">
+      <Filter>Исходные файлы\libraries\ysf</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pawn.hpp">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="player.hpp">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\pawn\amx\amx.h">
+      <Filter>Исходные файлы\libraries\pawn\amx</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\pawn\amx\getch.h">
+      <Filter>Исходные файлы\libraries\pawn\amx</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\pawn\amx\sclinux.h">
+      <Filter>Исходные файлы\libraries\pawn\amx</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\pawn\plugincommon.h">
+      <Filter>Исходные файлы\libraries\pawn</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\raknet\bitstream.h">
+      <Filter>Исходные файлы\libraries\raknet</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\raknet\networktypes.h">
+      <Filter>Исходные файлы\libraries\raknet</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\util\logger.hpp">
+      <Filter>Исходные файлы\libraries\util</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\util\raknet.hpp">
+      <Filter>Исходные файлы\libraries\util</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\ysf\addresses.h">
+      <Filter>Исходные файлы\libraries\ysf</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\ysf\globals.h">
+      <Filter>Исходные файлы\libraries\ysf</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\ysf\structs.h">
+      <Filter>Исходные файлы\libraries\ysf</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\ysf\utils\cvector.h">
+      <Filter>Исходные файлы\libraries\ysf\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\ysf\utils\cvector2d.h">
+      <Filter>Исходные файлы\libraries\ysf\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\ysf\utils\memory.h">
+      <Filter>Исходные файлы\libraries\ysf\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="main.hpp">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="effect.hpp">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="stream.hpp">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="command.hpp">
+      <Filter>Исходные файлы\service</Filter>
+    </ClInclude>
+    <ClInclude Include="control.hpp">
+      <Filter>Исходные файлы\service</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="control.cfg">
+      <Filter>Исходные файлы\files</Filter>
+    </None>
+    <None Include="control.def">
+      <Filter>Исходные файлы\files</Filter>
+    </None>
+    <None Include="Makefile">
+      <Filter>Исходные файлы\files</Filter>
+    </None>
+  </ItemGroup>
+</Project>

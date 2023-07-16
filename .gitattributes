@@ -1,0 +1,25 @@
+* text=auto
+
+LICENSE  text
+Makefile text
+*.txt    text
+*.h      text
+*.hpp    text
+*.c      text
+*.cpp    text
+*.hlsl   text
+*.def    text
+*.cfg    text
+*.inc    text
+*.iss    text
+*.md     text
+
+*.vcxproj* text eol=crlf
+*.sln      text eol=crlf
+
+*.lib binary
+*.dll binary
+*.png binary
+*.ico binary
+*.ttf binary
+*.hnd binary
