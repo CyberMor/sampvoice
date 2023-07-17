@@ -1,10 +1,10 @@
-.vs/
+/.vs/
 
-binaries/
+/binaries/
 
-client/build/
-control/build/
-voice/build/
+/client/build/
+/control/build/
+/voice/build/
 
 *.lck
 *.gch
