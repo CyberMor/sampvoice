@@ -21,8 +21,14 @@
 
 #ifndef _WIN32
 #include <unistd.h>
-#include <sys/random.h>
 #include <byteswap.h>
+#if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 25)
+#include <sys/random.h>
+#else
+#define _GNU_SOURCE
+#include <sys/syscall.h>
+#define getrandom(buf, buflen, flags) syscall(SYS_getrandom, buf, buflen, flags)
+#endif
 #endif
 
 #include <system/types.hpp>
