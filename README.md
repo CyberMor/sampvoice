@@ -53,7 +53,7 @@ To start using the plugin functionality, include the header file:
 ---------------------------------
 You need to know that the plugin uses its own types and constant system. Despite the fact that this is just a wrapper over the basic types of Pawn, it helps to navigate the types of the plugin itself and not to confuse pointers.
 
-To redirect audio traffic from player A to player B, you need to create an audio stream (using **SvCreateStream**), then attach it to speaker-channel of player A (using **SvAttachStream**), then attach player B to the audio stream (using **SvAttachListener **). Done, now when player A's microphone is activated (for example, with the **SvPlay** function), his audio traffic will be transmitted and then listened to by player B.
+To redirect audio traffic from player A to player B, you need to create an audio stream (using **SvCreateStream**), then attach it to speaker-channel of player A (using **SvAttachStream**), then attach player B to the audio stream (using **SvAttachListener**). Done, now when player A's microphone is activated (for example, with the **SvPlay** function), his audio traffic will be transmitted and then listened to by player B.
 
 Sound streams are pretty handy. They can be visualized using the example of Discord:
 * A stream is an analogue of a room (or channel).
