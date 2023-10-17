@@ -47,7 +47,7 @@ static std::atomic_bool gWorkStatus;
 static Pool<Player, kMaxPlayers> gPlayers;
 static Pool<Stream, kMaxStreams> gStreams;
 
-static bool gControlDebug = false;
+static bool gControlTrace = false;
 
 // Workers
 // ----------------------------------------------------------------
@@ -68,7 +68,7 @@ static void ControlWorker() noexcept
                 {
                     const auto& content = *reinterpret_cast<const PlayerCreate*>(buffer);
 
-                    if (gControlDebug) std::printf("PlayerCreate : player(%hu), key(0x%X)\n",
+                    if (gControlTrace) std::printf("PlayerCreate : player(%hu), key(0x%X)\n",
                         content.player, content.key);
 
                     if (content.player < kMaxPlayers && content.key != 0)
@@ -85,7 +85,7 @@ static void ControlWorker() noexcept
                 {
                     const auto& content = *reinterpret_cast<const PlayerListener*>(buffer);
 
-                    if (gControlDebug) std::printf("PlayerListener : player(%hu), status(%hhu)\n",
+                    if (gControlTrace) std::printf("PlayerListener : player(%hu), status(%hhu)\n",
                         content.player, content.status);
 
                     if (content.player < kMaxPlayers)
@@ -102,7 +102,7 @@ static void ControlWorker() noexcept
                 {
                     const auto& content = *reinterpret_cast<const PlayerSpeaker*>(buffer);
 
-                    if (gControlDebug) std::printf("PlayerSpeaker : player(%hu), channels(0x%X)\n",
+                    if (gControlTrace) std::printf("PlayerSpeaker : player(%hu), channels(0x%X)\n",
                         content.player, content.channels);
 
                     if (content.player < kMaxPlayers)
@@ -119,7 +119,7 @@ static void ControlWorker() noexcept
                 {
                     const auto& content = *reinterpret_cast<const PlayerAttachStream*>(buffer);
 
-                    if (gControlDebug) std::printf("PlayerAttachStream : player(%hu), channels(0x%X), stream(%hu)\n",
+                    if (gControlTrace) std::printf("PlayerAttachStream : player(%hu), channels(0x%X), stream(%hu)\n",
                         content.player, content.channels, content.stream);
 
                     if (content.player < kMaxPlayers && content.channels != 0 && content.stream < kMaxStreams)
@@ -139,7 +139,7 @@ static void ControlWorker() noexcept
                 {
                     const auto& content = *reinterpret_cast<const PlayerDetachStream*>(buffer);
 
-                    if (gControlDebug) std::printf("PlayerDetachStream : player(%hu), channels(0x%X), stream(%hu)\n",
+                    if (gControlTrace) std::printf("PlayerDetachStream : player(%hu), channels(0x%X), stream(%hu)\n",
                         content.player, content.channels, content.stream);
 
                     if (content.player < kMaxPlayers && content.channels != 0 && content.stream < kMaxStreams)
@@ -159,7 +159,7 @@ static void ControlWorker() noexcept
                 {
                     const auto& content = *reinterpret_cast<const PlayerDelete*>(buffer);
 
-                    if (gControlDebug) std::printf("PlayerDelete : player(%hu)\n", content.player);
+                    if (gControlTrace) std::printf("PlayerDelete : player(%hu)\n", content.player);
 
                     if (content.player < kMaxPlayers)
                     {
@@ -185,7 +185,7 @@ static void ControlWorker() noexcept
                 {
                     const auto& content = *reinterpret_cast<const StreamCreate*>(buffer);
 
-                    if (gControlDebug) std::printf("StreamCreate : stream(%hu)\n", content.stream);
+                    if (gControlTrace) std::printf("StreamCreate : stream(%hu)\n", content.stream);
 
                     if (content.stream < kMaxStreams)
                     {
@@ -198,7 +198,7 @@ static void ControlWorker() noexcept
                 {
                     const auto& content = *reinterpret_cast<const StreamTransiter*>(buffer);
 
-                    if (gControlDebug) std::printf("StreamTransiter : stream(%hu), status(%hhu)\n",
+                    if (gControlTrace) std::printf("StreamTransiter : stream(%hu), status(%hhu)\n",
                         content.stream, content.status);
 
                     if (content.stream < kMaxStreams)
@@ -215,7 +215,7 @@ static void ControlWorker() noexcept
                 {
                     const auto& content = *reinterpret_cast<const StreamAttachListener*>(buffer);
 
-                    if (gControlDebug) std::printf("StreamAttachListener : stream(%hu), player(%hu)\n",
+                    if (gControlTrace) std::printf("StreamAttachListener : stream(%hu), player(%hu)\n",
                         content.stream, content.player);
 
                     if (content.stream < kMaxStreams && content.player < kMaxPlayers)
@@ -232,7 +232,7 @@ static void ControlWorker() noexcept
                 {
                     const auto& content = *reinterpret_cast<const StreamDetachListener*>(buffer);
 
-                    if (gControlDebug) std::printf("StreamDetachListener : stream(%hu), player(%hu)\n",
+                    if (gControlTrace) std::printf("StreamDetachListener : stream(%hu), player(%hu)\n",
                         content.stream, content.player);
 
                     if (content.stream < kMaxStreams && content.player < kMaxPlayers)
@@ -249,7 +249,7 @@ static void ControlWorker() noexcept
                 {
                     const auto& content = *reinterpret_cast<const StreamDelete*>(buffer);
 
-                    if (gControlDebug) std::printf("StreamDelete : stream(%hu)\n", content.stream);
+                    if (gControlTrace) std::printf("StreamDelete : stream(%hu)\n", content.stream);
 
                     if (content.stream < kMaxStreams)
                     {
@@ -398,8 +398,8 @@ static void VoiceWorker() noexcept
 static void help(const cstr_t program) noexcept
 {
     std::printf("-------------------------------------------" "\n");
-    std::printf("  Use  : \"%s\" [--debug]"                   "\n", program);
-    std::printf(" Flags : --debug - print incoming commands"  "\n");
+    std::printf("  Use  : \"%s\" [--trace]"                   "\n", program);
+    std::printf(" Flags : --trace - print incoming commands"  "\n");
     std::printf("-------------------------------------------" "\n");
 }
 
@@ -412,9 +412,9 @@ int main(const int argc, const char* const* const argv) noexcept
         {
             return help(*argv), 0;
         }
-        else if (std::strcmp(argv[i], "--debug") == 0)
+        else if (std::strcmp(argv[i], "--trace") == 0)
         {
-            gControlDebug = true;
+            gControlTrace = true;
         }
         else
         {
