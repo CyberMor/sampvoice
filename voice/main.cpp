@@ -464,7 +464,7 @@ int main(const int argc, const char* const* const argv) noexcept
         config.Register(PARAMETER_VOICE_PORT, "voice_port");
         config.Register(PARAMETER_WORKERS, "workers");
 
-        if (config.Load("voice.cfg") == 0)
+        if (config.Load("voice.cfg") < 0)
         {
             std::printf("Failed to load 'voice.cfg'.\n");
             return -1;

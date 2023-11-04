@@ -159,6 +159,8 @@ public:
     */
     bool Initialize(const IPv4Address& command, const IPv4Address& control) noexcept
     {
+        _socket.Deinitialize();
+
         IPv4TcpSocket listener;
         {
             if (!listener.Initialize(false)) return false;

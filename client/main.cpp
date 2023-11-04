@@ -971,7 +971,7 @@ static DWORD WINAPI LibraryWaitingThread(const LPVOID) noexcept
     HMODULE samp_module;
 
     while ((samp_module = GetModuleHandle(gLibraryName)) == nullptr)
-        utils::thread::sleep(100); // 100 milliseconds
+        utils::thread::sleep(100);
 
     OnSampLoad(samp_module);
 

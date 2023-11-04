@@ -1,5 +1,5 @@
 ﻿LIBRARY sampvoice
-VERSION 4.0
+VERSION 4.1
 EXPORTS
 	Load
 	Unload

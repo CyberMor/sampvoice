@@ -68,7 +68,8 @@ public:
         std::memcpy(_patch_bytes, patch, Size);
         std::memcpy(_orig_bytes, address, Size);
 
-        if (enabled) Enable();
+        if (_upscope.Valid() && enabled == true && Enable() == false)
+            _upscope.Deinitialize();
     }
 
 public:
@@ -95,8 +96,10 @@ public:
         std::memcpy(_patch_bytes, patch, Size);
         std::memcpy(_orig_bytes, address, Size);
 
-        return _upscope.Initialize(address, false) &&
-            (enabled == false || (Enable(), _enabled == true));
+        if (_upscope.Initialize(address, false) && enabled == true && Enable() == false)
+            _upscope.Deinitialize();
+
+        return _upscope.Valid();
     }
 
     void Deinitialize() noexcept
@@ -108,28 +111,36 @@ public:
 
 public:
 
-    void Enable() noexcept
+    bool Enable() noexcept
     {
         if (_enabled == false)
         {
-            _upscope.Enable();
-            std::memcpy(_upscope.Address(), _patch_bytes, Size);
-            _upscope.Disable();
+            if (_upscope.Enable())
+            {
+                std::memcpy(_upscope.Address(), _patch_bytes, Size);
+                _upscope.Disable();
 
-            _enabled = true;
+                _enabled = true;
+            }
         }
+
+        return _enabled == true;
     }
 
-    void Disable() noexcept
+    bool Disable() noexcept
     {
         if (_enabled == true)
         {
-            _upscope.Enable();
-            std::memcpy(_upscope.Address(), _orig_bytes, Size);
-            _upscope.Disable();
+            if (_upscope.Enable())
+            {
+                std::memcpy(_upscope.Address(), _orig_bytes, Size);
+                _upscope.Disable();
 
-            _enabled = false;
+                _enabled = false;
+            }
         }
+
+        return _enabled == false;
     }
 
 public:
@@ -148,8 +159,8 @@ private:
 
     bool _enabled = false;
 
-    ubyte_t _patch_bytes[Size];
-    ubyte_t  _orig_bytes[Size];
+    alignas (alignof(std::max_align_t)) ubyte_t _patch_bytes[Size];
+    alignas (alignof(std::max_align_t)) ubyte_t  _orig_bytes[Size];
 
     UnprotectScope<Size> _upscope;
 

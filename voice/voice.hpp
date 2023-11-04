@@ -300,7 +300,7 @@ public:
         // --------------------------------
 
         const auto offset = Search(player, _buffer[_index], _length[_index]);
-        if (offset != None<uword_t>)
+        if (offset != None<decltype(offset)>)
         {
             std::copy(_buffer[_index], _buffer[_index] + offset, _buffer[_index ^ 1]);
             std::copy(_buffer[_index] + offset + 1, _buffer[_index] + _length[_index],
@@ -312,7 +312,7 @@ public:
         while (_lock.test_and_set(std::memory_order_acquire))
             std::this_thread::yield();
 
-        if (offset != None<uword_t>)
+        if (offset != None<decltype(offset)>)
         {
             _length[_index ^ 1] = _length[_index] - 1;
             _index = _index ^ 1;
@@ -324,7 +324,7 @@ public:
 
         // --------------------------------
 
-        return offset != None<uword_t>;
+        return offset != None<decltype(offset)>;
     }
 
 public:
@@ -364,6 +364,7 @@ private:
         const uqword_t* const buffer, const uword_t length) noexcept
     {
         assert(buffer != nullptr);
+
         if (length == 0) return { false, 0 };
         uword_t l = 0, r = length - 1; while (l != r)
         {
@@ -517,6 +518,8 @@ public:
         constexpr int kSndBufferSize = 4 * 1024 * 1024; // 4 MB (if possible)
         constexpr int kRcvBufferSize = 4 * 1024 * 1024; // 4 MB (if possible)
 
+        _socket.Deinitialize();
+
         IPv4UdpSocket socket;
 
         if (!socket.Initialize(false)) return false;
@@ -578,7 +581,9 @@ public:
         if (size == SOCKET_ERROR)
         {
 #ifdef _WIN32
-            if (GetSocketError() == WSAEMSGSIZE || GetSocketError() == WSAENETRESET || GetSocketError() == WSAETIMEDOUT)
+            if (GetSocketError() == WSAEMSGSIZE  ||
+                GetSocketError() == WSAENETRESET ||
+                GetSocketError() == WSAETIMEDOUT)
 #else
             if (GetSocketError() == EMSGSIZE)
 #endif

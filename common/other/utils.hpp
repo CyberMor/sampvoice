@@ -46,7 +46,7 @@ namespace utils
     {
         template <class Character>
         constexpr size_t length(const Character* string,
-            const Character rterminator = Zero<Character>) noexcept
+            const Character rterminator = {}) noexcept
         {
             assert(string != nullptr);
 
@@ -57,7 +57,7 @@ namespace utils
 
         template <class Character>
         inline Character* duplicate(const Character* const string, const size_t length,
-            const Character wterminator = Zero<Character>) noexcept
+            const Character wterminator = {}) noexcept
         {
             assert(string != nullptr);
 
@@ -73,8 +73,8 @@ namespace utils
 
         template <class Character>
         inline Character* duplicate(const Character* const string,
-            const Character rterminator = Zero<Character>,
-            const Character wterminator = Zero<Character>) noexcept
+            const Character rterminator = {},
+            const Character wterminator = {}) noexcept
         {
             assert(string != nullptr);
 
@@ -83,8 +83,8 @@ namespace utils
 
         template <class Character>
         inline void copy(const Character* source, Character* target, size_t limit,
-            const Character rterminator = Zero<Character>,
-            const Character wterminator = Zero<Character>) noexcept
+            const Character rterminator = {},
+            const Character wterminator = {}) noexcept
         {
             if (limit != 0)
             {
@@ -103,19 +103,19 @@ namespace utils
         }
 
         template <class Character>
-        constexpr size_t find(const Character* const string, const Character symbol,
-            const Character rterminator = Zero<Character>) noexcept
+        constexpr size_t find(const Character* string, const Character symbol,
+            const Character rterminator = {}) noexcept
         {
             assert(string != nullptr);
 
-            const Character* iterator = string;
-            while (*iterator != symbol && *iterator != rterminator) ++iterator;
-            return *iterator == symbol ? iterator - string : None<size_t>;
+            const Character* const begin = string;
+            while (*string != symbol && *string != rterminator) ++string;
+            return *string == symbol ? string - begin : None<size_t>;
         }
 
         template <class Character>
         constexpr bool has(const Character* string, const Character symbol,
-            const Character rterminator = Zero<Character>) noexcept
+            const Character rterminator = {}) noexcept
         {
             assert(string != nullptr);
 
@@ -140,8 +140,10 @@ namespace utils
         }
 
         template <class Buffer, class Value, typename = std::enable_if_t<!std::is_const_v<Buffer>>>
-        inline void erase(volatile Buffer* buffer, const Value value, size_t length) noexcept
+        inline void erase(volatile Buffer* buffer, size_t length, const Value value = {}) noexcept
         {
+            assert(length == 0 || buffer != nullptr);
+
             while (length != 0)
             {
                 *buffer = value;
@@ -156,38 +158,43 @@ namespace utils
     {
         inline void sleep(const Time time) noexcept
         {
+            assert(time.Milliseconds() >= 0);
+
             std::this_thread::sleep_for(std::chrono::milliseconds(time.Milliseconds()));
         }
     }
 
     namespace bitset
     {
-        template <class Type>
+        template <class Type, typename = std::enable_if_t<!std::is_const_v<Type> && std::is_integral_v<Type>>>
         inline bool set(Type& bits, const size_t bit) noexcept
         {
             assert(bit < Bits<Type>);
+
             const bool result = (bits & (HighBit<Type> >> bit)) == 0;
             if (result) bits |= (HighBit<Type> >> bit);
             return result;
         }
 
-        template <class Type>
-        constexpr bool test(Type& bits, const size_t bit) noexcept
+        template <class Type, typename = std::enable_if_t<std::is_integral_v<Type>>>
+        constexpr bool test(const Type& bits, const size_t bit) noexcept
         {
             assert(bit < Bits<Type>);
+
             return (bits & (HighBit<Type> >> bit)) != 0;
         }
 
-        template <class Type>
+        template <class Type, typename = std::enable_if_t<!std::is_const_v<Type> && std::is_integral_v<Type>>>
         inline bool reset(Type& bits, const size_t bit) noexcept
         {
             assert(bit < Bits<Type>);
+
             const bool result = (bits & (HighBit<Type> >> bit)) != 0;
             if (result) bits &= ~(HighBit<Type> >> bit);
             return result;
         }
 
-        template <class Type>
+        template <class Type, typename = std::enable_if_t<!std::is_const_v<Type> && std::is_integral_v<Type>>>
         inline size_t find_and_set(Type& bits) noexcept
         {
             if (bits != ~Zero<Type>)
@@ -204,11 +211,9 @@ namespace utils
 
     namespace ct // compile-time
     {
-        template <class Value>
+        template <class Value, typename = std::enable_if_t<std::is_integral_v<Value>>>
         constexpr Value bswap(Value value) noexcept
         {
-            static_assert(std::is_integral_v<Value>);
-
             Value result = 0;
 
             for (size_t i = 0; i != sizeof(Value); ++i)
@@ -292,18 +297,17 @@ namespace utils
         return *reinterpret_cast<const volatile ubyte_t*>(&word) == 0;
     }
 
-    template <class Number>
+    template <class Number, typename = std::enable_if_t<std::is_unsigned_v<Number>>>
     constexpr bool is_two_power(const Number number) noexcept
     {
-        static_assert(std::is_unsigned_v<Number>);
-
         return number != 0 && (number & (number - 1)) == 0;
     }
 
-    template <class Number>
+    template <class Number, typename = std::enable_if_t<std::is_unsigned_v<Number>>>
     constexpr Number binlog(Number number) noexcept
     {
-        static_assert(std::is_unsigned_v<Number>);
+        if (number > HighBit<Number>) // too big number
+            return None<Number>;
 
         if (number <= 1) return 1;
 
@@ -314,15 +318,13 @@ namespace utils
         return result;
     }
 
-    template <class Number>
-    constexpr Number binceil(const Number number) noexcept
+    template <class Number, typename = std::enable_if_t<std::is_unsigned_v<Number>>>
+    constexpr Number binceil(Number number) noexcept
     {
-        static_assert(std::is_unsigned_v<Number>);
-
-        if (number & HighBit<Number>) // too big number
+        if (number > HighBit<Number>) // too big number
             return None<Number>;
 
-        Number result = 1;
+        Number result = 2;
         while (result < number) result <<= 1;
         return result;
     }
@@ -392,7 +394,7 @@ namespace utils
             std::free(pointer);
     }
 
-    template <class Number>
+    template <class Number, typename = std::enable_if_t<std::is_integral_v<Number>>>
     constexpr char to_hex(const Number nibble) noexcept
     {
         const char kNibbleToSymbolTable[16]

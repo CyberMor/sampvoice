@@ -1660,7 +1660,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** const ppData) noexcept
         config.Register(PARAMETER_VOICE_HOST, "voice_host");
         config.Register(PARAMETER_VOICE_PORT, "voice_port");
 
-        if (config.Load("control.cfg") == 0)
+        if (config.Load("control.cfg") < 0)
         {
             Logger::Instance().Log("Failed to load 'control.cfg'.");
             Logger::Instance().Deinitialize();

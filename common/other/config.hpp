@@ -58,14 +58,16 @@ public:
 
     int Load(const cstr_t path) noexcept
     {
+        assert(path != nullptr && *path != '\0');
+
         File file { path, "rt" };
         if (file.Invalid())
-            return -1;
+            return 0;
 
         for (char line[512];;)
         {
             const int code = file.GetLine(line, '\n');
-            if (code < 0) return code != -2 ? -1 : 0;
+            if (code < 0) return code;
 
             if (*line != '#' && *line != '\0')
             {
@@ -85,7 +87,7 @@ public:
                     ++iterator;
 
                 if (*iterator++ != '=')
-                    return 0;
+                    return -2;
 
                 while (*iterator == ' ' || *iterator == '\t')
                     ++iterator;

@@ -106,11 +106,16 @@ public:
 
     static bool Rename(const cstr_t old_path, const cstr_t new_path) noexcept
     {
+        assert(old_path != nullptr && *old_path != '\0');
+        assert(new_path != nullptr && *new_path != '\0');
+
         return std::rename(old_path, new_path) == 0;
     }
 
     static bool Remove(const cstr_t path) noexcept
     {
+        assert(path != nullptr && *path != '\0');
+
         return std::remove(path) == 0;
     }
 
@@ -119,6 +124,8 @@ public:
     template <class DataType = ubyte_t, class SizeType = size_t>
     static Block<DataType, SizeType> Content(const cstr_t path) noexcept
     {
+        assert(path != nullptr && *path != '\0');
+
         Block<DataType, SizeType> result;
 
         if (std::FILE* const file = std::fopen(path, "rb"); file != nullptr)
@@ -148,6 +155,8 @@ public:
 
     static size_t Size(const cstr_t path) noexcept
     {
+        assert(path != nullptr && *path != '\0');
+
         size_t result = 0;
 
         if (std::FILE* const file = std::fopen(path, "rb"); file != nullptr)
@@ -170,6 +179,8 @@ public:
 
     static bool Explore(const cstr_t path, Info& info) noexcept
     {
+        assert(path != nullptr && *path != '\0');
+
         return stat(path, reinterpret_cast<struct stat*>(&info)) == 0;
     }
 
@@ -189,6 +200,9 @@ public:
 
     bool Initialize(const cstr_t file, const cstr_t modes) noexcept
     {
+        assert(file  != nullptr && *file  != '\0');
+        assert(modes != nullptr && *modes != '\0');
+
         _handle = (_handle != nullptr
             ? std::freopen(file, modes, _handle)
             : std::fopen(file, modes));
@@ -261,6 +275,8 @@ public:
 
         if (const long offset = std::ftell(_handle); offset >= 0)
         {
+            assert(length == 0 || buffer != nullptr);
+
             if (const size_t bytes = std::fread(buffer, 1, length, _handle);
                 std::fseek(_handle, offset, SEEK_SET) == 0 && std::ferror(_handle) == 0)
             {
@@ -281,6 +297,8 @@ public:
 
         if (const long offset = std::ftell(_handle); offset >= 0)
         {
+            assert(length == 0 || buffer != nullptr);
+
             if (const size_t units = std::fread(buffer, sizeof(DataType), length, _handle);
                 std::fseek(_handle, offset, SEEK_SET) == 0 && std::ferror(_handle) == 0)
             {
@@ -292,7 +310,7 @@ public:
         return result;
     }
 
-    template <class Buffer>
+    template <class Buffer, typename = std::enable_if_t<!std::is_const_v<Buffer>>>
     size_t PeekValue(Buffer& buffer) const noexcept
     {
         return Peek(reinterpret_cast<std::remove_all_extents_t<Buffer>*>(&buffer),
@@ -305,6 +323,8 @@ public:
     {
         assert(_handle != nullptr);
 
+        assert(length == 0 || buffer != nullptr);
+
         return std::fread(buffer, 1, length, _handle);
     }
 
@@ -313,10 +333,12 @@ public:
     {
         assert(_handle != nullptr);
 
+        assert(length == 0 || buffer != nullptr);
+
         return std::fread(buffer, sizeof(DataType), length, _handle);
     }
 
-    template <class Buffer>
+    template <class Buffer, typename = std::enable_if_t<!std::is_const_v<Buffer>>>
     size_t ReadValue(Buffer& buffer) noexcept
     {
         return Read(reinterpret_cast<std::remove_all_extents_t<Buffer>*>(&buffer),
@@ -329,6 +351,8 @@ public:
     {
         assert(_handle != nullptr);
 
+        assert(size == 0 || data != nullptr);
+
         return std::fwrite(data, 1, size, _handle);
     }
 
@@ -336,6 +360,8 @@ public:
     size_t Write(const DataType* const data, const size_t size) noexcept
     {
         assert(_handle != nullptr);
+
+        assert(size == 0 || data != nullptr);
 
         return std::fwrite(data, sizeof(DataType), size, _handle);
     }
@@ -349,7 +375,8 @@ public:
 
 public:
 
-    template <bool Endian = HostEndian, class... Buffers>
+    template <bool Endian = HostEndian, class... Buffers,
+        typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
     int PeekPacket(Buffers&... buffers) const noexcept
     {
         DataPacket<Buffers...> packet;
@@ -358,7 +385,8 @@ public:
         return 1;
     }
 
-    template <bool Endian = HostEndian, class... Buffers>
+    template <bool Endian = HostEndian, class... Buffers,
+        typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
     int ReadPacket(Buffers&... buffers) noexcept
     {
         DataPacket<Buffers...> packet;
@@ -379,16 +407,18 @@ public:
 public:
 
     template <class Character, typename = std::enable_if_t<!std::is_const_v<Character>>>
-    int GetLine(Character* buffer, size_t length, const Character rterminator = Zero<Character>,
-        const Character wterminator = Zero<Character>) noexcept
+    int GetLine(Character* buffer, size_t length,
+        const Character rterminator = {},
+        const Character wterminator = {}) noexcept
     {
         assert(_handle != nullptr);
 
+        assert(length == 0 || buffer != nullptr);
         while (length != 0)
         {
             if (std::fread(buffer, sizeof(Character), 1, _handle) != 1)
             {
-                if (std::feof(_handle) == 0) return -1; // error
+                if (Error() || !End()) return -1; // error
                 *buffer = wterminator;
                 return 0; // end of file
             }
@@ -407,34 +437,41 @@ public:
     }
 
     template <class Character, size_t Length, typename = std::enable_if_t<!std::is_const_v<Character>>>
-    int GetLine(Character(&buffer)[Length], const Character rterminator = Zero<Character>,
-        const Character wterminator = Zero<Character>) noexcept
+    int GetLine(Character(&buffer)[Length],
+        const Character rterminator = {},
+        const Character wterminator = {}) noexcept
     {
         return GetLine(buffer, Length, rterminator, wterminator);
     }
 
     template <class Character>
-    bool PutLine(const Character* line, const size_t length, const Character wterminator = Zero<Character>) noexcept
+    bool PutLine(const Character* const string, const size_t length,
+        const Character wterminator = {}) noexcept
     {
         assert(_handle != nullptr);
 
-        return std::fwrite(line, sizeof(Character), length, _handle) == length &&
+        assert(length == 0 || string != nullptr);
+
+        return std::fwrite(string, sizeof(Character), length, _handle) == length &&
                std::fwrite(&wterminator, sizeof(Character), 1, _handle) == 1;
     }
 
     template <class Character>
-    bool PutLine(const Character* const string, const Character wterminator = Zero<Character>,
-        const Character rterminator = Zero<Character>) noexcept
+    bool PutLine(const Character* const string,
+        const Character wterminator = {},
+        const Character rterminator = {}) noexcept
     {
         return PutLine(string, utils::string::length(string, rterminator), wterminator);
     }
 
 public:
 
-    template <class... Buffers>
+    template <class... Buffers, typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
     bool Scan(const cstr_t format, Buffers&... buffers) noexcept
     {
         assert(_handle != nullptr);
+
+        assert(format != nullptr);
 
         return std::fscanf(_handle, format, (&buffers)...) == sizeof...(buffers);
     }
@@ -443,6 +480,8 @@ public:
     bool Print(const cstr_t format, const Values... values) noexcept
     {
         assert(_handle != nullptr);
+
+        assert(format != nullptr);
 
         return std::fprintf(_handle, format, (values)...) == sizeof...(values);
     }
@@ -543,12 +582,16 @@ public:
     {
         assert(_handle != nullptr);
 
+        assert(buffer != nullptr && length != 0);
+
         return std::setvbuf(_handle, static_cast<char*>(buffer), _IOFBF, length) == 0;
     }
 
     bool ResizeBuffer(const size_t new_size) noexcept
     {
         assert(_handle != nullptr);
+
+        assert(new_size != 0);
 
         return std::setvbuf(_handle, nullptr, _IOFBF, new_size) == 0;
     }

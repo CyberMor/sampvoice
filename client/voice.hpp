@@ -131,6 +131,8 @@ public:
 
     bool Open() noexcept
     {
+        _socket.Deinitialize();
+
         IPv4UdpSocket socket;
 
         if (!socket.Initialize(true)) return false;

@@ -67,7 +67,8 @@ public:
     UnprotectScope(const ptr_t address, const bool enabled = true) noexcept
         : _address { address }
     {
-        if (enabled) Enable();
+        if (_address != nullptr && enabled == true && Enable() == false)
+            _address = nullptr;
     }
 
 public:
@@ -93,8 +94,10 @@ public:
         _protect = PAGE_EXECUTE_READWRITE;
 #endif
 
-        return _address != nullptr &&
-            (enabled == false || (Enable(), _enabled == true));
+        if (_address != nullptr && enabled == true && Enable() == false)
+            _address = nullptr;
+
+        return _address != nullptr;
     }
 
     void Deinitialize() noexcept
@@ -106,7 +109,7 @@ public:
 
 public:
 
-    void Enable() noexcept
+    bool Enable() noexcept
     {
         if (_enabled == false)
         {
@@ -117,7 +120,7 @@ public:
             if (VirtualProtect(_address, Size, _protect, &_protect) != 0)
                 _enabled = true;
 #else
-            if (const long pagesize = sysconf(_SC_PAGESIZE); pagesize != -1)
+            if (const long pagesize = sysconf(_SC_PAGESIZE); pagesize > 0)
             {
                 const adr_t begin = reinterpret_cast<adr_t>
                     (reinterpret_cast<uptrint_t>(_address) & -static_cast<uptrint_t>(pagesize));
@@ -128,9 +131,11 @@ public:
             }
 #endif
         }
+
+        return _enabled == true;
     }
 
-    void Disable() noexcept
+    bool Disable() noexcept
     {
         if (_enabled == true)
         {
@@ -140,6 +145,12 @@ public:
                 _enabled = false;
 #endif
         }
+
+#ifdef _WIN32
+        return _enabled == false;
+#else
+        return true;
+#endif
     }
 
 public:
@@ -170,7 +181,7 @@ inline bool UnprotectMemory(const ptr_t address, const size_t length) noexcept
     if (DWORD protect; VirtualProtect(address, length, PAGE_EXECUTE_READWRITE, &protect) != 0)
         return true;
 #else
-    if (const long pagesize = sysconf(_SC_PAGESIZE); pagesize != -1)
+    if (const long pagesize = sysconf(_SC_PAGESIZE); pagesize > 0)
     {
         const adr_t begin = reinterpret_cast<adr_t>
             (reinterpret_cast<uptrint_t>(address) & -static_cast<uptrint_t>(pagesize));

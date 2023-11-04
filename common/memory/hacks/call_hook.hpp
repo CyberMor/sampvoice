@@ -62,12 +62,16 @@ private:
 public:
 
     CallHook(const ptr_t inject, const cptr_t hook, const bool enabled = true) noexcept
-        : _target { reinterpret_cast<ptr_t>((reinterpret_cast<sptrint_t>(inject) +
-            static_cast<sptrint_t>(sizeof(CallInstruction))) + static_cast<const CallInstruction*>(inject)->Offset()) }
-        , _patch { inject, &CallInstruction(reinterpret_cast<sptrint_t>(hook) -
-            (reinterpret_cast<sptrint_t>(inject) + static_cast<sptrint_t>(sizeof(CallInstruction)))), enabled }
     {
-        assert(hook != nullptr);
+        assert(inject != nullptr);
+        assert(hook   != nullptr);
+
+        _target = reinterpret_cast<ptr_t>((reinterpret_cast<sptrint_t>(inject) +
+            static_cast<sptrint_t>(sizeof(CallInstruction))) + static_cast<const CallInstruction*>(inject)->Offset());
+
+        if (_target != nullptr && !_patch.Initialize(inject, &CallInstruction(reinterpret_cast<sptrint_t>(hook) -
+            (reinterpret_cast<sptrint_t>(inject) + static_cast<sptrint_t>(sizeof(CallInstruction)))), enabled))
+            _target = nullptr;
     }
 
 public:
@@ -86,12 +90,17 @@ public:
 
     bool Initialize(const ptr_t inject, const cptr_t hook, const bool enabled = true) noexcept
     {
-        assert(hook != nullptr);
+        assert(inject != nullptr);
+        assert(hook   != nullptr);
 
-        return (_target = reinterpret_cast<ptr_t>((reinterpret_cast<sptrint_t>(inject) +
-            static_cast<sptrint_t>(sizeof(CallInstruction))) + static_cast<const CallInstruction*>(inject)->Offset())) != nullptr
-            && _patch.Initialize(inject, &CallInstruction(reinterpret_cast<sptrint_t>(hook) -
-                (reinterpret_cast<sptrint_t>(inject) + static_cast<sptrint_t>(sizeof(CallInstruction)))), enabled);
+        _target = reinterpret_cast<ptr_t>((reinterpret_cast<sptrint_t>(inject) +
+            static_cast<sptrint_t>(sizeof(CallInstruction))) + static_cast<const CallInstruction*>(inject)->Offset());
+
+        if (_target != nullptr && !_patch.Initialize(inject, &CallInstruction(reinterpret_cast<sptrint_t>(hook) -
+            (reinterpret_cast<sptrint_t>(inject) + static_cast<sptrint_t>(sizeof(CallInstruction)))), enabled))
+            _target = nullptr;
+
+        return _target != nullptr && _patch.Valid();
     }
 
     void Deinitialize() noexcept
@@ -103,14 +112,14 @@ public:
 
 public:
 
-    void Enable() noexcept
+    bool Enable() noexcept
     {
-        _patch.Enable();
+        return _patch.Enable();
     }
 
-    void Disable() noexcept
+    bool Disable() noexcept
     {
-        _patch.Disable();
+        return _patch.Disable();
     }
 
 public:

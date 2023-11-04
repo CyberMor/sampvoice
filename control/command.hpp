@@ -160,6 +160,8 @@ public:
 
     bool Initialize(const IPv4Address& control, const IPv4Address& command) noexcept
     {
+        _socket.Deinitialize();
+
         IPv4TcpSocket socket;
 
         if (!socket.Initialize(false)) return false;

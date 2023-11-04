@@ -12,7 +12,7 @@
 #include <system/types.hpp>
 #include <other/version.hpp>
 
-constexpr Version kCurrentVersion = MakeVersion(4, 0, 0);
+constexpr Version kCurrentVersion = MakeVersion(4, 1, 0);
 
 constexpr size_t kMaxPlayers = 1024;
 constexpr size_t kMaxStreams = 4096;

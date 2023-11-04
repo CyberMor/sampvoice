@@ -81,7 +81,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>files/libraries</AdditionalLibraryDirectories>
       <MinimumRequiredVersion />
-      <Version>4.0</Version>
+      <Version>4.1</Version>
       <ImportLibrary />
       <ProgramDatabaseFile />
     </Link>
@@ -114,7 +114,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <MinimumRequiredVersion />
       <SetChecksum>true</SetChecksum>
-      <Version>4.0</Version>
+      <Version>4.1</Version>
       <ProgramDatabaseFile />
       <ImportLibrary />
       <ImageHasSafeExceptionHandlers />

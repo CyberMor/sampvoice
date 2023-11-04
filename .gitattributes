@@ -9,7 +9,7 @@ Makefile text
 *.cpp    text
 *.hlsl   text
 *.def    text
-*.cfg    text
+*.cfg    text eol=lf
 *.inc    text
 *.iss    text
 *.md     text

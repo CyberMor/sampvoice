@@ -97,14 +97,14 @@ public:
 
 public:
 
-    void Enable() noexcept
+    bool Enable() noexcept
     {
-        _patch.Enable();
+        return _patch.Enable();
     }
 
-    void Disable() noexcept
+    bool Disable() noexcept
     {
-        _patch.Disable();
+        return _patch.Disable();
     }
 
 public:
