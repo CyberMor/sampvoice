@@ -334,7 +334,17 @@ public:
 
     bool SendCommand() noexcept
     {
-        return _socket.Send(_command_buffer, _command_length) == _command_length;
+        int result = _socket.Send(_command_buffer, _command_length);
+        if (result == SOCKET_ERROR)
+        {
+            if (IPv4Address control, command; _socket.GetLocalAddress(control) && _socket.GetRemoteAddress(command) &&
+                Initialize(control, command))
+            {
+                result = _socket.Send(_command_buffer, _command_length);
+            }
+        }
+
+        return result == _command_length;
     }
 
 public:
