@@ -12,6 +12,7 @@
 #include <atomic>
 #include <cassert>
 #include <thread>
+#include <mutex>
 
 #include <system/types.hpp>
 #include <system/clock.hpp>
@@ -500,7 +501,7 @@ private:
 
     public:
 
-        mutable Spinlock lock;
+        mutable std::mutex lock;
 
         IPv4Address address;
 
@@ -616,7 +617,7 @@ public:
                     {
                         const Time moment = Clock::Now();
 
-                        _players[header->packet].lock.Lock();
+                        _players[header->packet].lock.lock();
 
                         if (_players[header->packet].address.Invalid())
                         {
@@ -631,7 +632,7 @@ public:
                             }
                         }
 
-                        _players[header->packet].lock.Unlock();
+                        _players[header->packet].lock.unlock();
 
                         _players.Release(header->packet);
                     }
@@ -651,7 +652,7 @@ public:
 
         const Time moment = Clock::Now();
 
-        _players[sender].lock.Lock();
+        _players[sender].lock.lock();
 
         if (header->key == _players[sender].GetActiveKey())
         {
@@ -684,7 +685,7 @@ public:
             }
         }
 
-        _players[sender].lock.Unlock();
+        _players[sender].lock.unlock();
 
         _players.Release(sender);
 
@@ -717,12 +718,12 @@ public:
         if (_players.Acquire(player) == false)
             return false;
 
-        _players[player].lock.Lock();
+        _players[player].lock.lock();
 
         const udword_t    key     = _players[player].GetActiveKey();
         const IPv4Address address = _players[player].address;
 
-        _players[player].lock.Unlock();
+        _players[player].lock.unlock();
 
         _players.Release(player);
 
@@ -745,19 +746,18 @@ public:
         {
             if (_players.Acquire<0>(player))
             {
-                _players[player].lock.Lock();
+                _players[player].lock.lock();
 
                 if (_players[player].address.Valid())
                 {
                     if (_players[player].last_packet_clock.Expired(kSilenceTimeout, moment))
                     {
                         _a2p_table.Remove(_players[player].address);
-
                         _players[player].address = {};
                     }
                 }
 
-                _players[player].lock.Unlock();
+                _players[player].lock.unlock();
             }
         }
     }
