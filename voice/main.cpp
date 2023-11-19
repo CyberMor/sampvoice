@@ -454,15 +454,17 @@ int main(const int argc, const char* const* const argv) noexcept
 
     Config config;
     {
+        using namespace std::literals;
+
         config.Reserve(PARAMETERS_COUNT);
 
-        config.Register(PARAMETER_CONTROL_HOST, "control_host");
-        config.Register(PARAMETER_CONTROL_PORT, "control_port");
-        config.Register(PARAMETER_COMMAND_HOST, "command_host");
-        config.Register(PARAMETER_COMMAND_PORT, "command_port");
-        config.Register(PARAMETER_VOICE_HOST, "voice_host");
-        config.Register(PARAMETER_VOICE_PORT, "voice_port");
-        config.Register(PARAMETER_WORKERS, "workers");
+        config.Register(PARAMETER_CONTROL_HOST, "control_host"s);
+        config.Register(PARAMETER_CONTROL_PORT, "control_port"s);
+        config.Register(PARAMETER_COMMAND_HOST, "command_host"s);
+        config.Register(PARAMETER_COMMAND_PORT, "command_port"s);
+        config.Register(PARAMETER_VOICE_HOST, "voice_host"s);
+        config.Register(PARAMETER_VOICE_PORT, "voice_port"s);
+        config.Register(PARAMETER_WORKERS, "workers"s);
 
         if (config.Load("voice.cfg") < 0)
         {
