@@ -1778,12 +1778,14 @@ PLUGIN_EXPORT int PLUGIN_CALL AmxLoad(AMX* const amx) noexcept
     if (pNetGame == nullptr)
         pNetGame = reinterpret_cast<CNetGame*(*)()>(ppPluginData[PLUGIN_DATA_NETGAME])();
 
-    if (!Pawn::Instance().RegisterScript(amx))
+    const int error = Pawn::Instance().RegisterScript(amx);
+
+    if (error != AMX_ERR_NONE && amx->error != AMX_ERR_NONE)
     {
-        Logger::Instance().Log("[sv:err:plugin] : failed to register script (error:%d)", amx->error);
+        Logger::Instance().Log("[sv:err:plugin] : failed to register script (error:%d, amx_error:%d)", error, amx->error);
     }
 
-    return AMX_ERR_NONE;
+    return error;
 }
 
 PLUGIN_EXPORT int PLUGIN_CALL AmxUnload(AMX* const) noexcept
