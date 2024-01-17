@@ -827,7 +827,7 @@ private:
             return None<cell>;
 
         assert(string_length >= 0);
-        auto string_buffer = Block<char>::FromHeap(string_length + 1);
+        auto string_buffer = DataBlock<char>::FromHeap(string_length + 1);
         if (string_buffer.Invalid()) return None<cell>;
 
         if (amx_GetString(string_buffer.Data(), physical_address, false, string_buffer.Size()) != 0)
@@ -894,7 +894,7 @@ private:
         const auto filter = static_cast<ubyte_t>(params[2]);
         const auto priority = static_cast<sword_t>(params[3]);
 
-        Block<ubyte_t> parameters;
+        DataBlock<ubyte_t> parameters;
 
         switch (filter)
         {
@@ -903,7 +903,7 @@ private:
                 if (*params != 10 * sizeof(cell))
                     return None<cell>;
 
-                parameters = Block<ubyte_t>::FromHeap(sizeof(ChorusParameters));
+                parameters = DataBlock<ubyte_t>::FromHeap(sizeof(ChorusParameters));
                 if (parameters.Invalid()) return None<cell>;
 
                 if (cell* physical_address; amx_GetAddr(amx, params[4], &physical_address) == 0)
@@ -940,7 +940,7 @@ private:
                 if (*params != 9 * sizeof(cell))
                     return None<cell>;
 
-                parameters = Block<ubyte_t>::FromHeap(sizeof(CompressorParameters));
+                parameters = DataBlock<ubyte_t>::FromHeap(sizeof(CompressorParameters));
                 if (parameters.Invalid()) return None<cell>;
 
                 if (cell* physical_address; amx_GetAddr(amx, params[4], &physical_address) == 0)
@@ -974,7 +974,7 @@ private:
                 if (*params != 8 * sizeof(cell))
                     return None<cell>;
 
-                parameters = Block<ubyte_t>::FromHeap(sizeof(DistortionParameters));
+                parameters = DataBlock<ubyte_t>::FromHeap(sizeof(DistortionParameters));
                 if (parameters.Invalid()) return None<cell>;
 
                 if (cell* physical_address; amx_GetAddr(amx, params[4], &physical_address) == 0)
@@ -1005,7 +1005,7 @@ private:
                 if (*params != 8 * sizeof(cell))
                     return None<cell>;
 
-                parameters = Block<ubyte_t>::FromHeap(sizeof(EchoParameters));
+                parameters = DataBlock<ubyte_t>::FromHeap(sizeof(EchoParameters));
                 if (parameters.Invalid()) return None<cell>;
 
                 if (cell* physical_address; amx_GetAddr(amx, params[4], &physical_address) == 0)
@@ -1036,7 +1036,7 @@ private:
                 if (*params != 10 * sizeof(cell))
                     return None<cell>;
 
-                parameters = Block<ubyte_t>::FromHeap(sizeof(FlangerParameters));
+                parameters = DataBlock<ubyte_t>::FromHeap(sizeof(FlangerParameters));
                 if (parameters.Invalid()) return None<cell>;
 
                 if (cell* physical_address; amx_GetAddr(amx, params[4], &physical_address) == 0)
@@ -1073,7 +1073,7 @@ private:
                 if (*params != 5 * sizeof(cell))
                     return None<cell>;
 
-                parameters = Block<ubyte_t>::FromHeap(sizeof(GargleParameters));
+                parameters = DataBlock<ubyte_t>::FromHeap(sizeof(GargleParameters));
                 if (parameters.Invalid()) return None<cell>;
 
                 if (cell* physical_address; amx_GetAddr(amx, params[4], &physical_address) == 0)
@@ -1094,7 +1094,7 @@ private:
                 if (*params != 15 * sizeof(cell))
                     return None<cell>;
 
-                parameters = Block<ubyte_t>::FromHeap(sizeof(I3dl2reverbParameters));
+                parameters = DataBlock<ubyte_t>::FromHeap(sizeof(I3dl2reverbParameters));
                 if (parameters.Invalid()) return None<cell>;
 
                 if (cell* physical_address; amx_GetAddr(amx, params[4], &physical_address) == 0)
@@ -1148,7 +1148,7 @@ private:
                 if (*params != 6 * sizeof(cell))
                     return None<cell>;
 
-                parameters = Block<ubyte_t>::FromHeap(sizeof(ParameqParameters));
+                parameters = DataBlock<ubyte_t>::FromHeap(sizeof(ParameqParameters));
                 if (parameters.Invalid()) return None<cell>;
 
                 if (cell* physical_address; amx_GetAddr(amx, params[4], &physical_address) == 0)
@@ -1172,7 +1172,7 @@ private:
                 if (*params != 7 * sizeof(cell))
                     return None<cell>;
 
-                parameters = Block<ubyte_t>::FromHeap(sizeof(ReverbParameters));
+                parameters = DataBlock<ubyte_t>::FromHeap(sizeof(ReverbParameters));
                 if (parameters.Invalid()) return None<cell>;
 
                 if (cell* physical_address; amx_GetAddr(amx, params[4], &physical_address) == 0)
@@ -1298,7 +1298,7 @@ public:
     std::function<void(uword_t, fdword_t, fdword_t, fdword_t)> OnSetPosition;
     std::function<void(uword_t, uword_t)>                      OnSetTarget;
     std::function<void(uword_t, uword_t)>                      OnSetEffect;
-    std::function<void(uword_t, Block<char>&&)>                OnSetIcon;
+    std::function<void(uword_t, DataBlock<char>&&)>            OnSetIcon;
 
     std::function<void(uword_t)> OnDeleteStream;
 
@@ -1307,8 +1307,8 @@ public:
 
     std::function<uword_t()> OnCreateEffect;
 
-    std::function<bool(uword_t, ubyte_t, sword_t, Block<ubyte_t>&&)> OnAppendFilter;
-    std::function<void(uword_t, ubyte_t, sword_t)>                   OnRemoveFilter;
+    std::function<bool(uword_t, ubyte_t, sword_t, DataBlock<ubyte_t>&&)> OnAppendFilter;
+    std::function<void(uword_t, ubyte_t, sword_t)>                       OnRemoveFilter;
 
     std::function<void(uword_t)> OnDeleteEffect;
 

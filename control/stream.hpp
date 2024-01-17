@@ -31,14 +31,14 @@ constexpr uword_t GetTargetType(const uword_t target) noexcept
 
 constexpr uword_t GetTargetIndex(const uword_t target) noexcept
 {
-    return target & static_cast<uword_t>(0x3FFF);
+    return target & 0x3FFF;
 }
 
 // ----------------------------------------------------------------
 
 constexpr uword_t MakeTarget(const uword_t type, const uword_t index) noexcept
 {
-    return (type << 14) | (index & static_cast<uword_t>(0x3FFF));
+    return (type << 14) | (index & 0x3FFF);
 }
 
 // Stream
@@ -76,6 +76,6 @@ public:
     uword_t target = Zero<uword_t>;
     uword_t effect = None<uword_t>;
 
-    Block<char> icon;
+    DataBlock<char> icon;
 
 };

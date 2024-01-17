@@ -154,7 +154,7 @@ public:
 
 public:
 
-    Filter(const ubyte_t type, const sword_t priority, Block<ubyte_t>&& parameters) noexcept
+    Filter(const ubyte_t type, const sword_t priority, DataBlock<ubyte_t>&& parameters) noexcept
         : _type       { type }
         , _priority   { priority }
         , _parameters { std::move(parameters) }
@@ -172,7 +172,7 @@ public:
         return _priority;
     }
 
-    const View<ubyte_t>& Parameters() const noexcept
+    const DataView<ubyte_t>& Parameters() const noexcept
     {
         return _parameters.Area();
     }
@@ -182,7 +182,7 @@ private:
     const ubyte_t _type;
     const sword_t _priority;
 
-    const Block<ubyte_t> _parameters;
+    const DataBlock<ubyte_t> _parameters;
 
 };
 
@@ -200,7 +200,7 @@ struct Effect {
 
 public:
 
-    bool AppendFilter(const ubyte_t type, const sword_t priority, Block<ubyte_t>&& parameters) noexcept
+    bool AppendFilter(const ubyte_t type, const sword_t priority, DataBlock<ubyte_t>&& parameters) noexcept
     {
         const auto filter = filters.Construct(type, priority, std::move(parameters));
         return filter != nullptr && (filters.PushBack(filter), true);

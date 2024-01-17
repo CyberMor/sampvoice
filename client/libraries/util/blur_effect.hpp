@@ -114,7 +114,7 @@ struct BlurEffect {
 
 public:
 
-    BlurEffect(IDirect3DDevice9* const device, const View<ubyte_t>& resource) noexcept
+    BlurEffect(IDirect3DDevice9* const device, const DataView<ubyte_t>& resource) noexcept
     {
         assert(device != nullptr);
 
@@ -355,7 +355,7 @@ public:
 
 public:
 
-    bool Initialize(IDirect3DDevice9* const device, const View<ubyte_t>& resource) noexcept
+    bool Initialize(IDirect3DDevice9* const device, const DataView<ubyte_t>& resource) noexcept
     {
         if (_device_backbuffer   != nullptr) _device_backbuffer->Release();
         if (_effect              != nullptr) _effect->Release();

@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include <cstdio>
-#include <cassert>
-
 #include <sys/stat.h>
+
+#include <cassert>
+#include <cstdio>
 
 #include <memory/block.hpp>
 #include <memory/packet.hpp>
@@ -47,15 +47,17 @@ struct File {
 
     };
 
+private:
+
+    static_assert(sizeof(Info) == sizeof(struct stat),
+        "'Info' type must be identical to 'struct stat' type");
+
 public:
 
     File() noexcept = default;
     ~File() noexcept
     {
-        if (_handle != nullptr)
-        {
-            std::fclose(_handle);
-        }
+        if (_handle != nullptr) std::fclose(_handle);
     }
 
     File(const File&) = delete;
@@ -70,10 +72,7 @@ public:
     {
         if (&object != this)
         {
-            if (_handle != nullptr)
-            {
-                std::fclose(_handle);
-            }
+            if (_handle != nullptr) std::fclose(_handle);
 
             _handle = object._handle;
 
@@ -122,11 +121,11 @@ public:
 public:
 
     template <class DataType = ubyte_t, class SizeType = size_t>
-    static Block<DataType, SizeType> Content(const cstr_t path) noexcept
+    static DataBlock<DataType, SizeType> Content(const cstr_t path) noexcept
     {
         assert(path != nullptr && *path != '\0');
 
-        Block<DataType, SizeType> result;
+        DataBlock<DataType, SizeType> result;
 
         if (std::FILE* const file = std::fopen(path, "rb"); file != nullptr)
         {
@@ -136,7 +135,7 @@ public:
                 {
                     if (std::fseek(file, 0, SEEK_SET) == 0)
                     {
-                        if (auto content = Block<DataType, SizeType>::FromHeap(size / sizeof(DataType)); content.Valid())
+                        if (auto content = DataBlock<DataType, SizeType>::FromHeap(size / sizeof(DataType)); content.Valid())
                         {
                             if (std::fread(content.Data(), sizeof(DataType), content.Size(), file) == content.Size())
                             {
@@ -186,6 +185,13 @@ public:
 
 public:
 
+    std::FILE* Handle() const noexcept
+    {
+        return _handle;
+    }
+
+public:
+
     bool Valid() const noexcept
     {
         return _handle != nullptr;
@@ -211,11 +217,8 @@ public:
 
     void Deinitialize() noexcept
     {
-        if (_handle != nullptr)
-        {
-            std::fclose(_handle);
-            _handle = nullptr;
-        }
+        if (_handle != nullptr) std::fclose(_handle);
+        _handle = nullptr;
     }
 
     void Release() noexcept
@@ -224,11 +227,6 @@ public:
     }
 
 public:
-
-    std::FILE* Handle() const noexcept
-    {
-        return _handle;
-    }
 
     int Descriptor() const noexcept
     {
@@ -377,7 +375,7 @@ public:
 
     template <bool Endian = HostEndian, class... Buffers,
         typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
-    int PeekPacket(Buffers&... buffers) const noexcept
+        int PeekPacket(Buffers&... buffers) const noexcept
     {
         DataPacket<Buffers...> packet;
         if (PeekValue(packet) != 1) return Error() ? -1 : 0;
@@ -387,7 +385,7 @@ public:
 
     template <bool Endian = HostEndian, class... Buffers,
         typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
-    int ReadPacket(Buffers&... buffers) noexcept
+        int ReadPacket(Buffers&... buffers) noexcept
     {
         DataPacket<Buffers...> packet;
         if (ReadValue(packet) != 1) return Error() ? -1 : 0;
@@ -406,6 +404,121 @@ public:
 
 public:
 
+    int GetCharacter(char* const buffer) noexcept
+    {
+        assert(_handle != nullptr);
+
+        if (std::fread(buffer, sizeof(char), 1, _handle) != 1)
+        {
+            if (std::ferror(_handle) != 0 || std::feof(_handle) == 0)
+                return -1; // error
+
+            return 0; // end of file
+        }
+
+        if (*buffer == '\r')
+        {
+            if (std::fread(buffer, sizeof(char), 1, _handle) != 1)
+            {
+                if (std::ferror(_handle) != 0 || std::feof(_handle) == 0)
+                    return -1; // error
+
+                return 1; // success (end of file)
+            }
+
+            *buffer = (*buffer == '\n' ? utils::string::ending::crlf : '\r');
+            if (*buffer != utils::string::ending::crlf)
+            {
+                if (std::fseek(_handle, -1, SEEK_CUR) != 0)
+                    return -1; // error
+
+                std::clearerr(_handle);
+            }
+        }
+
+        return 1;
+    }
+
+    template <class Character>
+    int GetCharacter(Character* const buffer) noexcept
+    {
+        assert(_handle != nullptr);
+
+        if (std::fread(buffer, sizeof(Character), 1, _handle) != 1)
+        {
+            if (std::ferror(_handle) != 0 || std::feof(_handle) == 0)
+                return -1; // error
+
+            return 0; // end of file
+        }
+
+        return 1;
+    }
+
+    bool PutCharacter(const char character) noexcept
+    {
+        assert(_handle != nullptr);
+
+        assert(character >= 0 || character == utils::string::ending::crlf);
+
+        if (character != utils::string::ending::crlf)
+            return std::fwrite(&character, sizeof(char), 1, _handle) == 1;
+        else return std::fwrite("\r\n", sizeof(char), 2, _handle) == 2;
+    }
+
+    template <class Character>
+    bool PutCharacter(const Character character) noexcept
+    {
+        assert(_handle != nullptr);
+
+        return std::fwrite(&character, sizeof(Character), 1, _handle) == 1;
+    }
+
+public:
+
+    int GetLine(char* buffer, size_t length,
+        const char rterminator = utils::string::ending::text,
+        const char wterminator = '\0') noexcept
+    {
+        assert(_handle != nullptr);
+
+        assert(rterminator >= 0 || rterminator == utils::string::ending::crlf
+                                || rterminator == utils::string::ending::text);
+        assert(wterminator >= 0);
+
+        assert(length == 0 || buffer != nullptr);
+        while (length != 0)
+        {
+            const int result = GetCharacter(buffer);
+            if (result == 0) *buffer = wterminator;
+            if (result <= 0) return result;
+
+            if (rterminator == utils::string::ending::text)
+            {
+                if (*buffer == '\n' || *buffer == utils::string::ending::crlf || *buffer == '\r')
+                    *buffer = wterminator;
+            }
+            else if (rterminator >= 0)
+            {
+                if (*buffer == rterminator)
+                    *buffer = wterminator;
+            }
+            else // if (rterminator == utils::string::ending::crlf)
+            {
+                if (*buffer == utils::string::ending::crlf)
+                    *buffer = wterminator;
+            }
+
+            if (*buffer == wterminator)
+                return 1; // success
+
+            ++buffer;
+            --length;
+        }
+
+        return -2; // too small buffer
+    }
+
     template <class Character, typename = std::enable_if_t<!std::is_const_v<Character>>>
     int GetLine(Character* buffer, size_t length,
         const Character rterminator = {},
@@ -416,24 +529,26 @@ public:
         assert(length == 0 || buffer != nullptr);
         while (length != 0)
         {
-            if (std::fread(buffer, sizeof(Character), 1, _handle) != 1)
-            {
-                if (Error() || !End()) return -1; // error
-                *buffer = wterminator;
-                return 0; // end of file
-            }
+            const int result = GetCharacter(buffer);
+            if (result == 0) *buffer = wterminator;
+            if (result <= 0) return result;
 
-            if (*buffer == rterminator)
-            {
-                *buffer = wterminator;
-                return 1; // success
-            }
+            if (*buffer == rterminator) *buffer = wterminator;
+            if (*buffer == wterminator) return 1; // success
 
             ++buffer;
             --length;
         }
 
         return -2; // too small buffer
+    }
+
+    template <size_t Length>
+    int GetLine(char(&buffer)[Length],
+        const char rterminator = utils::string::ending::text,
+        const char wterminator = '\0') noexcept
+    {
+        return GetLine(buffer, Length, rterminator, wterminator);
     }
 
     template <class Character, size_t Length, typename = std::enable_if_t<!std::is_const_v<Character>>>
@@ -450,10 +565,7 @@ public:
     {
         assert(_handle != nullptr);
 
-        assert(length == 0 || string != nullptr);
-
-        return std::fwrite(string, sizeof(Character), length, _handle) == length &&
-               std::fwrite(&wterminator, sizeof(Character), 1, _handle) == 1;
+        return Write(string, length) == length && PutCharacter(wterminator);
     }
 
     template <class Character>

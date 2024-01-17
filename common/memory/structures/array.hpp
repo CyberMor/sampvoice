@@ -74,12 +74,14 @@ public:
     const Type& operator[](const size_t index) const noexcept
     {
         assert(index < Size());
+
         return Data()[index];
     }
 
     Type& operator[](const size_t index) noexcept
     {
         assert(index < Size());
+
         return Data()[index];
     }
 

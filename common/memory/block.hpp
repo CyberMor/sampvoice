@@ -18,10 +18,10 @@
 #include "view.hpp"
 
 template <class DataType, class SizeType = size_t>
-struct Block {
+struct DataBlock {
 
-    Block() noexcept = default;
-    ~Block() noexcept
+    DataBlock() noexcept = default;
+    ~DataBlock() noexcept
     {
         if (_heap)
         {
@@ -29,7 +29,7 @@ struct Block {
         }
     }
 
-    Block(const Block& object) noexcept
+    DataBlock(const DataBlock& object) noexcept
     {
         if (object._heap)
         {
@@ -50,7 +50,7 @@ struct Block {
         }
     }
 
-    Block(Block&& object) noexcept
+    DataBlock(DataBlock&& object) noexcept
         : _area { object._area }
         , _heap { object._heap }
     {
@@ -58,7 +58,7 @@ struct Block {
         object._heap = false;
     }
 
-    Block& operator=(const Block& object) noexcept
+    DataBlock& operator=(const DataBlock& object) noexcept
     {
         if (&object != this)
         {
@@ -92,7 +92,7 @@ struct Block {
         return *this;
     }
 
-    Block& operator=(Block&& object) noexcept
+    DataBlock& operator=(DataBlock&& object) noexcept
     {
         if (&object != this)
         {
@@ -114,28 +114,28 @@ struct Block {
 public:
 
     template <bool Copy = false>
-    static Block FromData(const View<DataType, SizeType>& data) noexcept
+    static DataBlock FromData(DataType* const data, const SizeType size) noexcept
     {
-        Block block;
+        DataBlock block;
 
-        if (data.data != nullptr && data.size != 0)
+        if (data != nullptr && size != 0)
         {
             if constexpr (Copy)
             {
                 block._area.data = static_cast<DataType*>
-                    (utils::allocate<alignof(DataType)>(data.size * sizeof(DataType)));
+                    (utils::allocate<alignof(DataType)>(size * sizeof(DataType)));
                 if (block._area.data != nullptr)
                 {
                     std::memcpy(const_cast<std::remove_const_t<DataType>*>(block._area.data),
-                        data.data, data.size * sizeof(DataType));
+                        data, size * sizeof(DataType));
 
-                    block._area.size = data.size;
+                    block._area.size = size;
                     block._heap      = true;
                 }
             }
             else
             {
-                block._area = data;
+                block._area = { data, size };
             }
         }
 
@@ -143,29 +143,29 @@ public:
     }
 
     template <bool Zeros = false>
-    static Block FromArea(const View<DataType, SizeType>& area) noexcept
+    static DataBlock FromArea(DataType* const buffer, const SizeType length) noexcept
     {
-        Block block;
+        DataBlock block;
 
-        if (area.data != nullptr && area.size != 0)
+        if (buffer != nullptr && length != 0)
         {
             if constexpr (Zeros)
             {
-                std::memset(area.data, 0, area.size * sizeof(DataType));
+                std::memset(buffer, {}, length * sizeof(DataType));
             }
 
-            block._area = area;
+            block._area = { buffer, length };
         }
 
         return block;
     }
 
     template <bool Zeros = false>
-    static Block FromHeap(const SizeType size) noexcept
+    static DataBlock FromHeap(const SizeType size) noexcept
     {
         assert(size >= 0);
 
-        Block block;
+        DataBlock block;
 
         if (size != 0)
         {
@@ -176,7 +176,7 @@ public:
                 if constexpr (Zeros)
                 {
                     std::memset(const_cast<std::remove_const_t<DataType>*>(block._area.data),
-                        0, size * sizeof(DataType));
+                        {}, size * sizeof(DataType));
                 }
 
                 block._area.size = size;
@@ -189,44 +189,69 @@ public:
 
 public:
 
-    bool operator<(const Block& block) const noexcept
+    bool operator<(const DataBlock& block) const noexcept
     {
         const int result = std::memcmp(_area.data, block._area.data,
             std::min(_area.size, block._area.size));
         return result < 0 || result == 0 && _area.size < block._area.size;
     }
 
-    bool operator>(const Block& block) const noexcept
+    bool operator>(const DataBlock& block) const noexcept
     {
         const int result = std::memcmp(_area.data, block._area.data,
             std::min(_area.size, block._area.size));
         return result > 0 || result == 0 && _area.size > block._area.size;
     }
 
-    bool operator<=(const Block& block) const noexcept
+    bool operator<=(const DataBlock& block) const noexcept
     {
         const int result = std::memcmp(_area.data, block._area.data,
             std::min(_area.size, block._area.size));
         return result < 0 || result == 0 && _area.size <= block._area.size;
     }
 
-    bool operator>=(const Block& block) const noexcept
+    bool operator>=(const DataBlock& block) const noexcept
     {
         const int result = std::memcmp(_area.data, block._area.data,
             std::min(_area.size, block._area.size));
         return result > 0 || result == 0 && _area.size >= block._area.size;
     }
 
-    bool operator==(const Block& block) const noexcept
+    bool operator==(const DataBlock& block) const noexcept
     {
         return _area.size == block._area.size &&
             std::memcmp(_area.data, block._area.data, block._area.size) == 0;
     }
 
-    bool operator!=(const Block& block) const noexcept
+    bool operator!=(const DataBlock& block) const noexcept
     {
         return _area.size != block._area.size ||
             std::memcmp(_area.data, block._area.data, block._area.size) != 0;
+    }
+
+public:
+
+    DataBlock operator+(const DataBlock& block) const noexcept
+    {
+        DataBlock result;
+
+        if (result = FromHeap(Size() + block.Size()); result.Valid())
+        {
+            std::memcpy(result.Data(), Data(), Size());
+            std::memcpy(result.Data() + Size(), block.Data(), block.Size());
+        }
+
+        return result;
+    }
+
+    DataBlock& operator+=(const DataBlock& block) noexcept
+    {
+        if (const SizeType size = Size(); Resize(size + block.Size()))
+        {
+            std::memcpy(Data() + size, block.Data(), block.Size());
+        }
+
+        return *this;
     }
 
 public:
@@ -255,7 +280,7 @@ public:
 
 public:
 
-    const View<DataType, SizeType>& Area() const noexcept
+    const DataView<DataType, SizeType>& Area() const noexcept
     {
         return _area;
     }
@@ -269,12 +294,12 @@ public:
 
     void FillWithZeros() noexcept
     {
-        std::memset(Data(), 0x00, Bytes());
+        _area.FillWithZeros();
     }
 
     void FillWithOnes() noexcept
     {
-        std::memset(Data(), 0xFF, Bytes());
+        _area.FillWithOnes();
     }
 
 public:
@@ -330,7 +355,7 @@ public:
                         if (new_size > _area.size)
                         {
                             std::memset(const_cast<std::remove_const_t<DataType>*>(new_data + _area.size),
-                                0, (new_size - _area.size) * sizeof(DataType));
+                                {}, (new_size - _area.size) * sizeof(DataType));
                         }
                     }
 
@@ -353,7 +378,7 @@ public:
                     if constexpr (Zeros)
                     {
                         std::memset(const_cast<std::remove_const_t<DataType>*>(new_data + _area.size),
-                            0, (new_size - _area.size) * sizeof(DataType));
+                            {}, (new_size - _area.size) * sizeof(DataType));
                     }
 
                     _area = { new_data, new_size };
@@ -468,7 +493,7 @@ public:
 
 private:
 
-    View<DataType, SizeType> _area;
+    DataView<DataType, SizeType> _area;
 
 private:
 

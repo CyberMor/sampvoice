@@ -14,9 +14,6 @@
 
 #include <system/types.hpp>
 
-#include <memory/allocators/system_allocator.hpp>
-#include <memory/allocators/object_allocator.hpp>
-
 #define ListRemove(iterator, list, condition, ...)                  \
     for (auto iterator  = (list).Begin();                           \
               iterator != (list).End();)                            \
@@ -26,7 +23,7 @@
         iterator = next;                                            \
     }
 
-template <class Type, class Allocator = SystemAllocator>
+template <class Type>
 struct List {
 
     List() noexcept = default;
@@ -68,7 +65,7 @@ public:
         while (_head != nullptr)
         {
             Node* const next = _head->next;
-            _allocator.Destroy(_head);
+            delete _head;
             _head = next;
         }
     }
@@ -80,46 +77,16 @@ public:
 
 public:
 
-    template <class... Arguments>
-    List(Arguments&&... arguments) noexcept
-        : _allocator { std::forward<Arguments>(arguments)... }
-    {}
-
-public:
-
-    bool Valid() const noexcept
-    {
-        return _allocator.Valid();
-    }
-
-    bool Invalid() const noexcept
-    {
-        return _allocator.Invalid();
-    }
-
-public:
-
-    template <class... Arguments>
-    bool Initialize(Arguments&&... arguments) noexcept
-    {
-        _head = nullptr;
-        _tail = nullptr;
-
-        return _allocator.Initialize(std::forward<Arguments>(arguments)...);
-    }
-
     void Deinitialize() noexcept
     {
         while (_head != nullptr)
         {
             Node* const next = _head->next;
-            _allocator.Destroy(_head);
+            delete _head;
             _head = next;
         }
 
         _tail = nullptr;
-
-        _allocator.Deinitialize();
     }
 
 public:
@@ -127,8 +94,7 @@ public:
     template <class... Arguments>
     Type* Construct(Arguments&&... arguments) noexcept
     {
-        return reinterpret_cast<Type*>(_allocator.template Construct<Node>
-            (std::forward<Arguments>(arguments)...));
+        return reinterpret_cast<Type*>(new (std::nothrow) Node { std::forward<Arguments>(arguments)... });
     }
 
     void Destroy(Type* const pointer) noexcept
@@ -145,7 +111,7 @@ public:
             if (_tail == reinterpret_cast<Node*>(pointer)) _tail = prev;
         }
 
-        _allocator.Destroy(reinterpret_cast<Node*>(pointer));
+        delete reinterpret_cast<Node*>(pointer);
     }
 
 public:
@@ -288,7 +254,7 @@ public:
         {
             Node* const next = _head->next;
             if (next != nullptr) next->prev = nullptr;
-            _allocator.Destroy(_head);
+            delete _head;
             if (_tail != _head) _head = next;
             else _tail = _head = next;
         }
@@ -300,7 +266,7 @@ public:
         {
             Node* const prev = _tail->prev;
             if (prev != nullptr) prev->next = nullptr;
-            _allocator.Destroy(_tail);
+            delete _tail;
             if (_head != _tail) _tail = prev;
             else _head = _tail = prev;
         }
@@ -376,16 +342,12 @@ public:
         while (_head != nullptr)
         {
             Node* const next = _head->next;
-            _allocator.Destroy(_head);
+            delete _head;
             _head = next;
         }
 
         _tail = nullptr;
     }
-
-private:
-
-    ObjectAllocator<Allocator> _allocator;
 
 private:
 

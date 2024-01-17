@@ -57,16 +57,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "system", "system", "{6AC279
 		common\system\types.hpp = common\system\types.hpp
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "allocators", "allocators", "{9EFEFF9A-A175-4E01-B2FC-B644925F6511}"
-	ProjectSection(SolutionItems) = preProject
-		common\memory\allocators\fixed_pool_allocator.hpp = common\memory\allocators\fixed_pool_allocator.hpp
-		common\memory\allocators\growing_pool_allocator.hpp = common\memory\allocators\growing_pool_allocator.hpp
-		common\memory\allocators\object_allocator.hpp = common\memory\allocators\object_allocator.hpp
-		common\memory\allocators\proxy_allocator.hpp = common\memory\allocators\proxy_allocator.hpp
-		common\memory\allocators\system_allocator.hpp = common\memory\allocators\system_allocator.hpp
-		common\memory\allocators\threaded_allocator.hpp = common\memory\allocators\threaded_allocator.hpp
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "hacks", "hacks", "{570CF963-7DF8-427A-AE71-4037F1A74382}"
 	ProjectSection(SolutionItems) = preProject
 		common\memory\hacks\call_hook.hpp = common\memory\hacks\call_hook.hpp
@@ -82,7 +72,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "structures", "structures", 
 		common\memory\structures\bitset.hpp = common\memory\structures\bitset.hpp
 		common\memory\structures\list.hpp = common\memory\structures\list.hpp
 		common\memory\structures\pool.hpp = common\memory\structures\pool.hpp
-		common\memory\structures\queue.hpp = common\memory\structures\queue.hpp
 	EndProjectSection
 EndProject
 Global
@@ -113,7 +102,6 @@ Global
 		{72E921AD-707C-4A14-B0DE-A5934B3549BB} = {ED221D15-D8EB-4A7A-978D-DF5D4E081913}
 		{1B49494B-A2BB-4E10-A4A9-56485A69BCCC} = {ED221D15-D8EB-4A7A-978D-DF5D4E081913}
 		{6AC27975-BA50-47FA-BC41-920D595B235B} = {ED221D15-D8EB-4A7A-978D-DF5D4E081913}
-		{9EFEFF9A-A175-4E01-B2FC-B644925F6511} = {D2FA1F64-0A01-46C7-8AE5-0FC6377C4DD5}
 		{570CF963-7DF8-427A-AE71-4037F1A74382} = {D2FA1F64-0A01-46C7-8AE5-0FC6377C4DD5}
 		{8B6FCEFD-043A-4E3C-8D01-91BD440BFA0A} = {D2FA1F64-0A01-46C7-8AE5-0FC6377C4DD5}
 	EndGlobalSection

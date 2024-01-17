@@ -1130,7 +1130,7 @@ static void OnSetEffect(const uword_t stream, const uword_t effect) noexcept
     }
 }
 
-static void OnSetIcon(const uword_t stream, Block<char>&& icon) noexcept
+static void OnSetIcon(const uword_t stream, DataBlock<char>&& icon) noexcept
 {
     if (gStreams.Acquire<0>(stream))
     {
@@ -1219,7 +1219,7 @@ static uword_t OnCreateEffect() noexcept
 }
 
 static bool OnAppendFilter(const uword_t effect, const ubyte_t filter,
-    const sword_t priority, Block<ubyte_t>&& parameters) noexcept
+    const sword_t priority, DataBlock<ubyte_t>&& parameters) noexcept
 {
     if (gEffects.Acquire<0>(effect) == false)
         return false;
@@ -1425,6 +1425,132 @@ static void OnControlDisconnect(const uword_t player) noexcept
         });
 
         gPlayers.Remove(player, false);
+    }
+}
+
+// Command Service
+// ----------------------------------------------------------------
+
+/*
+    When communication with the voice server is lost, desync occurs.
+    In order to restore the state, the voice server clears its context,
+    and the control server sends it the current state upon connection.
+*/
+static void OnSynchronize() noexcept
+{
+    for (size_t player; player != kMaxPlayers; ++player)
+    {
+        if (gPlayers.Acquire<0>(player))
+        {
+            udword_t key;
+            do key = utils::crypto::random();
+            while (key == 0);
+
+            {
+                const auto packet = static_cast<ControlUpdateKey*>
+                    (ControlService::Instance().BeginPacket(ControlPackets::UpdateKey));
+
+                packet->key = key;
+
+                ControlService::Instance().EndPacket();
+                ControlService::Instance().SendPacket(player);
+            }
+
+            {
+                const auto command = static_cast<CommandPlayerCreate*>
+                    (CommandService::Instance().BeginCommand(CommandPackets::PlayerCreate));
+
+                command->player = player;
+                command->key = key;
+
+                CommandService::Instance().EndCommand();
+                CommandService::Instance().SendCommand();
+            } {
+                const auto command = static_cast<CommandPlayerListener*>
+                    (CommandService::Instance().BeginCommand(CommandPackets::PlayerListener));
+
+                command->player = player;
+                command->status = gPlayers[player].listener;
+
+                CommandService::Instance().EndCommand();
+                CommandService::Instance().SendCommand();
+            } {
+                const auto command = static_cast<CommandPlayerSpeaker*>
+                    (CommandService::Instance().BeginCommand(CommandPackets::PlayerSpeaker));
+
+                command->player = player;
+                command->channels = gPlayers[player].active_channels;
+
+                CommandService::Instance().EndCommand();
+                CommandService::Instance().SendCommand();
+            }
+            
+            for (size_t stream; stream != kMaxStreams; ++stream)
+            {
+                if (gStreams.Acquire<0>(stream))
+                {
+                    udword_t channels = 0;
+
+                    for (size_t channel = 0; channel != Bits<udword_t>; ++channel)
+                    {
+                        if (gPlayers[player].listeners[channel].Test(stream))
+                        {
+                            utils::bitset::set(channels, channel);
+                        }
+                    }
+
+                    if (channels != 0)
+                    {
+                        const auto command = static_cast<CommandPlayerAttachStream*>
+                            (CommandService::Instance().BeginCommand(CommandPackets::PlayerAttachStream));
+
+                        command->player = player;
+                        command->channels = channels;
+                        command->stream = stream;
+
+                        CommandService::Instance().EndCommand();
+                        CommandService::Instance().SendCommand();
+                    }
+                }
+            }
+        }
+    }
+
+    for (size_t stream; stream != kMaxStreams; ++stream)
+    {
+        if (gStreams.Acquire<0>(stream))
+        {
+            {
+                const auto command = static_cast<CommandStreamCreate*>
+                    (CommandService::Instance().BeginCommand(CommandPackets::StreamCreate));
+
+                command->stream = stream;
+
+                CommandService::Instance().EndCommand();
+                CommandService::Instance().SendCommand();
+            } {
+                const auto command = static_cast<CommandStreamTransiter*>
+                    (CommandService::Instance().BeginCommand(CommandPackets::StreamTransiter));
+
+                command->stream = stream;
+                command->status = gStreams[stream].transiter;
+
+                CommandService::Instance().EndCommand();
+                CommandService::Instance().SendCommand();
+            }
+
+            gStreams[stream].listeners.ForEach([stream](const size_t player) noexcept -> void
+            {
+                const auto command = static_cast<CommandStreamAttachListener*>
+                    (CommandService::Instance().BeginCommand(CommandPackets::StreamAttachListener));
+
+                command->stream = stream;
+                command->player = player;
+
+                CommandService::Instance().EndCommand();
+                CommandService::Instance().SendCommand();
+            });
+        }
     }
 }
 
@@ -1674,8 +1800,8 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** const ppData) noexcept
     // ----------------------------------------------------------------
 
     {
-        IPv4Address control = IPv4Address::Loopback();
-        IPv4Address command = IPv4Address::Loopback(2020);
+        IPv4Address control = IPv4Address::Loopback(2020);
+        IPv4Address command = IPv4Address::Empty();
 
         if (config.HasParameter(PARAMETER_CONTROL_HOST))
             control.SetHost(config.GetValueByIndex(PARAMETER_CONTROL_HOST).c_str());
@@ -1694,7 +1820,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** const ppData) noexcept
         if (config.HasParameter(PARAMETER_VOICE_PORT))
             gVoiceAddress.SetPort(std::stoi(config.GetValueByIndex(PARAMETER_VOICE_PORT)));
 
-        Logger::Instance().Log("[sv:dbg:plugin] : connecting to command service...");
+        CommandService::Instance().OnSynchronize = OnSynchronize;
 
         if (!CommandService::Instance().Initialize(control, command))
         {

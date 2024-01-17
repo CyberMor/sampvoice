@@ -35,7 +35,7 @@ private:
 
     static constexpr size_t Chunks() noexcept
     {
-        return (Capacity - 1) / Bits<uint_t> + 1;
+        return (Capacity - 1) / Bits<umaxint_t> + 1;
     }
 
 public:
@@ -94,7 +94,7 @@ public:
     bool Zeros() const noexcept
     {
         for (size_t chunk = 0; chunk != Chunks(); ++chunk)
-            if (_chunks[chunk].load(std::memory_order_relaxed) != Zero<uint_t>)
+            if (_chunks[chunk].load(std::memory_order_relaxed) != Zero<umaxint_t>)
                 return false;
 
         return true;
@@ -103,27 +103,10 @@ public:
     bool Ones() const noexcept
     {
         for (size_t chunk = 0; chunk != Chunks(); ++chunk)
-            if (_chunks[chunk].load(std::memory_order_relaxed) != ~Zero<uint_t>)
+            if (_chunks[chunk].load(std::memory_order_relaxed) != ~Zero<umaxint_t>)
                 return false;
 
         return true;
-    }
-
-public:
-
-    size_t FindFirstUnset() const noexcept
-    {
-        for (size_t chunk = 0; chunk != Chunks(); ++chunk)
-        {
-            if (uint_t bits = _chunks[chunk].load(std::memory_order_relaxed); bits != ~Zero<uint_t>)
-            {
-                size_t index = chunk * Bits<uint_t>;
-                while (bits & HighBit<uint_t>) bits <<= 1, ++index;
-                return index;
-            }
-        }
-
-        return None<size_t>;
     }
 
 public:
@@ -132,33 +115,33 @@ public:
     {
         assert(index < Capacity);
 
-        const size_t chunk = index / Bits<uint_t>;
-        const uint_t mask = HighBit<uint_t> >> (index % Bits<uint_t>);
-        const uint_t bits = _chunks[chunk].fetch_or(mask, std::memory_order_relaxed);
+        const size_t chunk = index / Bits<umaxint_t>;
+        const umaxint_t mask = HighBit<umaxint_t> >> (index % Bits<umaxint_t>);
+        const umaxint_t bits = _chunks[chunk].fetch_or(mask, std::memory_order_relaxed);
 
-        return (bits & mask) == Zero<uint_t>;
+        return (bits & mask) == Zero<umaxint_t>;
     }
 
     bool Test(const size_t index) const noexcept
     {
         assert(index < Capacity);
 
-        const size_t chunk = index / Bits<uint_t>;
-        const uint_t mask = HighBit<uint_t> >> (index % Bits<uint_t>);
-        const uint_t bits = _chunks[chunk].load(std::memory_order_relaxed);
+        const size_t chunk = index / Bits<umaxint_t>;
+        const umaxint_t mask = HighBit<umaxint_t> >> (index % Bits<umaxint_t>);
+        const umaxint_t bits = _chunks[chunk].load(std::memory_order_relaxed);
 
-        return (bits & mask) != Zero<uint_t>;
+        return (bits & mask) != Zero<umaxint_t>;
     }
 
     bool Reset(const size_t index) noexcept
     {
         assert(index < Capacity);
 
-        const size_t chunk = index / Bits<uint_t>;
-        const uint_t mask = HighBit<uint_t> >> (index % Bits<uint_t>);
-        const uint_t bits = _chunks[chunk].fetch_and(~mask, std::memory_order_relaxed);
+        const size_t chunk = index / Bits<umaxint_t>;
+        const umaxint_t mask = HighBit<umaxint_t> >> (index % Bits<umaxint_t>);
+        const umaxint_t bits = _chunks[chunk].fetch_and(~mask, std::memory_order_relaxed);
 
-        return (bits & mask) != Zero<uint_t>;
+        return (bits & mask) != Zero<umaxint_t>;
     }
 
 public:
@@ -166,7 +149,7 @@ public:
     void Clear() noexcept
     {
         for (size_t chunk = 0; chunk != Chunks(); ++chunk)
-            _chunks[chunk].store(Zero<uint_t>, std::memory_order_relaxed);
+            _chunks[chunk].store(Zero<umaxint_t>, std::memory_order_relaxed);
     }
 
 public:
@@ -179,17 +162,17 @@ public:
     {
         for (size_t chunk = 0; chunk != Chunks(); ++chunk)
         {
-            if (uint_t bits = _chunks[chunk].load(std::memory_order_relaxed); bits != Zero<uint_t>)
+            if (umaxint_t bits = _chunks[chunk].load(std::memory_order_relaxed); bits != Zero<umaxint_t>)
             {
-                size_t index = chunk * Bits<uint_t>;
-                do { if (bits & HighBit<uint_t>) callback(index); bits <<= 1, ++index; }
-                while (bits != Zero<uint_t>);
+                size_t index = chunk * Bits<umaxint_t>;
+                do { if (bits & HighBit<umaxint_t>) callback(index); bits <<= 1; ++index; }
+                while (bits != Zero<umaxint_t>);
             }
         }
     }
 
 private:
 
-    std::atomic<uint_t> _chunks[Chunks()] = {};
+    std::atomic<umaxint_t> _chunks[Chunks()] = {};
 
 };

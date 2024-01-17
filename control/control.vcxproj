@@ -70,7 +70,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>control.def</ModuleDefinitionFile>
       <MinimumRequiredVersion />
-      <Version>4.1</Version>
+      <Version>4.2</Version>
       <ImportLibrary />
     </Link>
   </ItemDefinitionGroup>
@@ -96,7 +96,7 @@
       <ModuleDefinitionFile>control.def</ModuleDefinitionFile>
       <SetChecksum>true</SetChecksum>
       <MinimumRequiredVersion />
-      <Version>4.1</Version>
+      <Version>4.2</Version>
       <ProgramDatabaseFile />
       <ImportLibrary />
       <ImageHasSafeExceptionHandlers />

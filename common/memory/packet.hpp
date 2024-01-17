@@ -41,10 +41,7 @@ private:
     template <class Type>
     static inline void _bswap_helper(Type& value) noexcept
     {
-        if constexpr (std::is_same_v<Type,  sword_t> || std::is_same_v<Type,  uword_t>
-                   || std::is_same_v<Type, sdword_t> || std::is_same_v<Type, udword_t>
-                   || std::is_same_v<Type, sqword_t> || std::is_same_v<Type, uqword_t>
-                   || std::is_same_v<Type, fdword_t> || std::is_same_v<Type, fqword_t>)
+        if constexpr (utils::is_bswappable<Type>)
         {
             utils::bswap(&value);
         }

@@ -52,8 +52,8 @@ private:
 
 public:
 
-    bool Initialize(IDirect3DDevice9* const device, const View<ubyte_t>& resource_passive_icon,
-        const View<ubyte_t>& resource_active_icon, const View<ubyte_t>& resource_muted_icon) noexcept
+    bool Initialize(IDirect3DDevice9* const device, const DataView<ubyte_t>& resource_passive_icon,
+        const DataView<ubyte_t>& resource_active_icon, const DataView<ubyte_t>& resource_muted_icon) noexcept
     {
         assert(device != nullptr);
 

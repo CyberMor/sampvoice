@@ -137,11 +137,13 @@ public:
 
         // --------------------------------
 
-        const auto [finded, offset] = Search(tag, _buffer[_index], _length[_index]);
+        const auto length = _length[_index];
+        const auto offset = SearchByTag(tag, _buffer[_index], length);
+        const bool finded = offset != length && GetTag(_buffer[_index][offset]) == tag;
         if (finded == false)
         {
             std::copy(_buffer[_index], _buffer[_index] + offset, _buffer[_index ^ 1]);
-            std::copy(_buffer[_index] + offset, _buffer[_index] + _length[_index],
+            std::copy(_buffer[_index] + offset, _buffer[_index] + length,
                 _buffer[_index ^ 1] + offset + 1);
 
             _buffer[_index ^ 1][offset] = record;
@@ -154,7 +156,7 @@ public:
 
         if (finded == false)
         {
-            _length[_index ^ 1] = _length[_index] + 1;
+            _length[_index ^ 1] = length + 1;
             _index = _index ^ 1;
         }
 
@@ -187,8 +189,11 @@ public:
 
         // --------------------------------
 
-        const auto [finded, offset] = Search(tag, _buffer[index], _length[index]);
-        const uword_t player = (finded == true ? GetPlayer(_buffer[index][offset]) : None<uword_t>);
+        const auto length = _length[index];
+        const auto offset = SearchByTag(tag, _buffer[index], length);
+        const bool finded = offset != length && GetTag(_buffer[index][offset]) == tag;
+
+        const uword_t player = (finded ? GetPlayer(_buffer[index][offset]) : None<uword_t>);
 
         // --------------------------------
 
@@ -239,11 +244,13 @@ public:
 
         // --------------------------------
 
-        const auto [finded, offset] = Search(tag, _buffer[_index], _length[_index]);
+        const auto length = _length[_index];
+        const auto offset = SearchByTag(tag, _buffer[_index], length);
+        const bool finded = offset != length && GetTag(_buffer[_index][offset]) == tag;
         if (finded == true)
         {
             std::copy(_buffer[_index], _buffer[_index] + offset, _buffer[_index ^ 1]);
-            std::copy(_buffer[_index] + offset + 1, _buffer[_index] + _length[_index],
+            std::copy(_buffer[_index] + offset + 1, _buffer[_index] + length,
                 _buffer[_index ^ 1] + offset);
         }
 
@@ -254,7 +261,7 @@ public:
 
         if (finded == true)
         {
-            _length[_index ^ 1] = _length[_index] - 1;
+            _length[_index ^ 1] = length - 1;
             _index = _index ^ 1;
         }
 
@@ -300,11 +307,13 @@ public:
 
         // --------------------------------
 
-        const auto offset = Search(player, _buffer[_index], _length[_index]);
-        if (offset != None<decltype(offset)>)
+        const auto length = _length[_index];
+        const auto offset = SearchByPlayer(player, _buffer[_index], length);
+        const bool finded = offset != length;
+        if (finded == true)
         {
             std::copy(_buffer[_index], _buffer[_index] + offset, _buffer[_index ^ 1]);
-            std::copy(_buffer[_index] + offset + 1, _buffer[_index] + _length[_index],
+            std::copy(_buffer[_index] + offset + 1, _buffer[_index] + length,
                 _buffer[_index ^ 1] + offset);
         }
 
@@ -313,9 +322,9 @@ public:
         while (_lock.test_and_set(std::memory_order_acquire))
             std::this_thread::yield();
 
-        if (offset != None<decltype(offset)>)
+        if (finded == true)
         {
-            _length[_index ^ 1] = _length[_index] - 1;
+            _length[_index ^ 1] = length - 1;
             _index = _index ^ 1;
         }
 
@@ -325,7 +334,7 @@ public:
 
         // --------------------------------
 
-        return offset != None<decltype(offset)>;
+        return finded == true;
     }
 
 public:
@@ -361,37 +370,37 @@ public:
 
 private:
 
-    static std::pair<bool, uword_t> Search(const uqword_t tag,
-        const uqword_t* const buffer, const uword_t length) noexcept
+    static uword_t SearchByTag(const uqword_t tag, const uqword_t* buffer, uword_t length) noexcept
     {
         assert(buffer != nullptr);
 
-        if (length == 0) return { false, 0 };
-        uword_t l = 0, r = length - 1; while (l != r)
+        const auto begin = buffer;
+
+        while (length != 0)
         {
-            const  uword_t m = l + (r - l) / 2;
-            const uqword_t t = GetTag(buffer[m]);
-            if (t == tag) return { true, m };
-            if (t < tag) l = m + 1;
-            else r = m - 1;
-        } {
-            const uqword_t t = GetTag(buffer[l]);
-            return { t == tag, t < tag ? l + 1 : l };
+            const auto remainder = length % 2;
+
+            length /= 2;
+
+            if (GetTag(buffer[length]) < tag)
+            {
+                buffer += length + remainder;
+            }
         }
+
+        return buffer - begin;
     }
 
-    static uword_t Search(const uword_t player,
-        const uqword_t* const buffer, const uword_t length) noexcept
+    static uword_t SearchByPlayer(const uword_t player, const uqword_t* const buffer, const uword_t length) noexcept
     {
         assert(buffer != nullptr);
 
-        for (uword_t i = 0; i != length; ++i)
-        {
-            if (GetPlayer(buffer[i]) == player)
-                return i;
-        }
+        uword_t offset = 0;
 
-        return None<uword_t>;
+        while (offset != length && GetPlayer(buffer[offset]) != player)
+            ++offset;
+
+        return offset;
     }
 
 private:
@@ -514,35 +523,75 @@ private:
 
 public:
 
-    bool Initialize(const IPv4Address& voice, std::FILE* const log = nullptr) noexcept
+    bool Initialize(const IPv4Address& voice) noexcept
     {
+        assert(voice.Valid());
+
         constexpr int kSndBufferSize = 4 * 1024 * 1024; // 4 MB (if possible)
         constexpr int kRcvBufferSize = 4 * 1024 * 1024; // 4 MB (if possible)
 
         _socket.Deinitialize();
 
+        _a2p_table.Clear();
+        _players.Clear();
+
         IPv4UdpSocket socket;
 
-        if (!socket.Initialize(false)) return false;
-        if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1)) return false;
-        if (int size; socket.GetOption(SOL_SOCKET, SO_SNDBUF, size) == 1)
-            do size *= 2; while (size <= kSndBufferSize && socket.SetOption(SOL_SOCKET, SO_SNDBUF, size));
-        if (int size; socket.GetOption(SOL_SOCKET, SO_RCVBUF, size) == 1)
-            do size *= 2; while (size <= kRcvBufferSize && socket.SetOption(SOL_SOCKET, SO_RCVBUF, size));
-        if (!socket.Bind(voice)) return false;
+        if (!socket.Initialize(false))
+        {
+            if (Logger != nullptr)
+            {
+                std::fprintf(Logger, "[Voice] Failed to initialize socket (%d)\n", GetSocketError());
+                std::fflush(Logger);
+            }
 
-        if (log != nullptr)
+            return false;
+        }
+
+        if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1))
+        {
+            if (Logger != nullptr)
+            {
+                std::fprintf(Logger, "[Voice] Failed to set option(SO_REUSEADDR) (%d)\n", GetSocketError());
+                std::fflush(Logger);
+            }
+
+            return false;
+        }
+
+        if (int current, value = kSndBufferSize; socket.GetOption(SOL_SOCKET, SO_SNDBUF, current) == 1)
+            while (value > current && !socket.SetOption(SOL_SOCKET, SO_SNDBUF, value)) value /= 2;
+        if (int current, value = kRcvBufferSize; socket.GetOption(SOL_SOCKET, SO_RCVBUF, current) == 1)
+            while (value > current && !socket.SetOption(SOL_SOCKET, SO_RCVBUF, value)) value /= 2;
+
+        if (!socket.Bind(voice))
+        {
+            if (Logger != nullptr)
+            {
+                char buffer[IPv4Address::LengthLimit + 1];
+
+                if (!voice.Print(buffer))
+                {
+                    buffer[0] = 'I'; buffer[1] = 'N'; buffer[2] = 'V'; buffer[3] = 'A';
+                    buffer[4] = 'L'; buffer[5] = 'I'; buffer[6] = 'D'; buffer[7] = '\0';
+                }
+
+                std::fprintf(Logger, "[Voice] Failed to bind(%s) (%d)\n", buffer, GetSocketError());
+                std::fflush(Logger);
+            }
+
+            return false;
+        }
+
+        if (Logger != nullptr)
         {
             if (int size; socket.GetOption(SOL_SOCKET, SO_SNDBUF, size) == 1)
-                std::fprintf(log, "SO_SNDBUF set to %d bytes.\n", size);
+                std::fprintf(Logger, "[Voice] set option(SO_SNDBUF) to %d bytes.\n", size);
             if (int size; socket.GetOption(SOL_SOCKET, SO_RCVBUF, size) == 1)
-                std::fprintf(log, "SO_RCVBUF set to %d bytes.\n", size);
+                std::fprintf(Logger, "[Voice] set option(SO_RCVBUF) to %d bytes.\n", size);
         }
 
         _socket = std::move(socket);
-
-        _a2p_table.Clear();
-        _players.Clear();
 
         return true;
     }
@@ -559,6 +608,8 @@ public:
 
     bool RegisterPlayer(const uword_t player, const udword_t key) noexcept
     {
+        assert(key != 0);
+
         return _players.EmplaceAt(player, true, key);
     }
 
@@ -572,23 +623,31 @@ public:
 
     size_t ReceivePacket(const ptr_t buffer, uword_t& sender) noexcept
     {
-        constexpr Time kResetKeyCooldown = Time::Seconds(2);
+        assert(buffer != nullptr);
 
         IPv4Address address;
 
     NextPacket:
 
         const auto size = _socket.ReceiveFrom(buffer, kVoiceIncomingPacketLimit, address);
-        if (size == SOCKET_ERROR)
+        if (size <= 0)
         {
 #ifdef _WIN32
             if (GetSocketError() == WSAEMSGSIZE  ||
+                GetSocketError() == WSAEINTR     ||
                 GetSocketError() == WSAENETRESET ||
-                GetSocketError() == WSAETIMEDOUT)
+                GetSocketError() == WSAECONNRESET)
 #else
-            if (GetSocketError() == EMSGSIZE)
+            if (GetSocketError() == EMSGSIZE ||
+                GetSocketError() == EINTR)
 #endif
                 goto NextPacket;
+
+            if (Logger != nullptr)
+            {
+                std::fprintf(Logger, "[Voice] Failed to recvfrom (%d)\n", GetSocketError());
+                std::fflush(Logger);
+            }
 
             return 0;
         }
@@ -606,6 +665,8 @@ public:
             utils::bswap(&header->channels);
         }
 
+        const Time moment = Clock::Now();
+
         sender = _a2p_table.Find(address);
         if (sender == None<uword_t>)
         {
@@ -615,8 +676,6 @@ public:
                 {
                     if (_players.Acquire(header->packet))
                     {
-                        const Time moment = Clock::Now();
-
                         _players[header->packet].lock.lock();
 
                         if (_players[header->packet].address.Invalid())
@@ -650,8 +709,6 @@ public:
         udword_t old_key;
         udword_t new_key = 0;
 
-        const Time moment = Clock::Now();
-
         _players[sender].lock.lock();
 
         if (header->key == _players[sender].GetActiveKey())
@@ -676,6 +733,8 @@ public:
         }
         else
         {
+            constexpr Time kResetKeyCooldown = Time::Seconds(2);
+
             if (_players[sender].key_reset_clock.ExpiredAndRestart(kResetKeyCooldown, moment))
             {
                 old_key = _players[sender].GetActiveKey();
@@ -715,6 +774,8 @@ public:
 
     bool SendPacket(const uword_t player, const ptr_t data, const size_t size) noexcept
     {
+        assert(size == 0 || data != nullptr);
+
         if (_players.Acquire(player) == false)
             return false;
 
@@ -761,6 +822,10 @@ public:
             }
         }
     }
+
+public:
+
+    std::FILE* Logger = nullptr;
 
 private:
 

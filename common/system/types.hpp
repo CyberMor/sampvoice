@@ -18,6 +18,16 @@
 // requirement : byte = 8 bits
 // requirement : word = 2 bytes
 
+// ----------------------------------------------------------------
+
+#ifndef CHAR_BIT
+#error failed to determine byte size
+#endif
+
+static_assert(CHAR_BIT == 8, "invalid 'byte' size");
+
+// ----------------------------------------------------------------
+
 using sbyte_t = std::int8_t;    // signed byte
 using ubyte_t = std::uint8_t;   // unsigned byte
 
@@ -32,14 +42,6 @@ using uqword_t = std::uint64_t; // unsigned quad word
 
 using fdword_t = float;         // floating double word
 using fqword_t = double;        // floating quad word
-
-// ----------------------------------------------------------------
-
-#ifndef CHAR_BIT
-#error failed to determine byte size
-#endif
-
-static_assert(CHAR_BIT == 8, "invalid 'byte' size");
 
 // ----------------------------------------------------------------
 
@@ -70,6 +72,8 @@ using sptrint_t = std::intptr_t;  // signed numeric pointer platform-specific ty
 using uptrint_t = std::uintptr_t; // unsigned numeric pointer platform-specific type
 
 using size_t = std::size_t;       // platform-specific size type (unsigned)
+
+// ----------------------------------------------------------------
 
 using  ptr_t = void*;             // universal pointer type
 using cptr_t = const void*;       // const universal pointer type

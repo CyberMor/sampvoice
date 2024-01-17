@@ -69,7 +69,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <MinimumRequiredVersion />
-      <Version>1.1</Version>
+      <Version>1.2</Version>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -93,7 +93,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <MinimumRequiredVersion />
       <SetChecksum>true</SetChecksum>
-      <Version>1.1</Version>
+      <Version>1.2</Version>
       <ProgramDatabaseFile />
       <ImageHasSafeExceptionHandlers />
     </Link>

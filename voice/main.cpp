@@ -59,227 +59,224 @@ static void ControlWorker() noexcept
 
     while (gWorkStatus.load(std::memory_order_relaxed))
     {
-        if (const ubyte_t command = CommandService::Instance().WaitCommand(buffer, kKeepAliveInterval);
-                          command != CommandService::WaitEmpty)
+        VoiceService::Instance().Tick();
+
+        const ubyte_t command = CommandService::Instance().WaitCommand(buffer, kKeepAliveInterval);
+
+        if (command == CommandService::WaitEmpty) continue;
+        if (command == CommandService::WaitError) break;
+
+        switch (command)
         {
-            switch (command)
+            case CommandPackets::PlayerCreate:
             {
-                case CommandPackets::PlayerCreate:
+                const auto& content = *reinterpret_cast<const PlayerCreate*>(buffer);
+
+                if (gControlTrace) std::printf("[PlayerCreate] player(%hu) key(0x%X)\n",
+                    content.player, content.key);
+
+                if (content.player < kMaxPlayers && content.key != 0)
                 {
-                    const auto& content = *reinterpret_cast<const PlayerCreate*>(buffer);
-
-                    if (gControlTrace) std::printf("PlayerCreate : player(%hu), key(0x%X)\n",
-                        content.player, content.key);
-
-                    if (content.player < kMaxPlayers && content.key != 0)
+                    if (gPlayers.EmplaceAt(content.player, true))
                     {
-                        if (gPlayers.EmplaceAt(content.player, true))
+                        VoiceService::Instance().RegisterPlayer(content.player, content.key);
+                    }
+                }
+
+                break;
+            }
+            case CommandPackets::PlayerListener:
+            {
+                const auto& content = *reinterpret_cast<const PlayerListener*>(buffer);
+
+                if (gControlTrace) std::printf("[PlayerListener] player(%hu) status(%hhu)\n",
+                    content.player, content.status);
+
+                if (content.player < kMaxPlayers)
+                {
+                    if (gPlayers.Acquire<0>(content.player))
+                    {
+                        gPlayers[content.player].listener.store(content.status, std::memory_order_relaxed);
+                    }
+                }
+
+                break;
+            }
+            case CommandPackets::PlayerSpeaker:
+            {
+                const auto& content = *reinterpret_cast<const PlayerSpeaker*>(buffer);
+
+                if (gControlTrace) std::printf("[PlayerSpeaker] player(%hu) channels(0x%X)\n",
+                    content.player, content.channels);
+
+                if (content.player < kMaxPlayers)
+                {
+                    if (gPlayers.Acquire<0>(content.player))
+                    {
+                        gPlayers[content.player].channels.store(content.channels, std::memory_order_relaxed);
+                    }
+                }
+
+                break;
+            }
+            case CommandPackets::PlayerAttachStream:
+            {
+                const auto& content = *reinterpret_cast<const PlayerAttachStream*>(buffer);
+
+                if (gControlTrace) std::printf("[PlayerAttachStream] player(%hu) channels(0x%X) stream(%hu)\n",
+                    content.player, content.channels, content.stream);
+
+                if (content.player < kMaxPlayers && content.channels != 0 && content.stream < kMaxStreams)
+                {
+                    if (gPlayers.Acquire<0>(content.player))
+                    {
+                        BitsetForEach(channel, content.channels)
                         {
-                            VoiceService::Instance().RegisterPlayer(content.player, content.key);
+                            gPlayers[content.player].listeners[channel].Set(content.stream);
                         }
                     }
-
-                    break;
                 }
-                case CommandPackets::PlayerListener:
+
+                break;
+            }
+            case CommandPackets::PlayerDetachStream:
+            {
+                const auto& content = *reinterpret_cast<const PlayerDetachStream*>(buffer);
+
+                if (gControlTrace) std::printf("[PlayerDetachStream] player(%hu) channels(0x%X) stream(%hu)\n",
+                    content.player, content.channels, content.stream);
+
+                if (content.player < kMaxPlayers && content.channels != 0 && content.stream < kMaxStreams)
                 {
-                    const auto& content = *reinterpret_cast<const PlayerListener*>(buffer);
-
-                    if (gControlTrace) std::printf("PlayerListener : player(%hu), status(%hhu)\n",
-                        content.player, content.status);
-
-                    if (content.player < kMaxPlayers)
+                    if (gPlayers.Acquire<0>(content.player))
                     {
-                        if (gPlayers.Acquire<0>(content.player))
+                        BitsetForEach(channel, content.channels)
                         {
-                            gPlayers[content.player].listener.store(content.status, std::memory_order_relaxed);
+                            gPlayers[content.player].listeners[channel].Reset(content.stream);
                         }
                     }
-
-                    break;
                 }
-                case CommandPackets::PlayerSpeaker:
+
+                break;
+            }
+            case CommandPackets::PlayerDelete:
+            {
+                const auto& content = *reinterpret_cast<const PlayerDelete*>(buffer);
+
+                if (gControlTrace) std::printf("[PlayerDelete] player(%hu)\n", content.player);
+
+                if (content.player < kMaxPlayers)
                 {
-                    const auto& content = *reinterpret_cast<const PlayerSpeaker*>(buffer);
-
-                    if (gControlTrace) std::printf("PlayerSpeaker : player(%hu), channels(0x%X)\n",
-                        content.player, content.channels);
-
-                    if (content.player < kMaxPlayers)
+                    if (gPlayers.Acquire<0>(content.player))
                     {
-                        if (gPlayers.Acquire<0>(content.player))
+                        VoiceService::Instance().RemovePlayer(content.player);
+
+                        gPlayers.Remove(content.player, false);
+
+                        for (size_t stream = 0; stream != kMaxStreams; ++stream)
                         {
-                            gPlayers[content.player].channels.store(content.channels, std::memory_order_relaxed);
-                        }
-                    }
-
-                    break;
-                }
-                case CommandPackets::PlayerAttachStream:
-                {
-                    const auto& content = *reinterpret_cast<const PlayerAttachStream*>(buffer);
-
-                    if (gControlTrace) std::printf("PlayerAttachStream : player(%hu), channels(0x%X), stream(%hu)\n",
-                        content.player, content.channels, content.stream);
-
-                    if (content.player < kMaxPlayers && content.channels != 0 && content.stream < kMaxStreams)
-                    {
-                        if (gPlayers.Acquire<0>(content.player))
-                        {
-                            BitsetForEach(channel, content.channels)
+                            if (gStreams.Acquire<0>(stream))
                             {
-                                gPlayers[content.player].listeners[channel].Set(content.stream);
+                                gStreams[stream].listeners.Reset(content.player);
                             }
                         }
                     }
-
-                    break;
                 }
-                case CommandPackets::PlayerDetachStream:
+
+                break;
+            }
+            case CommandPackets::StreamCreate:
+            {
+                const auto& content = *reinterpret_cast<const StreamCreate*>(buffer);
+
+                if (gControlTrace) std::printf("[StreamCreate] stream(%hu)\n", content.stream);
+
+                if (content.stream < kMaxStreams)
                 {
-                    const auto& content = *reinterpret_cast<const PlayerDetachStream*>(buffer);
+                    gStreams.EmplaceAt(content.stream, true);
+                }
 
-                    if (gControlTrace) std::printf("PlayerDetachStream : player(%hu), channels(0x%X), stream(%hu)\n",
-                        content.player, content.channels, content.stream);
+                break;
+            }
+            case CommandPackets::StreamTransiter:
+            {
+                const auto& content = *reinterpret_cast<const StreamTransiter*>(buffer);
 
-                    if (content.player < kMaxPlayers && content.channels != 0 && content.stream < kMaxStreams)
+                if (gControlTrace) std::printf("[StreamTransiter] stream(%hu) status(%hhu)\n",
+                    content.stream, content.status);
+
+                if (content.stream < kMaxStreams)
+                {
+                    if (gStreams.Acquire<0>(content.stream))
                     {
-                        if (gPlayers.Acquire<0>(content.player))
-                        {
-                            BitsetForEach(channel, content.channels)
-                            {
-                                gPlayers[content.player].listeners[channel].Reset(content.stream);
-                            }
-                        }
+                        gStreams[content.stream].transiter.store(content.status, std::memory_order_relaxed);
                     }
-
-                    break;
                 }
-                case CommandPackets::PlayerDelete:
+
+                break;
+            }
+            case CommandPackets::StreamAttachListener:
+            {
+                const auto& content = *reinterpret_cast<const StreamAttachListener*>(buffer);
+
+                if (gControlTrace) std::printf("[StreamAttachListener] stream(%hu) player(%hu)\n",
+                    content.stream, content.player);
+
+                if (content.stream < kMaxStreams && content.player < kMaxPlayers)
                 {
-                    const auto& content = *reinterpret_cast<const PlayerDelete*>(buffer);
-
-                    if (gControlTrace) std::printf("PlayerDelete : player(%hu)\n", content.player);
-
-                    if (content.player < kMaxPlayers)
+                    if (gStreams.Acquire<0>(content.stream))
                     {
-                        if (gPlayers.Acquire<0>(content.player))
+                        gStreams[content.stream].listeners.Set(content.player);
+                    }
+                }
+
+                break;
+            }
+            case CommandPackets::StreamDetachListener:
+            {
+                const auto& content = *reinterpret_cast<const StreamDetachListener*>(buffer);
+
+                if (gControlTrace) std::printf("[StreamDetachListener] stream(%hu) player(%hu)\n",
+                    content.stream, content.player);
+
+                if (content.stream < kMaxStreams && content.player < kMaxPlayers)
+                {
+                    if (gStreams.Acquire<0>(content.stream))
+                    {
+                        gStreams[content.stream].listeners.Reset(content.player);
+                    }
+                }
+
+                break;
+            }
+            case CommandPackets::StreamDelete:
+            {
+                const auto& content = *reinterpret_cast<const StreamDelete*>(buffer);
+
+                if (gControlTrace) std::printf("[StreamDelete] stream(%hu)\n", content.stream);
+
+                if (content.stream < kMaxStreams)
+                {
+                    if (gStreams.Acquire<0>(content.stream))
+                    {
+                        gStreams.Remove(content.stream, false);
+
+                        for (size_t player = 0; player != kMaxPlayers; ++player)
                         {
-                            VoiceService::Instance().RemovePlayer(content.player);
-
-                            gPlayers.Remove(content.player, false);
-
-                            for (size_t stream = 0; stream != kMaxStreams; ++stream)
+                            if (gPlayers.Acquire<0>(player))
                             {
-                                if (gStreams.Acquire<0>(stream))
+                                for (size_t channel = 0; channel != Bits<udword_t>; ++channel)
                                 {
-                                    gStreams[stream].listeners.Reset(content.player);
+                                    gPlayers[player].listeners[channel].Reset(content.stream);
                                 }
                             }
                         }
                     }
-
-                    break;
                 }
-                case CommandPackets::StreamCreate:
-                {
-                    const auto& content = *reinterpret_cast<const StreamCreate*>(buffer);
 
-                    if (gControlTrace) std::printf("StreamCreate : stream(%hu)\n", content.stream);
-
-                    if (content.stream < kMaxStreams)
-                    {
-                        gStreams.EmplaceAt(content.stream, true);
-                    }
-
-                    break;
-                }
-                case CommandPackets::StreamTransiter:
-                {
-                    const auto& content = *reinterpret_cast<const StreamTransiter*>(buffer);
-
-                    if (gControlTrace) std::printf("StreamTransiter : stream(%hu), status(%hhu)\n",
-                        content.stream, content.status);
-
-                    if (content.stream < kMaxStreams)
-                    {
-                        if (gStreams.Acquire<0>(content.stream))
-                        {
-                            gStreams[content.stream].transiter.store(content.status, std::memory_order_relaxed);
-                        }
-                    }
-
-                    break;
-                }
-                case CommandPackets::StreamAttachListener:
-                {
-                    const auto& content = *reinterpret_cast<const StreamAttachListener*>(buffer);
-
-                    if (gControlTrace) std::printf("StreamAttachListener : stream(%hu), player(%hu)\n",
-                        content.stream, content.player);
-
-                    if (content.stream < kMaxStreams && content.player < kMaxPlayers)
-                    {
-                        if (gStreams.Acquire<0>(content.stream))
-                        {
-                            gStreams[content.stream].listeners.Set(content.player);
-                        }
-                    }
-
-                    break;
-                }
-                case CommandPackets::StreamDetachListener:
-                {
-                    const auto& content = *reinterpret_cast<const StreamDetachListener*>(buffer);
-
-                    if (gControlTrace) std::printf("StreamDetachListener : stream(%hu), player(%hu)\n",
-                        content.stream, content.player);
-
-                    if (content.stream < kMaxStreams && content.player < kMaxPlayers)
-                    {
-                        if (gStreams.Acquire<0>(content.stream))
-                        {
-                            gStreams[content.stream].listeners.Reset(content.player);
-                        }
-                    }
-
-                    break;
-                }
-                case CommandPackets::StreamDelete:
-                {
-                    const auto& content = *reinterpret_cast<const StreamDelete*>(buffer);
-
-                    if (gControlTrace) std::printf("StreamDelete : stream(%hu)\n", content.stream);
-
-                    if (content.stream < kMaxStreams)
-                    {
-                        if (gStreams.Acquire<0>(content.stream))
-                        {
-                            gStreams.Remove(content.stream, false);
-
-                            for (size_t player = 0; player != kMaxPlayers; ++player)
-                            {
-                                if (gPlayers.Acquire<0>(player))
-                                {
-                                    for (size_t channel = 0; channel != Bits<udword_t>; ++channel)
-                                    {
-                                        gPlayers[player].listeners[channel].Reset(content.stream);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    break;
-                }
-                default:
-                {
-                    return;
-                }
+                break;
             }
         }
-
-        VoiceService::Instance().Tick();
     }
 }
 
@@ -418,19 +415,19 @@ int main(const int argc, const char* const* const argv) noexcept
         }
         else
         {
-            std::printf("Unknown option '%s'.\n", argv[i]);
+            std::printf("[Main] Unknown option '%s'.\n", argv[i]);
             return help(*argv), 0;
         }
     }
 
-    std::printf("Voice Server %hhu.%hhu.%hu starting...\n",
+    std::printf("[Main] Voice Server %hhu.%hhu.%hu starting...\n",
         GetVersionMajor(kCurrentVersion),
         GetVersionMinor(kCurrentVersion),
         GetVersionPatch(kCurrentVersion));
 
     if (!SocketLibraryStartup())
     {
-        std::printf("Failed to initialize socket library.\n");
+        std::printf("[Main] Failed to initialize socket library.\n");
         return -1;
     }
 
@@ -450,7 +447,7 @@ int main(const int argc, const char* const* const argv) noexcept
         PARAMETERS_COUNT
     };
 
-    std::printf("Loading 'voice.cfg' file...\n");
+    std::printf("[Main] Loading 'voice.cfg' file...\n");
 
     Config config;
     {
@@ -468,7 +465,7 @@ int main(const int argc, const char* const* const argv) noexcept
 
         if (config.Load("voice.cfg") < 0)
         {
-            std::printf("Failed to load 'voice.cfg'.\n");
+            std::printf("[Main] Failed to load 'voice.cfg'.\n");
             return -1;
         }
     }
@@ -479,8 +476,8 @@ int main(const int argc, const char* const* const argv) noexcept
         // -----------------------------------------------
 
         {
-            IPv4Address control = IPv4Address::Empty();
-            IPv4Address command = IPv4Address::Loopback(2020);
+            IPv4Address control = IPv4Address::Loopback(2020);
+            IPv4Address command = IPv4Address::Loopback();
 
             if (config.HasParameter(PARAMETER_CONTROL_HOST))
                 control.SetHost(config.GetValueByIndex(PARAMETER_CONTROL_HOST).c_str());
@@ -492,17 +489,18 @@ int main(const int argc, const char* const* const argv) noexcept
             if (config.HasParameter(PARAMETER_COMMAND_PORT))
                 command.SetPort(std::stoi(config.GetValueByIndex(PARAMETER_COMMAND_PORT)));
 
-            if (char host[IPv4Address::HostLengthLimit + 1]; control.PrintHost(host))
-                std::printf("Waiting for connection from control server '%s:%hu'...\n",
-                    host, control.GetPort<true>());
+            if (char buffer[IPv4Address::LengthLimit + 1]; control.Print(buffer))
+                std::printf("[Main] Connecting to control server '%s'...\n", buffer);
+
+            CommandService::Instance().Logger = stdout;
 
             if (!CommandService::Instance().Initialize(command, control))
             {
-                std::printf("Failed to initialize command service.\n");
+                std::printf("[Main] Failed to initialize command service.\n");
                 return -1;
             }
 
-            std::printf("Connection to control server established.\n");
+            std::printf("[Main] Connection to control server established.\n");
         }
 
         // Voice Service
@@ -516,18 +514,19 @@ int main(const int argc, const char* const* const argv) noexcept
             if (config.HasParameter(PARAMETER_VOICE_PORT))
                 voice.SetPort(std::stoi(config.GetValueByIndex(PARAMETER_VOICE_PORT)));
 
-            if (char host[IPv4Address::HostLengthLimit + 1]; voice.PrintHost(host))
-                std::printf("Opening voice service at '%s:%hu'...\n",
-                    host, voice.GetPort<true>());
+            if (char buffer[IPv4Address::LengthLimit + 1]; voice.Print(buffer))
+                std::printf("[Main] Opening voice service at '%s'...\n", buffer);
 
-            if (!VoiceService::Instance().Initialize(voice, stdout))
+            VoiceService::Instance().Logger = stdout;
+
+            if (!VoiceService::Instance().Initialize(voice))
             {
-                std::printf("Failed to initialize voice service.\n");
+                std::printf("[Main] Failed to initialize voice service.\n");
                 CommandService::Instance().Deinitialize();
                 return -1;
             }
 
-            std::printf("Voice service opened.\n");
+            std::printf("[Main] Voice service opened.\n");
         }
 
         // Workers
@@ -555,7 +554,7 @@ int main(const int argc, const char* const* const argv) noexcept
 
         gWorkStatus.store(true, std::memory_order_release);
 
-        std::printf("Launching %d voice workers...\n", workers);
+        std::printf("[Main] Launching %d voice workers...\n", workers);
 
         for (int i = 0; i != workers; ++i)
         {
@@ -567,7 +566,7 @@ int main(const int argc, const char* const* const argv) noexcept
         // Stopping and Deinitialization
         // -----------------------------------------------
 
-        std::printf("Finishing work...\n");
+        std::printf("[Main] Finishing work...\n");
 
         gWorkStatus.store(false, std::memory_order_release);
 

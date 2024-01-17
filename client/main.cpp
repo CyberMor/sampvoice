@@ -478,7 +478,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const EffectAppendFilter*>(data);
 
-            Block<const ubyte_t> parameters;
+            DataBlock<const ubyte_t> parameters;
 
             switch (content.type)
             {
@@ -495,7 +495,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                         reinterpret_cast<const ChorusParameters*>(content.parameters)->delay,
                         reinterpret_cast<const ChorusParameters*>(content.parameters)->phase);
 
-                    parameters = Block<const ubyte_t>::FromData<true>({ content.parameters, sizeof(ChorusParameters) });
+                    parameters = DataBlock<const ubyte_t>::FromData<true>(content.parameters, sizeof(ChorusParameters));
 
                     break;
                 }
@@ -511,7 +511,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                         reinterpret_cast<const CompressorParameters*>(content.parameters)->ratio,
                         reinterpret_cast<const CompressorParameters*>(content.parameters)->predelay);
 
-                    parameters = Block<const ubyte_t>::FromData<true>({ content.parameters, sizeof(CompressorParameters) });
+                    parameters = DataBlock<const ubyte_t>::FromData<true>(content.parameters, sizeof(CompressorParameters));
 
                     break;
                 }
@@ -526,7 +526,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                         reinterpret_cast<const DistortionParameters*>(content.parameters)->posteqbandwidth,
                         reinterpret_cast<const DistortionParameters*>(content.parameters)->prelowpasscutoff);
 
-                    parameters = Block<const ubyte_t>::FromData<true>({ content.parameters, sizeof(DistortionParameters) });
+                    parameters = DataBlock<const ubyte_t>::FromData<true>(content.parameters, sizeof(DistortionParameters));
 
                     break;
                 }
@@ -541,7 +541,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                         reinterpret_cast<const EchoParameters*>(content.parameters)->rightdelay,
                         reinterpret_cast<const EchoParameters*>(content.parameters)->pandelay);
 
-                    parameters = Block<const ubyte_t>::FromData<true>({ content.parameters, sizeof(EchoParameters) });
+                    parameters = DataBlock<const ubyte_t>::FromData<true>(content.parameters, sizeof(EchoParameters));
 
                     break;
                 }
@@ -558,7 +558,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                         reinterpret_cast<const FlangerParameters*>(content.parameters)->delay,
                         reinterpret_cast<const FlangerParameters*>(content.parameters)->phase);
 
-                    parameters = Block<const ubyte_t>::FromData<true>({ content.parameters, sizeof(FlangerParameters) });
+                    parameters = DataBlock<const ubyte_t>::FromData<true>(content.parameters, sizeof(FlangerParameters));
 
                     break;
                 }
@@ -570,7 +570,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                         reinterpret_cast<const GargleParameters*>(content.parameters)->ratehz,
                         reinterpret_cast<const GargleParameters*>(content.parameters)->waveshape);
 
-                    parameters = Block<const ubyte_t>::FromData<true>({ content.parameters, sizeof(GargleParameters) });
+                    parameters = DataBlock<const ubyte_t>::FromData<true>(content.parameters, sizeof(GargleParameters));
 
                     break;
                 }
@@ -593,7 +593,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                         reinterpret_cast<const I3dl2reverbParameters*>(content.parameters)->density,
                         reinterpret_cast<const I3dl2reverbParameters*>(content.parameters)->hfreference);
 
-                    parameters = Block<const ubyte_t>::FromData<true>({ content.parameters, sizeof(I3dl2reverbParameters) });
+                    parameters = DataBlock<const ubyte_t>::FromData<true>(content.parameters, sizeof(I3dl2reverbParameters));
 
                     break;
                 }
@@ -606,7 +606,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                         reinterpret_cast<const ParameqParameters*>(content.parameters)->bandwidth,
                         reinterpret_cast<const ParameqParameters*>(content.parameters)->gain);
 
-                    parameters = Block<const ubyte_t>::FromData<true>({ content.parameters, sizeof(ParameqParameters) });
+                    parameters = DataBlock<const ubyte_t>::FromData<true>(content.parameters, sizeof(ParameqParameters));
 
                     break;
                 }
@@ -620,7 +620,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                         reinterpret_cast<const ReverbParameters*>(content.parameters)->reverbtime,
                         reinterpret_cast<const ReverbParameters*>(content.parameters)->highfreqrtratio);
 
-                    parameters = Block<const ubyte_t>::FromData<true>({ content.parameters, sizeof(ReverbParameters) });
+                    parameters = DataBlock<const ubyte_t>::FromData<true>(content.parameters, sizeof(ReverbParameters));
 
                     break;
                 }
@@ -671,6 +671,17 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                 content.effect);
 
             gEffects.Remove(content.effect, false);
+
+            return true;
+        }
+        case ControlPackets::UpdateKey:
+        {
+            const auto& content = *static_cast<const UpdateKey*>(data);
+
+            Logger::Instance().LogToFile("[sv:dbg:UpdateKey] : key(%u)",
+                content.key);
+
+            VoiceService::Instance().SetKey(content.key);
 
             return true;
         }
@@ -767,12 +778,12 @@ static void OnGameExit() noexcept
 // Render Callbacks
 // ----------------------------------------------------------------
 
-static Block<ubyte_t> gPassiveMicroIconResource;
-static Block<ubyte_t> gActiveMicroIconResource;
-static Block<ubyte_t> gMutedMicroIconResource;
-static Block<ubyte_t> gSpeakerIconResource;
-static Block<ubyte_t> gBlurShaderResource;
-static Block<ubyte_t> gLogoIconResource;
+static DataBlock<ubyte_t> gPassiveMicroIconResource;
+static DataBlock<ubyte_t> gActiveMicroIconResource;
+static DataBlock<ubyte_t> gMutedMicroIconResource;
+static DataBlock<ubyte_t> gSpeakerIconResource;
+static DataBlock<ubyte_t> gBlurShaderResource;
+static DataBlock<ubyte_t> gLogoIconResource;
 
 static void OnDeviceInitialize(IDirect3D9* const, IDirect3DDevice9* const device,
     const D3DPRESENT_PARAMETERS& parameters) noexcept

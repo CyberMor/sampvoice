@@ -9,6 +9,9 @@
 
 #pragma once
 
+#include <cassert>
+#include <functional>
+
 #include <system/types.hpp>
 #include <system/clock.hpp>
 #include <network/address.hpp>
@@ -160,20 +163,43 @@ public:
 
     bool Initialize(const IPv4Address& control, const IPv4Address& command) noexcept
     {
+        assert(control.Valid());
+        assert(command.Valid());
+
         _socket.Deinitialize();
 
         IPv4TcpSocket socket;
 
-        if (!socket.Initialize(false)) return false;
-        if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1)) return false;
-        if (!socket.SetOption(IPPROTO_TCP, TCP_NODELAY, 1)) return false;
-        if (!socket.Bind(control)) return false;
+        if (!socket.Initialize(true))
+        {
+            Logger::Instance().Log("[Command] Failed to initialize socket (%d)", GetSocketError());
+            return false;
+        }
+        if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1))
+        {
+            Logger::Instance().Log("[Command] Failed to set option(SO_REUSEADDR) (%d)", GetSocketError());
+            return false;
+        }
+        if (!socket.Bind(control))
+        {
+            char buffer[IPv4Address::LengthLimit + 1];
 
-        constexpr Time kConnectCooldown = Time::Seconds(1);
-        while (!socket.Connect(command)) // Wait until the Voice Server becomes available
-            utils::thread::sleep(kConnectCooldown);
+            if (!control.Print(buffer))
+            {
+                buffer[0] = 'I'; buffer[1] = 'N'; buffer[2] = 'V'; buffer[3] = 'A';
+                buffer[4] = 'L'; buffer[5] = 'I'; buffer[6] = 'D'; buffer[7] = '\0';
+            }
 
-        if (!socket.Shutdown(SHUT_RD)) return false;
+            Logger::Instance().Log("[Command] Failed to bind(%s) (%d)", buffer, GetSocketError());
+            return false;
+        }
+        if (!socket.Listen(1))
+        {
+            Logger::Instance().Log("[Command] Failed to listen(1) (%d)", GetSocketError());
+            return false;
+        }
+
+        _command_address = command;
 
         _socket = std::move(socket);
 
@@ -334,23 +360,46 @@ public:
 
     bool SendCommand() noexcept
     {
-        int result = _socket.Send(_command_buffer, _command_length);
-        if (result == SOCKET_ERROR)
-        {
-            if (IPv4Address control, command; _socket.GetLocalAddress(control) && _socket.GetRemoteAddress(command) &&
-                Initialize(control, command))
-            {
-                result = _socket.Send(_command_buffer, _command_length);
-            }
-        }
-
-        return result == _command_length;
+        return _socket.Send(_command_buffer, _command_length) == _command_length;
     }
 
 public:
 
-    void Tick(const Time moment = Clock::Now()) noexcept
+    int Tick(const Time moment = Clock::Now()) noexcept
     {
+        if (_socket.IsListening() == 1)
+        {
+            if (_socket.Wait(Poll::InstantTimeout, POLLIN) == 1)
+            {
+                IPv4Address address;
+                IPv4TcpSocket socket = _socket.Accept(address, false);
+                if (socket.Valid() && (_command_address.IsEmpty() || address == _command_address))
+                {
+                    if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1))
+                    {
+                        Logger::Instance().Log("[Command] Failed to set option(SO_REUSEADDR) (%d)", GetSocketError());
+                        return -1;
+                    }
+                    if (!socket.SetOption(IPPROTO_TCP, TCP_NODELAY, 1))
+                    {
+                        Logger::Instance().Log("[Command] Failed to set option(TCP_NODELAY) (%d)", GetSocketError());
+                        return -1;
+                    }
+                    if (!socket.Shutdown(SHUT_RD))
+                    {
+                        Logger::Instance().Log("[Command] Failed to shutdown(SHUT_RD) (%d)", GetSocketError());
+                        return -1;
+                    }
+
+                    _socket = std::move(socket);
+
+                    OnSynchronize();
+                }
+            }
+
+            return 0;
+        }
+
         constexpr Time kKeepAliveInterval = Time::Seconds(5);
 
         if (_clock.ExpiredAndRestart(kKeepAliveInterval, moment))
@@ -358,11 +407,21 @@ public:
             BeginCommand(CommandPackets::KeepAlive);
             SendCommand();
         }
+
+        return 1;
     }
+
+public:
+
+    std::function<void()> OnSynchronize;
 
 private:
 
     IPv4TcpSocket _socket;
+
+private:
+
+    IPv4Address _command_address;
 
 private:
 

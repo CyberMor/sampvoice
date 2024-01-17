@@ -96,6 +96,13 @@ public:
 
 public:
 
+    SOCKET Handle() const noexcept
+    {
+        return _handle;
+    }
+
+public:
+
     bool Valid() const noexcept
     {
         return _handle != INVALID_SOCKET;
@@ -104,13 +111,6 @@ public:
     bool Invalid() const noexcept
     {
         return _handle == INVALID_SOCKET;
-    }
-
-public:
-
-    SOCKET Handle() const noexcept
-    {
-        return _handle;
     }
 
 public:
@@ -147,8 +147,9 @@ public:
         {
             shutdown(_handle, SHUT_RDWR);
             CloseSocket(_handle);
-            _handle = INVALID_SOCKET;
         }
+
+        _handle = INVALID_SOCKET;
     }
 
     void Release() noexcept
@@ -160,6 +161,10 @@ public:
 
     bool SetOption(const int level, const int option, const cptr_t data, const socklen_t size) noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
+        assert(size == 0 || data != nullptr);
+
         return setsockopt(_handle, level, option, static_cast<const char*>(data), size) == 0;
     }
 
@@ -178,6 +183,10 @@ public:
 
     socklen_t GetOption(const int level, const int option, const ptr_t buffer, socklen_t length) const noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
+        assert(buffer != nullptr && length != 0);
+
         if (getsockopt(_handle, level, option, static_cast<char*>(buffer), &length) == 0)
             return length;
 
@@ -199,8 +208,25 @@ public:
 
 public:
 
+    int IsListening() const noexcept
+    {
+        assert(_handle != INVALID_SOCKET);
+
+        int result;
+
+        if (socklen_t length = sizeof(result);
+            getsockopt(_handle, SOL_SOCKET, SO_ACCEPTCONN, reinterpret_cast<char*>(&result), &length) != 0)
+            result = -1;
+
+        return result;
+    }
+
+public:
+
     bool GetLocalAddress(Address<Domain>& address) const noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
         socklen_t address_size = address.Size();
         return getsockname(_handle, address.Data(), &address_size) == 0 &&
             address_size == address.Size();
@@ -208,6 +234,8 @@ public:
 
     bool GetRemoteAddress(Address<Domain>& address) const noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
         socklen_t address_size = address.Size();
         return getpeername(_handle, address.Data(), &address_size) == 0 &&
             address_size == address.Size();
@@ -217,6 +245,8 @@ public:
 
     bool SetNonBlocking(const bool state) noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
 #ifdef _WIN32
         auto value = static_cast<u_long>(state);
 
@@ -236,6 +266,10 @@ public:
 
     bool Bind(const Address<Domain>& address) noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
+        assert(address.Valid());
+
         return bind(_handle, address.Data(), address.Size()) == 0;
     }
 
@@ -249,6 +283,10 @@ public:
 
     bool Connect(const Address<Domain>& address) noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
+        assert(address.Valid());
+
         return connect(_handle, address.Data(), address.Size()) == 0;
     }
 
@@ -264,10 +302,10 @@ public:
     {
 #ifdef _WIN32
         return Connect(address) || ((GetSocketError() == WSAEWOULDBLOCK || GetSocketError() == WSAEINPROGRESS) &&
-            Wait(timeout, POLLOUT) == 1 && Status() == 0);
+            Wait(timeout, POLLOUT) == 1 && Error() == 0);
 #else
         return Connect(address) || (GetSocketError() == EINPROGRESS &&
-            Wait(timeout, POLLOUT) == 1 && Status() == 0);
+            Wait(timeout, POLLOUT) == 1 && Error() == 0);
 #endif
     }
 
@@ -281,6 +319,8 @@ public:
 
     bool Listen(const int queue = SOMAXCONN) noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
         return listen(_handle, queue) == 0;
     }
 
@@ -288,6 +328,8 @@ public:
 
     int ReadingAvailable() const noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
 #ifdef _WIN32
         if (u_long bytes; ioctlsocket(_handle, FIONREAD, &bytes) == 0)
             return static_cast<int>(bytes);
@@ -300,6 +342,8 @@ public:
 
     int WritingAvailable() const noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
 #ifndef _WIN32
         if (int bytes; ioctl(_handle, SIOCOUTQ, &bytes) != -1)
             return bytes;
@@ -311,6 +355,8 @@ public:
 
     Socket Accept(const bool nonblock) noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
 #ifdef _WIN32
         SOCKET handle = accept(_handle, nullptr, nullptr);
         if (nonblock)
@@ -332,6 +378,8 @@ public:
 
     Socket Accept(Address<Domain>& address, const bool nonblock) noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
         socklen_t address_size = address.Size();
 #ifdef _WIN32
         SOCKET handle = accept(_handle, address.Data(), &address_size);
@@ -357,6 +405,10 @@ public:
 
     auto Peek(const ptr_t buffer, const size_t length, const int flags = 0) const noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
+        assert(buffer != nullptr && length != 0);
+
         return recv(_handle, static_cast<char*>(buffer), length, flags | MSG_PEEK);
     }
 
@@ -364,9 +416,7 @@ public:
     auto Peek(DataType* const buffer, const size_t length, const int flags = 0) const noexcept
     {
         const auto result = Peek(static_cast<ptr_t>(buffer), length * sizeof(DataType), flags);
-        return result != static_cast<decltype(result)>(SOCKET_ERROR)
-             ? result / static_cast<decltype(result)>(sizeof(DataType))
-             : static_cast<decltype(result)>(SOCKET_ERROR);
+        return result > 0 ? result / static_cast<decltype(result)>(sizeof(DataType)) : result;
     }
 
     template <class Buffer, typename = std::enable_if_t<!std::is_const_v<Buffer>>>
@@ -380,6 +430,10 @@ public:
 
     auto Receive(const ptr_t buffer, const size_t length, const int flags = 0) noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
+        assert(buffer != nullptr && length != 0);
+
         return recv(_handle, static_cast<char*>(buffer), length, flags);
     }
 
@@ -387,9 +441,7 @@ public:
     auto Receive(DataType* const buffer, const size_t length, const int flags = 0) noexcept
     {
         const auto result = Receive(static_cast<ptr_t>(buffer), length * sizeof(DataType), flags);
-        return result != static_cast<decltype(result)>(SOCKET_ERROR)
-             ? result / static_cast<decltype(result)>(sizeof(DataType))
-             : static_cast<decltype(result)>(SOCKET_ERROR);
+        return result > 0 ? result / static_cast<decltype(result)>(sizeof(DataType)) : result;
     }
 
     template <class Buffer, typename = std::enable_if_t<!std::is_const_v<Buffer>>>
@@ -403,6 +455,10 @@ public:
 
     auto Send(const cptr_t data, const size_t size, const int flags = 0) noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
+        assert(size == 0 || data != nullptr);
+
         return send(_handle, static_cast<const char*>(data), size, flags);
     }
 
@@ -410,9 +466,7 @@ public:
     auto Send(const DataType* const data, const size_t size, const int flags = 0) noexcept
     {
         const auto result = Send(static_cast<cptr_t>(data), size * sizeof(DataType), flags);
-        return result != static_cast<decltype(result)>(SOCKET_ERROR)
-             ? result / static_cast<decltype(result)>(sizeof(DataType))
-             : static_cast<decltype(result)>(SOCKET_ERROR);
+        return result > 0 ? result / static_cast<decltype(result)>(sizeof(DataType)) : result;
     }
 
     template <class Value>
@@ -426,37 +480,30 @@ public:
 
     template <bool Endian = NetEndian, class... Buffers,
         typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
-    int PeekPacket(Buffers&... buffers) const noexcept
+    auto PeekPacket(Buffers&... buffers) const noexcept
     {
         DataPacket<Buffers...> packet;
-        { const auto result = PeekValue(packet, MSG_WAITALL);
-            if (result == SOCKET_ERROR) return -1;
-            if (result != 1) return 0; }
-        packet.template Get<Endian>(buffers...);
-        return 1;
+        const auto result = PeekValue(packet, MSG_WAITALL);
+        if (result == 1) packet.template Get<Endian>(buffers...);
+        return result;
     }
 
     template <bool Endian = NetEndian, class... Buffers,
         typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
-    int ReceivePacket(Buffers&... buffers) noexcept
+    auto ReceivePacket(Buffers&... buffers) noexcept
     {
         DataPacket<Buffers...> packet;
-        { const auto result = ReceiveValue(packet, MSG_WAITALL);
-            if (result == SOCKET_ERROR) return -1;
-            if (result != 1) return 0; }
-        packet.template Get<Endian>(buffers...);
-        return 1;
+        const auto result = ReceiveValue(packet, MSG_WAITALL);
+        if (result == 1) packet.template Get<Endian>(buffers...);
+        return result;
     }
 
     template <bool Endian = NetEndian, class... Values>
-    int SendPacket(const Values... values) noexcept
+    auto SendPacket(const Values... values) noexcept
     {
         DataPacket<Values...> packet;
         packet.template Set<Endian>(values...);
-        { const auto result = SendValue(packet);
-            if (result == SOCKET_ERROR) return -1;
-            if (result != 1) return 0; }
-        return 1;
+        return SendValue(packet);
     }
 
 public:
@@ -464,10 +511,14 @@ public:
     auto PeekFrom(const ptr_t buffer, const size_t length,
         Address<Domain>& address, const int flags = 0) const noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
+        assert(buffer != nullptr && length != 0);
+
         socklen_t address_size = address.Size();
         const auto bytes = recvfrom(_handle, static_cast<char*>(buffer),
             length, flags | MSG_PEEK, address.Data(), &address_size);
-        assert(bytes == SOCKET_ERROR || address_size <= address.Size());
+        assert(bytes <= 0 || address_size <= address.Size());
         return bytes;
     }
 
@@ -476,9 +527,7 @@ public:
         Address<Domain>& address, const int flags = 0) const noexcept
     {
         const auto result = PeekFrom(static_cast<ptr_t>(buffer), length * sizeof(DataType), address, flags);
-        return result != static_cast<decltype(result)>(SOCKET_ERROR)
-             ? result / static_cast<decltype(result)>(sizeof(DataType))
-             : static_cast<decltype(result)>(SOCKET_ERROR);
+        return result > 0 ? result / static_cast<decltype(result)>(sizeof(DataType)) : result;
     }
 
     template <class Buffer, typename = std::enable_if_t<!std::is_const_v<Buffer>>>
@@ -493,10 +542,14 @@ public:
     auto ReceiveFrom(const ptr_t buffer, const size_t length,
         Address<Domain>& address, const int flags = 0) noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
+        assert(buffer != nullptr && length != 0);
+
         socklen_t address_size = address.Size();
         const auto bytes = recvfrom(_handle, static_cast<char*>(buffer),
             length, flags, address.Data(), &address_size);
-        assert(bytes == SOCKET_ERROR || address_size <= address.Size());
+        assert(bytes <= 0 || address_size <= address.Size());
         return bytes;
     }
 
@@ -505,9 +558,7 @@ public:
         Address<Domain>& address, const int flags = 0) noexcept
     {
         const auto result = ReceiveFrom(static_cast<ptr_t>(buffer), length * sizeof(DataType), address, flags);
-        return result != static_cast<decltype(result)>(SOCKET_ERROR)
-             ? result / static_cast<decltype(result)>(sizeof(DataType))
-             : static_cast<decltype(result)>(SOCKET_ERROR);
+        return result > 0 ? result / static_cast<decltype(result)>(sizeof(DataType)) : result;
     }
 
     template <class Buffer, typename = std::enable_if_t<!std::is_const_v<Buffer>>>
@@ -522,6 +573,11 @@ public:
     auto SendTo(const cptr_t data, const size_t size,
         const Address<Domain>& address, const int flags = 0) noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
+        assert(size == 0 || data != nullptr);
+        assert(address.Valid());
+
         return sendto(_handle, static_cast<const char*>(data),
             size, flags, address.Data(), address.Size());
     }
@@ -531,9 +587,7 @@ public:
         const Address<Domain>& address, const int flags = 0) noexcept
     {
         const auto result = SendTo(static_cast<cptr_t>(data), size * sizeof(DataType), address, flags);
-        return result != static_cast<decltype(result)>(SOCKET_ERROR)
-             ? result / static_cast<decltype(result)>(sizeof(DataType))
-             : static_cast<decltype(result)>(SOCKET_ERROR);
+        return result > 0 ? result / static_cast<decltype(result)>(sizeof(DataType)) : result;
     }
 
     template <class Value>
@@ -547,43 +601,38 @@ public:
 
     template <bool Endian = NetEndian, class... Buffers,
         typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
-    int PeekPacketFrom(Address<Domain>& address, Buffers&... buffers) const noexcept
+    auto PeekPacketFrom(Address<Domain>& address, Buffers&... buffers) const noexcept
     {
         DataPacket<Buffers...> packet;
-        { const auto result = PeekValueFrom(packet, address);
-            if (result == SOCKET_ERROR) return -1;
-            if (result != 1) return 0; }
-        packet.template Get<Endian>(buffers...);
-        return 1;
+        const auto result = PeekValueFrom(packet, address);
+        if (result == 1) packet.template Get<Endian>(buffers...);
+        return result;
     }
 
     template <bool Endian = NetEndian, class... Buffers,
         typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
-    int ReceivePacketFrom(Address<Domain>& address, Buffers&... buffers) noexcept
+    auto ReceivePacketFrom(Address<Domain>& address, Buffers&... buffers) noexcept
     {
         DataPacket<Buffers...> packet;
-        { const auto result = ReceiveValueFrom(packet, address);
-            if (result == SOCKET_ERROR) return -1;
-            if (result != 1) return 0; }
-        packet.template Get<Endian>(buffers...);
-        return 1;
+        const auto result = ReceiveValueFrom(packet, address);
+        if (result == 1) packet.template Get<Endian>(buffers...);
+        return result;
     }
 
     template <bool Endian = NetEndian, class... Values>
-    int SendPacketTo(const Address<Domain>& address, const Values... values) noexcept
+    auto SendPacketTo(const Address<Domain>& address, const Values... values) noexcept
     {
         DataPacket<Values...> packet;
         packet.template Set<Endian>(values...);
-        { const auto result = SendValueTo(packet, address);
-            if (result == SOCKET_ERROR) return -1;
-            if (result != 1) return 0; }
-        return 1;
+        return SendValueTo(packet, address);
     }
 
 public:
 
     bool Shutdown(const int mode) noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
         return shutdown(_handle, mode) == 0;
     }
 
@@ -591,12 +640,16 @@ public:
 
     int Wait(const Time timeout, const sword_t events) noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
         Poll::Event event { _handle, events };
 
         if (const int result = Poll::Wait(event, timeout); result != 1)
             return result;
 
-        if (event.Events() & (POLLERR | POLLHUP | POLLNVAL))
+        assert((event.Events() & POLLNVAL) == 0);
+
+        if (event.Events() & (POLLERR | POLLHUP))
             return -1;
 
         return 1;
@@ -604,8 +657,10 @@ public:
 
 public:
 
-    int Status() const noexcept
+    int Error() const noexcept
     {
+        assert(_handle != INVALID_SOCKET);
+
         int result;
 
         if (socklen_t length = sizeof(result);
@@ -626,9 +681,6 @@ private:
 template <int Type, int Protocol = GetDefaultProtocol(AF_INET, Type)>
 using IPv4Socket = Socket<AF_INET, Type, Protocol>;
 
-template <int Type, int Protocol = GetDefaultProtocol(AF_INET6, Type)>
-using IPv6Socket = Socket<AF_INET6, Type, Protocol>;
-
 // ----------------------------------------------------------
 
 template <int Domain, int Protocol = GetDefaultProtocol(Domain, SOCK_STREAM)>
@@ -648,7 +700,4 @@ using UdpSocket = DatagramSocket<Domain, IPPROTO_UDP>;
 // ----------------------------------------------------------
 
 using IPv4TcpSocket = TcpSocket<AF_INET>;
-using IPv6TcpSocket = TcpSocket<AF_INET6>;
-
 using IPv4UdpSocket = UdpSocket<AF_INET>;
-using IPv6UdpSocket = UdpSocket<AF_INET6>;

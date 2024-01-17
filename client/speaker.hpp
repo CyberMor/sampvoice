@@ -554,6 +554,6 @@ public:
 
     std::function<void(size_t)> OnFrame;
 
-    View<ubyte_t> Buffer;
+    DataView<ubyte_t> Buffer;
 
 };

@@ -65,7 +65,7 @@ struct Texture {
 
 public:
 
-    Texture(IDirect3DDevice9* const device, const View<ubyte_t>& resource) noexcept
+    Texture(IDirect3DDevice9* const device, const DataView<ubyte_t>& resource) noexcept
     {
         assert(device != nullptr);
 
@@ -137,7 +137,7 @@ public:
 
 public:
 
-    bool Initialize(IDirect3DDevice9* const device, const View<ubyte_t>& resource) noexcept
+    bool Initialize(IDirect3DDevice9* const device, const DataView<ubyte_t>& resource) noexcept
     {
         if (_texture != nullptr) _texture->Release();
         if (_sprite  != nullptr) _sprite->Release();

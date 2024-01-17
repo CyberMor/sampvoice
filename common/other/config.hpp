@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <cassert>
+
 #include <vector>
 #include <string>
 
@@ -60,13 +62,13 @@ public:
     {
         assert(path != nullptr && *path != '\0');
 
-        File file { path, "rt" };
+        File file { path, "r" };
         if (file.Invalid())
             return 0;
 
         for (char line[512];;)
         {
-            const int code = file.GetLine(line, '\n');
+            const int code = file.GetLine(line);
             if (code < 0) return code;
 
             if (*line != '#' && *line != '\0')
@@ -124,7 +126,7 @@ public:
     bool HasParameter(const size_t index) const noexcept
     {
         return !_parameters[index].first.empty() &&
-               !_parameters[index].second.empty();
+            !_parameters[index].second.empty();
     }
 
     template <class String>

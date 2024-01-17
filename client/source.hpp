@@ -93,7 +93,7 @@ public:
 public:
 
     void PushPacket(const udword_t packet, const uword_t* const streams,
-        const View<const ubyte_t, opus_int32>& content) noexcept
+        const DataView<const ubyte_t, opus_int32>& content) noexcept
     {
         if (packet > _current + kSourceKeepingBuffer || packet + (kSourceMutableBuffer - 1) < _current)
             Reset(packet);

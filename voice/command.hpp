@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <cassert>
+
 #include <system/types.hpp>
 #include <network/address.hpp>
 #include <network/socket.hpp>
@@ -154,30 +156,81 @@ public:
 
 public:
 
-    /*
-        Wait for connection from 'control' host
-    */
     bool Initialize(const IPv4Address& command, const IPv4Address& control) noexcept
     {
+        assert(command.Valid());
+        assert(control.Valid());
+
         _socket.Deinitialize();
 
-        IPv4TcpSocket listener;
-        {
-            if (!listener.Initialize(false)) return false;
-            if (!listener.SetOption(SOL_SOCKET, SO_REUSEADDR, 1)) return false;
-            if (!listener.Bind(command)) return false;
-            if (!listener.Listen(1)) return false;
-        }
-
         IPv4TcpSocket socket;
+
+        if (!socket.Initialize(false))
         {
-            IPv4Address address; do socket = listener.Accept(address, false);
-            while (socket.Invalid() || (!control.IsEmpty() && address != control));
+            if (Logger != nullptr)
+            {
+                std::fprintf(Logger, "[Command] Failed to initialize socket (%d)\n", GetSocketError());
+                std::fflush(Logger);
+            }
+
+            return false;
         }
 
-        if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1)) return false;
-        if (!socket.SetOption(IPPROTO_TCP, TCP_NODELAY, 1)) return false;
-        if (!socket.Shutdown(SHUT_WR)) return false;
+        if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1))
+        {
+            if (Logger != nullptr)
+            {
+                std::fprintf(Logger, "[Command] Failed to set option(SO_REUSEADDR) (%d)\n", GetSocketError());
+                std::fflush(Logger);
+            }
+
+            return false;
+        }
+
+        if (!socket.SetOption(IPPROTO_TCP, TCP_NODELAY, 1))
+        {
+            if (Logger != nullptr)
+            {
+                std::fprintf(Logger, "[Command] Failed to set option(TCP_NODELAY) (%d)\n", GetSocketError());
+                std::fflush(Logger);
+            }
+
+            return false;
+        }
+
+        if (!socket.Bind(command))
+        {
+            if (Logger != nullptr)
+            {
+                char buffer[IPv4Address::LengthLimit + 1];
+
+                if (!command.Print(buffer))
+                {
+                    buffer[0] = 'I'; buffer[1] = 'N'; buffer[2] = 'V'; buffer[3] = 'A';
+                    buffer[4] = 'L'; buffer[5] = 'I'; buffer[6] = 'D'; buffer[7] = '\0';
+                }
+
+                std::fprintf(Logger, "[Command] Failed to bind(%s) (%d)\n", buffer, GetSocketError());
+                std::fflush(Logger);
+            }
+
+            return false;
+        }
+
+        constexpr Time kConnectCooldown = Time::Seconds(1);
+        while (!socket.Connect(control)) // Wait until the Control Server becomes available
+            utils::thread::sleep(kConnectCooldown);
+
+        if (!socket.Shutdown(SHUT_WR))
+        {
+            if (Logger != nullptr)
+            {
+                std::fprintf(Logger, "[Command] Failed to shutdown(SHUT_WR) (%d)\n", GetSocketError());
+                std::fflush(Logger);
+            }
+
+            return false;
+        }
 
         _socket = std::move(socket);
 
@@ -191,17 +244,40 @@ public:
 
 public:
 
-    static constexpr ubyte_t WaitError = ~static_cast<ubyte_t>(0);
-    static constexpr ubyte_t WaitEmpty = ~static_cast<ubyte_t>(1);
+    static constexpr ubyte_t WaitEmpty = ~static_cast<ubyte_t>(0);
+    static constexpr ubyte_t WaitError = ~static_cast<ubyte_t>(1);
 
 public:
 
     ubyte_t WaitCommand(const ptr_t buffer, const Time timeout = Poll::InfiniteTimeout) noexcept
     {
+        assert(buffer != nullptr);
+
         switch (_socket.Wait(timeout, POLLIN))
         {
-            case Poll::WaitError: return WaitError;
             case Poll::WaitEmpty: return WaitEmpty;
+            case Poll::WaitError:
+            {
+#ifndef _WIN32
+                if (GetSocketError() == EINTR)
+                {
+                    if (Logger != nullptr)
+                    {
+                        std::fprintf(Logger, "[Command] poll(%d, POLLIN) interrupted\n", static_cast<int>(timeout.Milliseconds()));
+                        std::fflush(Logger);
+                    }
+
+                    return WaitEmpty;
+                }
+#endif
+                if (Logger != nullptr)
+                {
+                    std::fprintf(Logger, "[Command] Failed to poll(%d, POLLIN) (%d)\n", static_cast<int>(timeout.Milliseconds()), GetSocketError());
+                    std::fflush(Logger);
+                }
+
+                return WaitError;
+            }
         }
 
         goto ReceiveCommand;
@@ -210,8 +286,29 @@ public:
 
         switch (_socket.Wait(Poll::InstantTimeout, POLLIN))
         {
-            case Poll::WaitError: return WaitError;
             case Poll::WaitEmpty: return WaitEmpty;
+            case Poll::WaitError:
+            {
+#ifndef _WIN32
+                if (GetSocketError() == EINTR)
+                {
+                    if (Logger != nullptr)
+                    {
+                        std::fprintf(Logger, "[Command] poll(0, POLLIN) interrupted\n");
+                        std::fflush(Logger);
+                    }
+
+                    return WaitEmpty;
+                }
+#endif
+                if (Logger != nullptr)
+                {
+                    std::fprintf(Logger, "[Command] Failed to poll(0, POLLIN) (%d)\n", GetSocketError());
+                    std::fflush(Logger);
+                }
+
+                return WaitError;
+            }
         }
         
     ReceiveCommand:
@@ -219,7 +316,32 @@ public:
         ubyte_t command;
 
         if (_socket.ReceiveValue(command, MSG_WAITALL) != 1)
+        {
+#ifdef _WIN32
+            if (GetSocketError() == WSAEINTR)
+#else
+            if (GetSocketError() == EINTR)
+#endif
+            {
+                if (Logger != nullptr)
+                {
+                    std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Repeat call.\n");
+                    std::fflush(Logger);
+                }
+
+                goto ReceiveCommand;
+            }
+
+            if (Logger != nullptr)
+            {
+                std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
+                std::fflush(Logger);
+            }
+
             return WaitError;
+        }
+
+    ReceiveBody:
 
         switch (command)
         {
@@ -232,7 +354,30 @@ public:
                 auto& content = *static_cast<PlayerCreate*>(buffer);
 
                 if (_socket.ReceiveValue(content, MSG_WAITALL) != 1)
+                {
+#ifdef _WIN32
+                    if (GetSocketError() == WSAEINTR)
+#else
+                    if (GetSocketError() == EINTR)
+#endif
+                    {
+                        if (Logger != nullptr)
+                        {
+                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
+                            std::fflush(Logger);
+                        }
+
+                        goto ReceiveBody;
+                    }
+
+                    if (Logger != nullptr)
+                    {
+                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
+                        std::fflush(Logger);
+                    }
+
                     return WaitError;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -247,7 +392,30 @@ public:
                 auto& content = *static_cast<PlayerListener*>(buffer);
 
                 if (_socket.ReceiveValue(content, MSG_WAITALL) != 1)
+                {
+#ifdef _WIN32
+                    if (GetSocketError() == WSAEINTR)
+#else
+                    if (GetSocketError() == EINTR)
+#endif
+                    {
+                        if (Logger != nullptr)
+                        {
+                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
+                            std::fflush(Logger);
+                        }
+
+                        goto ReceiveBody;
+                    }
+
+                    if (Logger != nullptr)
+                    {
+                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
+                        std::fflush(Logger);
+                    }
+
                     return WaitError;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -261,7 +429,30 @@ public:
                 auto& content = *static_cast<PlayerSpeaker*>(buffer);
 
                 if (_socket.ReceiveValue(content, MSG_WAITALL) != 1)
+                {
+#ifdef _WIN32
+                    if (GetSocketError() == WSAEINTR)
+#else
+                    if (GetSocketError() == EINTR)
+#endif
+                    {
+                        if (Logger != nullptr)
+                        {
+                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
+                            std::fflush(Logger);
+                        }
+
+                        goto ReceiveBody;
+                    }
+
+                    if (Logger != nullptr)
+                    {
+                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
+                        std::fflush(Logger);
+                    }
+
                     return WaitError;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -276,7 +467,30 @@ public:
                 auto& content = *static_cast<PlayerAttachStream*>(buffer);
 
                 if (_socket.ReceiveValue(content, MSG_WAITALL) != 1)
+                {
+#ifdef _WIN32
+                    if (GetSocketError() == WSAEINTR)
+#else
+                    if (GetSocketError() == EINTR)
+#endif
+                    {
+                        if (Logger != nullptr)
+                        {
+                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
+                            std::fflush(Logger);
+                        }
+
+                        goto ReceiveBody;
+                    }
+
+                    if (Logger != nullptr)
+                    {
+                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
+                        std::fflush(Logger);
+                    }
+
                     return WaitError;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -292,7 +506,30 @@ public:
                 auto& content = *static_cast<PlayerDetachStream*>(buffer);
 
                 if (_socket.ReceiveValue(content, MSG_WAITALL) != 1)
+                {
+#ifdef _WIN32
+                    if (GetSocketError() == WSAEINTR)
+#else
+                    if (GetSocketError() == EINTR)
+#endif
+                    {
+                        if (Logger != nullptr)
+                        {
+                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
+                            std::fflush(Logger);
+                        }
+
+                        goto ReceiveBody;
+                    }
+
+                    if (Logger != nullptr)
+                    {
+                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
+                        std::fflush(Logger);
+                    }
+
                     return WaitError;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -308,7 +545,30 @@ public:
                 auto& content = *static_cast<PlayerDelete*>(buffer);
 
                 if (_socket.ReceiveValue(content, MSG_WAITALL) != 1)
+                {
+#ifdef _WIN32
+                    if (GetSocketError() == WSAEINTR)
+#else
+                    if (GetSocketError() == EINTR)
+#endif
+                    {
+                        if (Logger != nullptr)
+                        {
+                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
+                            std::fflush(Logger);
+                        }
+
+                        goto ReceiveBody;
+                    }
+
+                    if (Logger != nullptr)
+                    {
+                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
+                        std::fflush(Logger);
+                    }
+
                     return WaitError;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -322,7 +582,30 @@ public:
                 auto& content = *static_cast<StreamCreate*>(buffer);
 
                 if (_socket.ReceiveValue(content, MSG_WAITALL) != 1)
+                {
+#ifdef _WIN32
+                    if (GetSocketError() == WSAEINTR)
+#else
+                    if (GetSocketError() == EINTR)
+#endif
+                    {
+                        if (Logger != nullptr)
+                        {
+                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
+                            std::fflush(Logger);
+                        }
+
+                        goto ReceiveBody;
+                    }
+
+                    if (Logger != nullptr)
+                    {
+                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
+                        std::fflush(Logger);
+                    }
+
                     return WaitError;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -336,7 +619,30 @@ public:
                 auto& content = *static_cast<StreamTransiter*>(buffer);
 
                 if (_socket.ReceiveValue(content, MSG_WAITALL) != 1)
+                {
+#ifdef _WIN32
+                    if (GetSocketError() == WSAEINTR)
+#else
+                    if (GetSocketError() == EINTR)
+#endif
+                    {
+                        if (Logger != nullptr)
+                        {
+                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
+                            std::fflush(Logger);
+                        }
+
+                        goto ReceiveBody;
+                    }
+
+                    if (Logger != nullptr)
+                    {
+                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
+                        std::fflush(Logger);
+                    }
+
                     return WaitError;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -350,7 +656,30 @@ public:
                 auto& content = *static_cast<StreamAttachListener*>(buffer);
 
                 if (_socket.ReceiveValue(content, MSG_WAITALL) != 1)
+                {
+#ifdef _WIN32
+                    if (GetSocketError() == WSAEINTR)
+#else
+                    if (GetSocketError() == EINTR)
+#endif
+                    {
+                        if (Logger != nullptr)
+                        {
+                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
+                            std::fflush(Logger);
+                        }
+
+                        goto ReceiveBody;
+                    }
+
+                    if (Logger != nullptr)
+                    {
+                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
+                        std::fflush(Logger);
+                    }
+
                     return WaitError;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -365,7 +694,30 @@ public:
                 auto& content = *static_cast<StreamDetachListener*>(buffer);
 
                 if (_socket.ReceiveValue(content, MSG_WAITALL) != 1)
+                {
+#ifdef _WIN32
+                    if (GetSocketError() == WSAEINTR)
+#else
+                    if (GetSocketError() == EINTR)
+#endif
+                    {
+                        if (Logger != nullptr)
+                        {
+                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
+                            std::fflush(Logger);
+                        }
+
+                        goto ReceiveBody;
+                    }
+
+                    if (Logger != nullptr)
+                    {
+                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
+                        std::fflush(Logger);
+                    }
+
                     return WaitError;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -380,7 +732,30 @@ public:
                 auto& content = *static_cast<StreamDelete*>(buffer);
 
                 if (_socket.ReceiveValue(content, MSG_WAITALL) != 1)
+                {
+#ifdef _WIN32
+                    if (GetSocketError() == WSAEINTR)
+#else
+                    if (GetSocketError() == EINTR)
+#endif
+                    {
+                        if (Logger != nullptr)
+                        {
+                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
+                            std::fflush(Logger);
+                        }
+
+                        goto ReceiveBody;
+                    }
+
+                    if (Logger != nullptr)
+                    {
+                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
+                        std::fflush(Logger);
+                    }
+
                     return WaitError;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -391,12 +766,22 @@ public:
             }
             default:
             {
+                if (Logger != nullptr)
+                {
+                    std::fprintf(Logger, "[Command] Failed to recognize command(%hhu)\n", command);
+                    std::fflush(Logger);
+                }
+
                 return WaitError;
             }
         }
 
         return command;
     }
+
+public:
+
+    std::FILE* Logger = nullptr;
 
 private:
 

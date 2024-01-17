@@ -44,21 +44,16 @@ public:
         assert(log_file != nullptr);
         assert(log_func != nullptr);
 
-        return (_log_file = (_log_file != nullptr ?
-            std::freopen(log_file, "at", _log_file) :
-            std::fopen(log_file, "at"))) != nullptr &&
+        return (_log_file = (_log_file != nullptr ? std::freopen(log_file, "a", _log_file) : std::fopen(log_file, "a"))) != nullptr &&
                (_log_func = log_func) != nullptr;
     }
 
     void Deinitialize() noexcept
     {
-        if (_log_file != nullptr)
-        {
-            std::fclose(_log_file);
+        if (_log_file != nullptr) std::fclose(_log_file);
 
-            _log_file = nullptr;
-            _log_func = nullptr;
-        }
+        _log_file = nullptr;
+        _log_func = nullptr;
     }
 
 public:
@@ -74,7 +69,7 @@ public:
             const auto time_of_day = std::localtime(&c_time);
             assert(time_of_day != nullptr);
 
-            std::fprintf(_log_file, "[%.02d.%.02d.%.04d] (%.02d:%.02d:%.02d) : ",
+            std::fprintf(_log_file, "[%.02d.%.02d.%.04d](%.02d:%.02d:%.02d): ",
                 time_of_day->tm_mday, time_of_day->tm_mon + 1, time_of_day->tm_year + 1900,
                 time_of_day->tm_hour, time_of_day->tm_min, time_of_day->tm_sec);
             std::fprintf(_log_file, message, arguments...);

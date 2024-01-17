@@ -46,7 +46,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <TargetName>sampvoice</TargetName>
     <TargetExt>.asi</TargetExt>
-    <ExecutablePath>$(VC_ExecutablePath_x86);$(WindowsSdk_71A_ExecutablePath);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);D:\Windows Kits\10\bin\10.0.18362.0\x86</ExecutablePath>
+    <ExecutablePath>$(DXSDK_DIR)\Utilities\bin\x86;$(VC_ExecutablePath_x86);$(WindowsSdk_71A_ExecutablePath);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);D:\Windows Kits\10\bin\10.0.18362.0\x86</ExecutablePath>
     <IncludePath>$(VC_IncludePath);$(WindowsSdk_71A_IncludePath);$(DXSDK_DIR)\Include</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSdk_71A_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)\Lib\x86;</LibraryPath>
     <ExcludePath>$(VC_IncludePath);$(VC_ExecutablePath_x86);$(WindowsSdk_71A_ExecutablePath);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(MSBuild_ExecutablePath);$(VC_LibraryPath_x86);$(SystemRoot)</ExcludePath>
@@ -59,7 +59,7 @@
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSdk_71A_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(DXSDK_DIR)\Lib\x86;</LibraryPath>
     <ExcludePath>$(VC_IncludePath);$(VC_ExecutablePath_x86);$(WindowsSdk_71A_ExecutablePath);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(MSBuild_ExecutablePath);$(VC_LibraryPath_x86);$(SystemRoot)</ExcludePath>
     <IncludePath>$(VC_IncludePath);$(WindowsSdk_71A_IncludePath);$(DXSDK_DIR)\Include</IncludePath>
-    <ExecutablePath>$(VC_ExecutablePath_x86);$(WindowsSdk_71A_ExecutablePath);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);D:\Windows Kits\10\bin\10.0.18362.0\x86</ExecutablePath>
+    <ExecutablePath>$(DXSDK_DIR)\Utilities\bin\x86;$(VC_ExecutablePath_x86);$(WindowsSdk_71A_ExecutablePath);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);D:\Windows Kits\10\bin\10.0.18362.0\x86</ExecutablePath>
     <OutDir>$(SolutionDir)\binaries\</OutDir>
     <IntDir>build\</IntDir>
     <LinkIncremental />
@@ -81,7 +81,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>files/libraries</AdditionalLibraryDirectories>
       <MinimumRequiredVersion />
-      <Version>4.1</Version>
+      <Version>4.2</Version>
       <ImportLibrary />
       <ProgramDatabaseFile />
     </Link>
@@ -114,7 +114,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <MinimumRequiredVersion />
       <SetChecksum>true</SetChecksum>
-      <Version>4.1</Version>
+      <Version>4.2</Version>
       <ProgramDatabaseFile />
       <ImportLibrary />
       <ImageHasSafeExceptionHandlers />

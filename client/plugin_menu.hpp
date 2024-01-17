@@ -79,8 +79,8 @@ private:
 public:
 
     bool Initialize(IDirect3DDevice9* const device,
-        const View<ubyte_t>& resource_shader,
-        const View<ubyte_t>& resource_logo,
+        const DataView<ubyte_t>& resource_shader,
+        const DataView<ubyte_t>& resource_logo,
         const cstr_t font_file) noexcept
     {
         assert(device != nullptr);

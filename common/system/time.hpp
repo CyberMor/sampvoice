@@ -167,23 +167,29 @@ public:
     template <class Number = fdword_t, typename = std::enable_if_t<std::is_arithmetic_v<Number>>>
     constexpr Number Seconds() const noexcept
     {
-        return static_cast<Number>(_milliseconds) / static_cast<sqword_t>(1000);
+        if constexpr (std::is_floating_point_v<Number>)
+             return static_cast<Number>(_milliseconds) / static_cast<sqword_t>(1000);
+        else return static_cast<Number>(_milliseconds / static_cast<sqword_t>(1000));
     }
 
     template <class Number = fdword_t, typename = std::enable_if_t<std::is_arithmetic_v<Number>>>
     constexpr Number Minutes() const noexcept
     {
-        return static_cast<Number>(_milliseconds) / static_cast<sqword_t>(60 * 1000);
+        if constexpr (std::is_floating_point_v<Number>)
+             return static_cast<Number>(_milliseconds) / static_cast<sqword_t>(60 * 1000);
+        else return static_cast<Number>(_milliseconds / static_cast<sqword_t>(60 * 1000));
     }
 
     template <class Number = fdword_t, typename = std::enable_if_t<std::is_arithmetic_v<Number>>>
     constexpr Number Hours() const noexcept
     {
-        return static_cast<Number>(_milliseconds) / static_cast<sqword_t>(60 * 60 * 1000);
+        if constexpr (std::is_floating_point_v<Number>)
+             return static_cast<Number>(_milliseconds) / static_cast<sqword_t>(60 * 60 * 1000);
+        else return static_cast<Number>(_milliseconds / static_cast<sqword_t>(60 * 60 * 1000));
     }
 
 private:
 
-    sqword_t _milliseconds = 0;
+    sqword_t _milliseconds = {};
 
 };

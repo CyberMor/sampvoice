@@ -56,6 +56,8 @@ struct ControlPackets
         EffectRemoveFilter,
         EffectDelete,
 
+        UpdateKey,
+
         ENUM_END
     };
 };
@@ -179,6 +181,11 @@ struct ControlEffectRemoveFilter
 struct ControlEffectDelete
 {
     uword_t effect;
+};
+
+struct ControlUpdateKey
+{
+    udword_t key;
 };
 
 #pragma pack(pop)
@@ -552,6 +559,17 @@ public:
                 if constexpr (HostEndian != NetEndian)
                 {
                     utils::bswap(&reinterpret_cast<ControlEffectDelete*>(_packet_buffer + 2)->effect);
+                }
+
+                break;
+            }
+            case ControlPackets::UpdateKey:
+            {
+                _packet_length += sizeof(ControlUpdateKey);
+
+                if constexpr (HostEndian != NetEndian)
+                {
+                    utils::bswap(&reinterpret_cast<ControlUpdateKey*>(_packet_buffer + 2)->key);
                 }
 
                 break;

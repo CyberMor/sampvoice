@@ -15,18 +15,18 @@
 #include <other/utils.hpp>
 
 template <class DataType, class SizeType = size_t>
-struct View {
+struct DataView {
 
-    constexpr View() noexcept = default;
-    ~View() noexcept = default;
-    constexpr View(const View&) noexcept = default;
-    constexpr View(View&&) noexcept = default;
-    constexpr View& operator=(const View&) noexcept = default;
-    constexpr View& operator=(View&&) noexcept = default;
+    constexpr DataView() noexcept = default;
+    ~DataView() noexcept = default;
+    constexpr DataView(const DataView&) noexcept = default;
+    constexpr DataView(DataView&&) noexcept = default;
+    constexpr DataView& operator=(const DataView&) noexcept = default;
+    constexpr DataView& operator=(DataView&&) noexcept = default;
 
 public:
 
-    constexpr View(DataType* const data, const SizeType size) noexcept
+    constexpr DataView(DataType* const data, const SizeType size) noexcept
         : data { data }
         , size { size }
     {
@@ -37,14 +37,14 @@ public:
 public:
 
     template <class Buffer, typename = std::enable_if_t<std::is_pod_v<std::remove_reference_t<Buffer>>>>
-    static constexpr View FromBuffer(Buffer&& buffer) noexcept
+    static constexpr DataView FromBuffer(Buffer&& buffer) noexcept
     {
         static_assert(sizeof(Buffer) % sizeof(DataType) == 0);
 
         return { reinterpret_cast<DataType*>(&buffer), sizeof(Buffer) / sizeof(DataType) };
     }
 
-    static constexpr View FromString(DataType* const string, const DataType terminator = Zero<DataType>) noexcept
+    static constexpr DataView FromString(DataType* const string, const DataType terminator = {}) noexcept
     {
         assert(string != nullptr);
 
@@ -52,7 +52,7 @@ public:
     }
 
     template <class MemoryDataType, class MemorySizeType>
-    static constexpr View FromMemory(const View<MemoryDataType, MemorySizeType>& memory) noexcept
+    static constexpr DataView FromMemory(const DataView<MemoryDataType, MemorySizeType>& memory) noexcept
     {
         assert(memory.Bytes() % sizeof(DataType) == 0);
 
@@ -62,32 +62,32 @@ public:
 
 public:
 
-    constexpr bool operator<(const View& view) const noexcept
+    constexpr bool operator<(const DataView& view) const noexcept
     {
         return data < view.data || data == view.data && size < view.size;
     }
 
-    constexpr bool operator>(const View& view) const noexcept
+    constexpr bool operator>(const DataView& view) const noexcept
     {
         return data > view.data || data == view.data && size > view.size;
     }
 
-    constexpr bool operator<=(const View& view) const noexcept
+    constexpr bool operator<=(const DataView& view) const noexcept
     {
         return data < view.data || data == view.data && size <= view.size;
     }
 
-    constexpr bool operator>=(const View& view) const noexcept
+    constexpr bool operator>=(const DataView& view) const noexcept
     {
         return data > view.data || data == view.data && size >= view.size;
     }
 
-    constexpr bool operator==(const View& view) const noexcept
+    constexpr bool operator==(const DataView& view) const noexcept
     {
         return data == view.data && size == view.size;
     }
 
-    constexpr bool operator!=(const View& view) const noexcept
+    constexpr bool operator!=(const DataView& view) const noexcept
     {
         return data != view.data || size != view.size;
     }
@@ -97,14 +97,18 @@ public:
     constexpr const DataType& operator[](const SizeType index) const noexcept
     {
         assert(data != nullptr);
+
         assert(index >= 0 && index < size);
+
         return data[index];
     }
 
-    constexpr DataType& operator[](const SizeType index) noexcept
+    DataType& operator[](const SizeType index) noexcept
     {
         assert(data != nullptr);
+
         assert(index >= 0 && index < size);
+
         return data[index];
     }
 
@@ -122,19 +126,19 @@ public:
 
 public:
 
-    constexpr bool Contains(const View& view) const noexcept
+    constexpr bool Contains(const DataView& view) const noexcept
     {
         return view.data >= data && view.data + view.size <= data + size;
     }
 
-    constexpr bool Intersect(const View& view) const noexcept
+    constexpr bool Intersect(const DataView& view) const noexcept
     {
         return view.data <= data + size && view.data + view.size >= data;
     }
 
 public:
 
-    constexpr View SubLeft(SizeType offset) const noexcept
+    constexpr DataView SubLeft(SizeType offset) const noexcept
     {
         assert(offset >= 0);
 
@@ -143,7 +147,7 @@ public:
         return { data + offset, size - offset };
     }
 
-    constexpr View SubLeft(SizeType offset, SizeType length) const noexcept
+    constexpr DataView SubLeft(SizeType offset, SizeType length) const noexcept
     {
         assert(offset >= 0 && length >= 0);
 
@@ -157,7 +161,7 @@ public:
 
 public:
 
-    constexpr View SubRight(SizeType offset) const noexcept
+    constexpr DataView SubRight(SizeType offset) const noexcept
     {
         assert(offset >= 0);
 
@@ -166,7 +170,7 @@ public:
         return { data, size - offset };
     }
 
-    constexpr View SubRight(SizeType offset, SizeType length) const noexcept
+    constexpr DataView SubRight(SizeType offset, SizeType length) const noexcept
     {
         assert(offset >= 0 && length >= 0);
 
@@ -176,6 +180,22 @@ public:
             length = available;
 
         return { (data + size) - (offset + length), length };
+    }
+
+public:
+
+    void FillWithZeros() const noexcept
+    {
+        assert(size == 0 || data != nullptr);
+
+        std::memset(Data(), { 0x00 }, Bytes());
+    }
+
+    void FillWithOnes() const noexcept
+    {
+        assert(size == 0 || data != nullptr);
+
+        std::memset(Data(), { 0xFF }, Bytes());
     }
 
 public:
@@ -191,6 +211,7 @@ public:
     {
         assert(data != nullptr);
         assert(size != 0);
+
         return Data();
     }
 
@@ -198,6 +219,7 @@ public:
     {
         assert(data != nullptr);
         assert(size != 0);
+
         return Data() + Size() - 1;
     }
 

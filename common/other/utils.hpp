@@ -44,6 +44,12 @@ namespace utils
 {
     namespace string
     {
+        namespace ending
+        {
+            constexpr char crlf = -1; // Line Ending: 'crlf'
+            constexpr char text = -2; // Line Ending: 'crlf' or 'cr' or 'lf'
+        }
+
         template <class Character>
         constexpr size_t length(const Character* string,
             const Character rterminator = {}) noexcept
@@ -53,32 +59,6 @@ namespace utils
             size_t result = 0;
             while (*string++ != rterminator) ++result;
             return result;
-        }
-
-        template <class Character>
-        inline Character* duplicate(const Character* const string, const size_t length,
-            const Character wterminator = {}) noexcept
-        {
-            assert(string != nullptr);
-
-            const auto result = static_cast<Character*>(std::malloc((length + 1) * sizeof(Character)));
-            if (result != nullptr)
-            {
-                std::memcpy(result, string, length * sizeof(Character));
-                result[length] = wterminator;
-            }
-
-            return result;
-        }
-
-        template <class Character>
-        inline Character* duplicate(const Character* const string,
-            const Character rterminator = {},
-            const Character wterminator = {}) noexcept
-        {
-            assert(string != nullptr);
-
-            return duplicate(string, length(string, rterminator), wterminator);
         }
 
         template <class Character>
@@ -138,20 +118,6 @@ namespace utils
 #endif
             return value;
         }
-
-        template <class Buffer, class Value, typename = std::enable_if_t<!std::is_const_v<Buffer>>>
-        inline void erase(volatile Buffer* buffer, size_t length, const Value value = {}) noexcept
-        {
-            assert(length == 0 || buffer != nullptr);
-
-            while (length != 0)
-            {
-                *buffer = value;
-
-                ++buffer;
-                --length;
-            }
-        }
     }
 
     namespace thread
@@ -192,20 +158,6 @@ namespace utils
             const bool result = (bits & (HighBit<Type> >> bit)) != 0;
             if (result) bits &= ~(HighBit<Type> >> bit);
             return result;
-        }
-
-        template <class Type, typename = std::enable_if_t<!std::is_const_v<Type> && std::is_integral_v<Type>>>
-        inline size_t find_and_set(Type& bits) noexcept
-        {
-            if (bits != ~Zero<Type>)
-            {
-                size_t bit = 0;
-                while (bits & (HighBit<Type> >> bit)) ++bit;
-                bits |= (HighBit<Type> >> bit);
-                return bit;
-            }
-
-            return None<size_t>;
         }
     }
 
@@ -250,6 +202,13 @@ namespace utils
         for (size_t i = 0; i != Size; ++i)
             std::swap(static_cast<adr_t>(target)[i], static_cast<adr_t>(target)[(Size - 1) - i]);
     }
+
+    template <class Type>
+    constexpr bool is_bswappable =
+       std::is_same_v<Type,  sword_t> || std::is_same_v<Type,  uword_t>
+    || std::is_same_v<Type, sdword_t> || std::is_same_v<Type, udword_t>
+    || std::is_same_v<Type, sqword_t> || std::is_same_v<Type, uqword_t>
+    || std::is_same_v<Type, fdword_t> || std::is_same_v<Type, fqword_t>;
 
     inline sword_t bswap(const sword_t value) noexcept { return bswap_16(value); }
     inline uword_t bswap(const uword_t value) noexcept { return bswap_16(value); }
@@ -333,14 +292,14 @@ namespace utils
     constexpr Number align_down(const Number number,
         const size_t align = alignof(std::max_align_t)) noexcept
     {
-        return (size_t)(number) & -align;
+        return (Number)((size_t)(number) & ~(align - 1));
     }
 
     template <class Number>
     constexpr Number align_up(const Number number,
         const size_t align = alignof(std::max_align_t)) noexcept
     {
-        return ((size_t)(number) + (align - 1)) & -align;
+        return (Number)(((size_t)(number) + (align - 1)) & ~(align - 1));
     }
 
     template <size_t Align = alignof(std::max_align_t)>

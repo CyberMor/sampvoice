@@ -179,7 +179,7 @@ public:
 
 public:
 
-    View<ubyte_t> Buffer() noexcept
+    DataView<ubyte_t> Buffer() noexcept
     {
         return { _buffer + sizeof(OutcomingVoiceHeader),
             sizeof(_buffer) - sizeof(OutcomingVoiceHeader) };

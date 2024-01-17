@@ -72,13 +72,6 @@ public:
 
     bool Initialize() noexcept
     {
-        if (!_locked_players.Initialize())
-        {
-            Logger::Instance().LogToFile("[sv:err:blacklist:initialize] : "
-                "failed to initialize memory for locked players list");
-            return false;
-        }
-
         if (!_create_player_in_pool_hook.Initialize
             (Addresses::Instance().CreatePlayerInPoolFunction(), CreatePlayerInPoolHook) ||
             !_delete_player_from_pool_hook.Initialize
@@ -88,7 +81,6 @@ public:
                 "failed to initialize hooks");
             _create_player_in_pool_hook.Deinitialize();
             _delete_player_from_pool_hook.Deinitialize();
-            _locked_players.Deinitialize();
             return false;
         }
 
