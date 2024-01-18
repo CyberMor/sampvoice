@@ -41,7 +41,7 @@ public:
 
 public:
 
-    bool RegisterScript(AMX* const amx) noexcept
+    void RegisterScript(AMX* const amx) noexcept
     {
         const AMX_NATIVE_INFO natives[]
         {
@@ -114,7 +114,7 @@ public:
 #undef  DefineNativeFunction
         };
 
-        return amx_Register(amx, natives, std::size(natives)) == 0;
+        amx_Register(amx, natives, std::size(natives));
     }
 
 private:
