@@ -21,6 +21,7 @@
 #include <network/socket.hpp>
 #include <other/utils.hpp>
 
+#include "logger.hpp"
 #include "main.hpp"
 
 // Packets
@@ -541,8 +542,7 @@ public:
         {
             if (Logger != nullptr)
             {
-                std::fprintf(Logger, "[Voice] Failed to initialize socket (%d)\n", GetSocketError());
-                std::fflush(Logger);
+                Logger::Instance().Log("[Voice] Failed to initialize socket (%d)", GetSocketError());
             }
 
             return false;
@@ -552,8 +552,7 @@ public:
         {
             if (Logger != nullptr)
             {
-                std::fprintf(Logger, "[Voice] Failed to set option(SO_REUSEADDR) (%d)\n", GetSocketError());
-                std::fflush(Logger);
+                Logger::Instance().Log("[Voice] Failed to set option(SO_REUSEADDR) (%d)", GetSocketError());
             }
 
             return false;
@@ -576,8 +575,7 @@ public:
                     buffer[4] = 'L'; buffer[5] = 'I'; buffer[6] = 'D'; buffer[7] = '\0';
                 }
 
-                std::fprintf(Logger, "[Voice] Failed to bind(%s) (%d)\n", buffer, GetSocketError());
-                std::fflush(Logger);
+                Logger::Instance().Log("[Voice] Failed to bind(%s) (%d)", buffer, GetSocketError());
             }
 
             return false;
@@ -586,9 +584,9 @@ public:
         if (Logger != nullptr)
         {
             if (int size; socket.GetOption(SOL_SOCKET, SO_SNDBUF, size) == 1)
-                std::fprintf(Logger, "[Voice] set option(SO_SNDBUF) to %d bytes.\n", size);
+                Logger::Instance().Log("[Voice] set option(SO_SNDBUF) to %d bytes.", size);
             if (int size; socket.GetOption(SOL_SOCKET, SO_RCVBUF, size) == 1)
-                std::fprintf(Logger, "[Voice] set option(SO_RCVBUF) to %d bytes.\n", size);
+                Logger::Instance().Log("[Voice] set option(SO_RCVBUF) to %d bytes.", size);
         }
 
         _socket = std::move(socket);
@@ -645,8 +643,7 @@ public:
 
             if (Logger != nullptr)
             {
-                std::fprintf(Logger, "[Voice] Failed to recvfrom (%d)\n", GetSocketError());
-                std::fflush(Logger);
+                Logger::Instance().Log("[Voice] Failed to recvfrom (%d)", GetSocketError());
             }
 
             return 0;

@@ -16,6 +16,8 @@
 #include <network/socket.hpp>
 #include <other/utils.hpp>
 
+#include "logger.hpp"
+
 // Types
 // --------------------------------------------
 
@@ -169,8 +171,7 @@ public:
         {
             if (Logger != nullptr)
             {
-                std::fprintf(Logger, "[Command] Failed to initialize socket (%d)\n", GetSocketError());
-                std::fflush(Logger);
+                Logger::Instance().Log("[Command] Failed to initialize socket (%d)", GetSocketError());
             }
 
             return false;
@@ -180,8 +181,7 @@ public:
         {
             if (Logger != nullptr)
             {
-                std::fprintf(Logger, "[Command] Failed to set option(SO_REUSEADDR) (%d)\n", GetSocketError());
-                std::fflush(Logger);
+                Logger::Instance().Log("[Command] Failed to set option(SO_REUSEADDR) (%d)", GetSocketError());
             }
 
             return false;
@@ -191,8 +191,7 @@ public:
         {
             if (Logger != nullptr)
             {
-                std::fprintf(Logger, "[Command] Failed to set option(TCP_NODELAY) (%d)\n", GetSocketError());
-                std::fflush(Logger);
+                Logger::Instance().Log("[Command] Failed to set option(TCP_NODELAY) (%d)", GetSocketError());
             }
 
             return false;
@@ -210,8 +209,7 @@ public:
                     buffer[4] = 'L'; buffer[5] = 'I'; buffer[6] = 'D'; buffer[7] = '\0';
                 }
 
-                std::fprintf(Logger, "[Command] Failed to bind(%s) (%d)\n", buffer, GetSocketError());
-                std::fflush(Logger);
+                Logger::Instance().Log("[Command] Failed to bind(%s) (%d)", buffer, GetSocketError());
             }
 
             return false;
@@ -225,8 +223,7 @@ public:
         {
             if (Logger != nullptr)
             {
-                std::fprintf(Logger, "[Command] Failed to shutdown(SHUT_WR) (%d)\n", GetSocketError());
-                std::fflush(Logger);
+                Logger::Instance().Log("[Command] Failed to shutdown(SHUT_WR) (%d)", GetSocketError());
             }
 
             return false;
@@ -263,8 +260,7 @@ public:
                 {
                     if (Logger != nullptr)
                     {
-                        std::fprintf(Logger, "[Command] poll(%d, POLLIN) interrupted\n", static_cast<int>(timeout.Milliseconds()));
-                        std::fflush(Logger);
+                        Logger::Instance().Log("[Command] poll(%d, POLLIN) interrupted", static_cast<int>(timeout.Milliseconds()));
                     }
 
                     return WaitEmpty;
@@ -272,8 +268,7 @@ public:
 #endif
                 if (Logger != nullptr)
                 {
-                    std::fprintf(Logger, "[Command] Failed to poll(%d, POLLIN) (%d)\n", static_cast<int>(timeout.Milliseconds()), GetSocketError());
-                    std::fflush(Logger);
+                    Logger::Instance().Log("[Command] Failed to poll(%d, POLLIN) (%d)", static_cast<int>(timeout.Milliseconds()), GetSocketError());
                 }
 
                 return WaitError;
@@ -294,8 +289,7 @@ public:
                 {
                     if (Logger != nullptr)
                     {
-                        std::fprintf(Logger, "[Command] poll(0, POLLIN) interrupted\n");
-                        std::fflush(Logger);
+                        Logger::Instance().Log("[Command] poll(0, POLLIN) interrupted");
                     }
 
                     return WaitEmpty;
@@ -303,8 +297,7 @@ public:
 #endif
                 if (Logger != nullptr)
                 {
-                    std::fprintf(Logger, "[Command] Failed to poll(0, POLLIN) (%d)\n", GetSocketError());
-                    std::fflush(Logger);
+                    Logger::Instance().Log("[Command] Failed to poll(0, POLLIN) (%d)", GetSocketError());
                 }
 
                 return WaitError;
@@ -325,8 +318,7 @@ public:
             {
                 if (Logger != nullptr)
                 {
-                    std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Repeat call.\n");
-                    std::fflush(Logger);
+                    Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Repeat call.");
                 }
 
                 goto ReceiveCommand;
@@ -334,8 +326,7 @@ public:
 
             if (Logger != nullptr)
             {
-                std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
-                std::fflush(Logger);
+                Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
             }
 
             return WaitError;
@@ -363,8 +354,7 @@ public:
                     {
                         if (Logger != nullptr)
                         {
-                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
-                            std::fflush(Logger);
+                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
                         }
 
                         goto ReceiveBody;
@@ -372,8 +362,7 @@ public:
 
                     if (Logger != nullptr)
                     {
-                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
-                        std::fflush(Logger);
+                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
                     }
 
                     return WaitError;
@@ -401,8 +390,7 @@ public:
                     {
                         if (Logger != nullptr)
                         {
-                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
-                            std::fflush(Logger);
+                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
                         }
 
                         goto ReceiveBody;
@@ -410,8 +398,7 @@ public:
 
                     if (Logger != nullptr)
                     {
-                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
-                        std::fflush(Logger);
+                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
                     }
 
                     return WaitError;
@@ -438,8 +425,7 @@ public:
                     {
                         if (Logger != nullptr)
                         {
-                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
-                            std::fflush(Logger);
+                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
                         }
 
                         goto ReceiveBody;
@@ -447,8 +433,7 @@ public:
 
                     if (Logger != nullptr)
                     {
-                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
-                        std::fflush(Logger);
+                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
                     }
 
                     return WaitError;
@@ -476,8 +461,7 @@ public:
                     {
                         if (Logger != nullptr)
                         {
-                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
-                            std::fflush(Logger);
+                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
                         }
 
                         goto ReceiveBody;
@@ -485,8 +469,7 @@ public:
 
                     if (Logger != nullptr)
                     {
-                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
-                        std::fflush(Logger);
+                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
                     }
 
                     return WaitError;
@@ -515,8 +498,7 @@ public:
                     {
                         if (Logger != nullptr)
                         {
-                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
-                            std::fflush(Logger);
+                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
                         }
 
                         goto ReceiveBody;
@@ -524,8 +506,7 @@ public:
 
                     if (Logger != nullptr)
                     {
-                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
-                        std::fflush(Logger);
+                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
                     }
 
                     return WaitError;
@@ -554,8 +535,7 @@ public:
                     {
                         if (Logger != nullptr)
                         {
-                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
-                            std::fflush(Logger);
+                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
                         }
 
                         goto ReceiveBody;
@@ -563,8 +543,7 @@ public:
 
                     if (Logger != nullptr)
                     {
-                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
-                        std::fflush(Logger);
+                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
                     }
 
                     return WaitError;
@@ -591,8 +570,7 @@ public:
                     {
                         if (Logger != nullptr)
                         {
-                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
-                            std::fflush(Logger);
+                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
                         }
 
                         goto ReceiveBody;
@@ -600,8 +578,7 @@ public:
 
                     if (Logger != nullptr)
                     {
-                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
-                        std::fflush(Logger);
+                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
                     }
 
                     return WaitError;
@@ -628,8 +605,7 @@ public:
                     {
                         if (Logger != nullptr)
                         {
-                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
-                            std::fflush(Logger);
+                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
                         }
 
                         goto ReceiveBody;
@@ -637,8 +613,7 @@ public:
 
                     if (Logger != nullptr)
                     {
-                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
-                        std::fflush(Logger);
+                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
                     }
 
                     return WaitError;
@@ -665,8 +640,7 @@ public:
                     {
                         if (Logger != nullptr)
                         {
-                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
-                            std::fflush(Logger);
+                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
                         }
 
                         goto ReceiveBody;
@@ -674,8 +648,7 @@ public:
 
                     if (Logger != nullptr)
                     {
-                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
-                        std::fflush(Logger);
+                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
                     }
 
                     return WaitError;
@@ -703,8 +676,7 @@ public:
                     {
                         if (Logger != nullptr)
                         {
-                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
-                            std::fflush(Logger);
+                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
                         }
 
                         goto ReceiveBody;
@@ -712,8 +684,7 @@ public:
 
                     if (Logger != nullptr)
                     {
-                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
-                        std::fflush(Logger);
+                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
                     }
 
                     return WaitError;
@@ -741,8 +712,7 @@ public:
                     {
                         if (Logger != nullptr)
                         {
-                            std::fprintf(Logger, "[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.\n", command);
-                            std::fflush(Logger);
+                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
                         }
 
                         goto ReceiveBody;
@@ -750,8 +720,7 @@ public:
 
                     if (Logger != nullptr)
                     {
-                        std::fprintf(Logger, "[Command] Failed to recv(MSG_WAITALL) (%d)\n", GetSocketError());
-                        std::fflush(Logger);
+                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
                     }
 
                     return WaitError;
@@ -768,8 +737,7 @@ public:
             {
                 if (Logger != nullptr)
                 {
-                    std::fprintf(Logger, "[Command] Failed to recognize command(%hhu)\n", command);
-                    std::fflush(Logger);
+                    Logger::Instance().Log("[Command] Failed to recognize command(%hhu)", command);
                 }
 
                 return WaitError;

@@ -100,6 +100,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="command.hpp" />
+    <ClInclude Include="logger.hpp" />
     <ClInclude Include="main.hpp" />
     <ClInclude Include="voice.hpp" />
   </ItemGroup>

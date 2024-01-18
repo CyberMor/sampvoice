@@ -22,6 +22,9 @@
     <ClInclude Include="command.hpp">
       <Filter>Исходные файлы\service</Filter>
     </ClInclude>
+    <ClInclude Include="logger.hpp">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

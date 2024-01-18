@@ -125,13 +125,17 @@ public:
 
     bool HasParameter(const size_t index) const noexcept
     {
+        assert(index < _parameters.size());
+
         return !_parameters[index].first.empty() &&
-            !_parameters[index].second.empty();
+               !_parameters[index].second.empty();
     }
 
     template <class String>
     bool SetParameter(const size_t index, String&& value) noexcept
     {
+        assert(index < _parameters.size());
+
         if (_parameters[index].first.empty())
             return false;
 
@@ -144,11 +148,15 @@ public:
 
     const std::string& GetKeyByIndex(const size_t index) const noexcept
     {
+        assert(index < _parameters.size());
+
         return _parameters[index].first;
     }
 
     const std::string& GetValueByIndex(const size_t index) const noexcept
     {
+        assert(index < _parameters.size());
+
         return _parameters[index].second;
     }
 

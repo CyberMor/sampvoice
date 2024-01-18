@@ -7,6 +7,8 @@
     Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
+#include <mutex>
+
 #include <system/types.hpp>
 #include <memory/structures/array.hpp>
 #include <memory/structures/bitset.hpp>
@@ -18,6 +20,7 @@
 #include "command.hpp"
 #include "voice.hpp"
 
+#include "logger.hpp"
 #include "main.hpp"
 
 // Types
@@ -72,7 +75,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const PlayerCreate*>(buffer);
 
-                if (gControlTrace) std::printf("[PlayerCreate] player(%hu) key(0x%X)\n",
+                if (gControlTrace) Logger::Instance().Log("[PlayerCreate] player(%hu) key(0x%X)",
                     content.player, content.key);
 
                 if (content.player < kMaxPlayers && content.key != 0)
@@ -89,7 +92,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const PlayerListener*>(buffer);
 
-                if (gControlTrace) std::printf("[PlayerListener] player(%hu) status(%hhu)\n",
+                if (gControlTrace) Logger::Instance().Log("[PlayerListener] player(%hu) status(%hhu)",
                     content.player, content.status);
 
                 if (content.player < kMaxPlayers)
@@ -106,7 +109,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const PlayerSpeaker*>(buffer);
 
-                if (gControlTrace) std::printf("[PlayerSpeaker] player(%hu) channels(0x%X)\n",
+                if (gControlTrace) Logger::Instance().Log("[PlayerSpeaker] player(%hu) channels(0x%X)",
                     content.player, content.channels);
 
                 if (content.player < kMaxPlayers)
@@ -123,7 +126,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const PlayerAttachStream*>(buffer);
 
-                if (gControlTrace) std::printf("[PlayerAttachStream] player(%hu) channels(0x%X) stream(%hu)\n",
+                if (gControlTrace) Logger::Instance().Log("[PlayerAttachStream] player(%hu) channels(0x%X) stream(%hu)",
                     content.player, content.channels, content.stream);
 
                 if (content.player < kMaxPlayers && content.channels != 0 && content.stream < kMaxStreams)
@@ -143,7 +146,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const PlayerDetachStream*>(buffer);
 
-                if (gControlTrace) std::printf("[PlayerDetachStream] player(%hu) channels(0x%X) stream(%hu)\n",
+                if (gControlTrace) Logger::Instance().Log("[PlayerDetachStream] player(%hu) channels(0x%X) stream(%hu)",
                     content.player, content.channels, content.stream);
 
                 if (content.player < kMaxPlayers && content.channels != 0 && content.stream < kMaxStreams)
@@ -163,7 +166,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const PlayerDelete*>(buffer);
 
-                if (gControlTrace) std::printf("[PlayerDelete] player(%hu)\n", content.player);
+                if (gControlTrace) Logger::Instance().Log("[PlayerDelete] player(%hu)", content.player);
 
                 if (content.player < kMaxPlayers)
                 {
@@ -189,7 +192,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const StreamCreate*>(buffer);
 
-                if (gControlTrace) std::printf("[StreamCreate] stream(%hu)\n", content.stream);
+                if (gControlTrace) Logger::Instance().Log("[StreamCreate] stream(%hu)", content.stream);
 
                 if (content.stream < kMaxStreams)
                 {
@@ -202,7 +205,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const StreamTransiter*>(buffer);
 
-                if (gControlTrace) std::printf("[StreamTransiter] stream(%hu) status(%hhu)\n",
+                if (gControlTrace) Logger::Instance().Log("[StreamTransiter] stream(%hu) status(%hhu)",
                     content.stream, content.status);
 
                 if (content.stream < kMaxStreams)
@@ -219,7 +222,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const StreamAttachListener*>(buffer);
 
-                if (gControlTrace) std::printf("[StreamAttachListener] stream(%hu) player(%hu)\n",
+                if (gControlTrace) Logger::Instance().Log("[StreamAttachListener] stream(%hu) player(%hu)",
                     content.stream, content.player);
 
                 if (content.stream < kMaxStreams && content.player < kMaxPlayers)
@@ -236,7 +239,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const StreamDetachListener*>(buffer);
 
-                if (gControlTrace) std::printf("[StreamDetachListener] stream(%hu) player(%hu)\n",
+                if (gControlTrace) Logger::Instance().Log("[StreamDetachListener] stream(%hu) player(%hu)",
                     content.stream, content.player);
 
                 if (content.stream < kMaxStreams && content.player < kMaxPlayers)
@@ -253,7 +256,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const StreamDelete*>(buffer);
 
-                if (gControlTrace) std::printf("[StreamDelete] stream(%hu)\n", content.stream);
+                if (gControlTrace) Logger::Instance().Log("[StreamDelete] stream(%hu)", content.stream);
 
                 if (content.stream < kMaxStreams)
                 {
@@ -420,14 +423,20 @@ int main(const int argc, const char* const* const argv) noexcept
         }
     }
 
-    std::printf("[Main] Voice Server %hhu.%hhu.%hu starting...\n",
+    if (!Logger::Instance().Initialize("voice.log"))
+    {
+        std::printf("[Main] Failed to initialize logger.\n");
+        return -1;
+    }
+
+    Logger::Instance().Log("[Main] Voice Server %hhu.%hhu.%hu starting...",
         GetVersionMajor(kCurrentVersion),
         GetVersionMinor(kCurrentVersion),
         GetVersionPatch(kCurrentVersion));
 
     if (!SocketLibraryStartup())
     {
-        std::printf("[Main] Failed to initialize socket library.\n");
+        Logger::Instance().Log("[Main] Failed to initialize socket library.");
         return -1;
     }
 
@@ -447,7 +456,7 @@ int main(const int argc, const char* const* const argv) noexcept
         PARAMETERS_COUNT
     };
 
-    std::printf("[Main] Loading 'voice.cfg' file...\n");
+    Logger::Instance().Log("[Main] Loading 'voice.cfg' file...");
 
     Config config;
     {
@@ -465,7 +474,7 @@ int main(const int argc, const char* const* const argv) noexcept
 
         if (config.Load("voice.cfg") < 0)
         {
-            std::printf("[Main] Failed to load 'voice.cfg'.\n");
+            Logger::Instance().Log("[Main] Failed to load 'voice.cfg'.");
             return -1;
         }
     }
@@ -490,17 +499,17 @@ int main(const int argc, const char* const* const argv) noexcept
                 command.SetPort(std::stoi(config.GetValueByIndex(PARAMETER_COMMAND_PORT)));
 
             if (char buffer[IPv4Address::LengthLimit + 1]; control.Print(buffer))
-                std::printf("[Main] Connecting to control server '%s'...\n", buffer);
+                Logger::Instance().Log("[Main] Connecting to control server '%s'...", buffer);
 
             CommandService::Instance().Logger = stdout;
 
             if (!CommandService::Instance().Initialize(command, control))
             {
-                std::printf("[Main] Failed to initialize command service.\n");
+                Logger::Instance().Log("[Main] Failed to initialize command service.");
                 return -1;
             }
 
-            std::printf("[Main] Connection to control server established.\n");
+            Logger::Instance().Log("[Main] Connection to control server established.");
         }
 
         // Voice Service
@@ -515,18 +524,18 @@ int main(const int argc, const char* const* const argv) noexcept
                 voice.SetPort(std::stoi(config.GetValueByIndex(PARAMETER_VOICE_PORT)));
 
             if (char buffer[IPv4Address::LengthLimit + 1]; voice.Print(buffer))
-                std::printf("[Main] Opening voice service at '%s'...\n", buffer);
+                Logger::Instance().Log("[Main] Opening voice service at '%s'...", buffer);
 
             VoiceService::Instance().Logger = stdout;
 
             if (!VoiceService::Instance().Initialize(voice))
             {
-                std::printf("[Main] Failed to initialize voice service.\n");
+                Logger::Instance().Log("[Main] Failed to initialize voice service.");
                 CommandService::Instance().Deinitialize();
                 return -1;
             }
 
-            std::printf("[Main] Voice service opened.\n");
+            Logger::Instance().Log("[Main] Voice service opened.");
         }
 
         // Workers
@@ -554,7 +563,7 @@ int main(const int argc, const char* const* const argv) noexcept
 
         gWorkStatus.store(true, std::memory_order_release);
 
-        std::printf("[Main] Launching %d voice workers...\n", workers);
+        Logger::Instance().Log("[Main] Launching %d voice workers...", workers);
 
         for (int i = 0; i != workers; ++i)
         {
@@ -566,7 +575,7 @@ int main(const int argc, const char* const* const argv) noexcept
         // Stopping and Deinitialization
         // -----------------------------------------------
 
-        std::printf("[Main] Finishing work...\n");
+        Logger::Instance().Log("[Main] Finishing work...");
 
         gWorkStatus.store(false, std::memory_order_release);
 

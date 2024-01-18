@@ -123,7 +123,7 @@ public:
             if (const long pagesize = sysconf(_SC_PAGESIZE); pagesize > 0)
             {
                 const adr_t begin = reinterpret_cast<adr_t>
-                    (reinterpret_cast<uptrint_t>(_address) & -static_cast<uptrint_t>(pagesize));
+                    (reinterpret_cast<uptrint_t>(_address) & ~(static_cast<uptrint_t>(pagesize) - 1));
                 const adr_t end = static_cast<adr_t>(_address) + Size;
 
                 if (mprotect(begin, end - begin, PROT_READ | PROT_WRITE | PROT_EXEC) == 0)
@@ -184,7 +184,7 @@ inline bool UnprotectMemory(const ptr_t address, const size_t length) noexcept
     if (const long pagesize = sysconf(_SC_PAGESIZE); pagesize > 0)
     {
         const adr_t begin = reinterpret_cast<adr_t>
-            (reinterpret_cast<uptrint_t>(address) & -static_cast<uptrint_t>(pagesize));
+            (reinterpret_cast<uptrint_t>(address) & ~(static_cast<uptrint_t>(pagesize) - 1));
         const adr_t end = static_cast<adr_t>(address) + length;
 
         if (mprotect(begin, end - begin, PROT_READ | PROT_WRITE | PROT_EXEC) == 0)
