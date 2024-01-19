@@ -897,7 +897,10 @@
     <ClCompile Include="libraries\samp\CDeathWindow.cpp" />
     <ClCompile Include="libraries\samp\CDialog.cpp" />
     <ClCompile Include="libraries\samp\CEntitySA.cpp" />
-    <ClCompile Include="libraries\samp\CFont.cpp" />
+    <ClCompile Include="libraries\samp\CFont.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="libraries\samp\CFonts.cpp" />
     <ClCompile Include="libraries\samp\CGameSA.cpp" />
     <ClCompile Include="libraries\samp\CGangZonePool.cpp" />
