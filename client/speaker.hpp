@@ -51,7 +51,7 @@ public:
         if (BASS_IsStarted() == FALSE)
             return false;
 
-        Logger::Instance().LogToFile("[sv:dbg:speaker:initialize] : module initializing...");
+        Logger::Instance().LogToFile("[sv:dbg:speaker:initialize] module initializing...");
 
         {
             BASS_DEVICEINFO device_info;
@@ -62,7 +62,7 @@ public:
                 const bool  device_loopback = device_info.flags & BASS_DEVICE_LOOPBACK;
                 const DWORD device_type     = device_info.flags & BASS_DEVICE_TYPE_MASK;
 
-                Logger::Instance().LogToFile("[sv:dbg:speaker:initialize] : device detect "
+                Logger::Instance().LogToFile("[sv:dbg:speaker:initialize] device detect "
                     "[ id(%d) enabled(%hhu) loopback(%hhu) name(%s) type(0x%X) ]",
                     device_number, device_enabled, device_loopback, device_info.name != nullptr ?
                     device_info.name : "none", device_type);
@@ -74,7 +74,7 @@ public:
 
         if (_devices.empty())
         {
-            Logger::Instance().LogToFile("[sv:inf:speaker:initialize] : failed to find microphones");
+            Logger::Instance().LogToFile("[sv:inf:speaker:initialize] failed to find microphones");
             return false;
         }
 
@@ -99,56 +99,56 @@ public:
             _encoder = opus_encoder_create(kFrequency, 1, OPUS_APPLICATION_VOIP, &error);
             if (_encoder == nullptr || error < 0)
             {
-                Logger::Instance().LogToFile("[sv:err:speaker:initialize] : failed to "
+                Logger::Instance().LogToFile("[sv:err:speaker:initialize] failed to "
                     "create encoder (code:%d)", error);
                 return false;
             }
         }
         if (const int error = opus_encoder_ctl(_encoder, OPUS_SET_COMPLEXITY(10)); error < 0)
         {
-            Logger::Instance().LogToFile("[sv:err:speaker:initialize] : failed to "
+            Logger::Instance().LogToFile("[sv:err:speaker:initialize] failed to "
                 "set complexity for encoder (code:%d)", error);
             return false;
         }
         if (const int error = opus_encoder_ctl(_encoder, OPUS_SET_BITRATE(OPUS_BITRATE_MAX)); error < 0)
         {
-            Logger::Instance().LogToFile("[sv:err:speaker:initialize] : failed to "
+            Logger::Instance().LogToFile("[sv:err:speaker:initialize] failed to "
                 "set bitrate for encoder (code:%d)", error);
             return false;
         }
         if (const int error = opus_encoder_ctl(_encoder, OPUS_SET_FORCE_CHANNELS(1)); error < 0)
         {
-            Logger::Instance().LogToFile("[sv:err:speaker:initialize] : failed to "
+            Logger::Instance().LogToFile("[sv:err:speaker:initialize] failed to "
                 "set count channels for encoder (code:%d)", error);
             return false;
         }
         if (const int error = opus_encoder_ctl(_encoder, OPUS_SET_SIGNAL(OPUS_SIGNAL_VOICE)); error < 0)
         {
-            Logger::Instance().LogToFile("[sv:err:speaker:initialize] : failed to "
+            Logger::Instance().LogToFile("[sv:err:speaker:initialize] failed to "
                 "set signal type for encoder (code:%d)", error);
             return false;
         }
         if (const int error = opus_encoder_ctl(_encoder, OPUS_SET_INBAND_FEC(0)); error < 0)
         {
-            Logger::Instance().LogToFile("[sv:err:speaker:initialize] : failed to "
+            Logger::Instance().LogToFile("[sv:err:speaker:initialize] failed to "
                 "set inband fec for encoder (code:%d)", error);
             return false;
         }
         if (const int error = opus_encoder_ctl(_encoder, OPUS_SET_DTX(0)); error < 0)
         {
-            Logger::Instance().LogToFile("[sv:err:speaker:initialize] : failed to "
+            Logger::Instance().LogToFile("[sv:err:speaker:initialize] failed to "
                 "set dtx for encoder (code:%d)", error);
             return false;
         }
         if (const int error = opus_encoder_ctl(_encoder, OPUS_SET_LSB_DEPTH(16)); error < 0)
         {
-            Logger::Instance().LogToFile("[sv:err:speaker:initialize] : failed to "
+            Logger::Instance().LogToFile("[sv:err:speaker:initialize] failed to "
                 "set lsb depth for encoder (code:%d)", error);
             return false;
         }
         if (const int error = opus_encoder_ctl(_encoder, OPUS_SET_PREDICTION_DISABLED(TRUE)); error < 0)
         {
-            Logger::Instance().LogToFile("[sv:err:speaker:initialize] : failed to "
+            Logger::Instance().LogToFile("[sv:err:speaker:initialize] failed to "
                 "disable prediction for encoder (code:%d)", error);
             return false;
         }
@@ -200,7 +200,7 @@ public:
             }
             if (status == FALSE || _device == None<size_t>)
             {
-                Logger::Instance().LogToFile("[sv:err:speaker:initialize] : failed to "
+                Logger::Instance().LogToFile("[sv:err:speaker:initialize] failed to "
                     "initialize device (code:%d)", BASS_ErrorGetCode());
                 return false;
             }
@@ -213,7 +213,7 @@ public:
             reinterpret_cast<RECORDPROC*>(OnProcess), nullptr);
         if (_channel_record == NULL)
         {
-            Logger::Instance().LogToFile("[sv:err:speaker:initialize] : failed to create speaker "
+            Logger::Instance().LogToFile("[sv:err:speaker:initialize] failed to create speaker "
                 "stream (code:%d)", BASS_ErrorGetCode());
             return false;
         }
@@ -229,7 +229,7 @@ public:
 
         if (BASS_ChannelSetAttribute(_channel_record, BASS_ATTRIB_GRANULE, kFrameSamples) == FALSE)
         {
-            Logger::Instance().LogToFile("[sv:err:speaker:initialize] : failed to set "
+            Logger::Instance().LogToFile("[sv:err:speaker:initialize] failed to set "
                 "'BASS_ATTRIB_GRANULE' parameter (code:%d)", BASS_ErrorGetCode());
             return false;
         }
@@ -237,14 +237,14 @@ public:
         _channel_check = BASS_StreamCreate(kFrequency, 1, BASS_SAMPLE_MONO | BASS_SAMPLE_FLOAT, STREAMPROC_PUSH, nullptr);
         if (_channel_check == NULL)
         {
-            Logger::Instance().LogToFile("[sv:err:speaker:initialize] : failed to create "
+            Logger::Instance().LogToFile("[sv:err:speaker:initialize] failed to create "
                 "check stream (code:%d)", BASS_ErrorGetCode());
             return false;
         }
 
         SyncConfigs();
 
-        Logger::Instance().LogToFile("[sv:dbg:speaker:initialize] : module initialized");
+        Logger::Instance().LogToFile("[sv:dbg:speaker:initialize] module initialized");
 
         devices_scope.Release();
         encoder_scope.Release();
@@ -257,7 +257,7 @@ public:
 
     void Deinitialize() noexcept
     {
-        Logger::Instance().LogToFile("[sv:dbg:speaker:deinitialize] : module releasing...");
+        Logger::Instance().LogToFile("[sv:dbg:speaker:deinitialize] module releasing...");
 
         StopRecording();
         StopChecking();
@@ -276,7 +276,7 @@ public:
         _device = None<size_t>;
         _devices.clear();
 
-        Logger::Instance().LogToFile("[sv:dbg:speaker:deinitialize] : module released");
+        Logger::Instance().LogToFile("[sv:dbg:speaker:deinitialize] module released");
     }
 
 public:
@@ -316,7 +316,7 @@ public:
 
             if (BASS_ChannelStart(_channel_record) == FALSE)
             {
-                Logger::Instance().LogToFile("[sv:err:speaker] : failed to "
+                Logger::Instance().LogToFile("[sv:err:speaker] failed to "
                     "play record channel (code:%d)", BASS_ErrorGetCode());
             }
         }
@@ -339,7 +339,7 @@ public:
         {
             if (BASS_ChannelPause(_channel_record) == FALSE)
             {
-                Logger::Instance().LogToFile("[sv:err:speaker] : failed to "
+                Logger::Instance().LogToFile("[sv:err:speaker] failed to "
                     "pause record channel (code:%d)", BASS_ErrorGetCode());
             }
         }
@@ -355,7 +355,7 @@ public:
         if (!PluginConfig::Instance().IsMicroEnable())
             return false;
 
-        Logger::Instance().LogToFile("[sv:dbg:speaker] : checking device starting...");
+        Logger::Instance().LogToFile("[sv:dbg:speaker] checking device starting...");
 
         if (_is_recording == false)
         {
@@ -364,14 +364,14 @@ public:
 
             if (BASS_ChannelStart(_channel_record) == FALSE)
             {
-                Logger::Instance().LogToFile("[sv:err:speaker] : failed to "
+                Logger::Instance().LogToFile("[sv:err:speaker] failed to "
                     "play record channel (code:%d)", BASS_ErrorGetCode());
             }
         }
 
         if (BASS_ChannelPlay(_channel_check, TRUE) == FALSE)
         {
-            Logger::Instance().LogToFile("[sv:err:speaker] : failed to "
+            Logger::Instance().LogToFile("[sv:err:speaker] failed to "
                 "play checking channel (code:%d)", BASS_ErrorGetCode());
         }
 
@@ -389,11 +389,11 @@ public:
     {
         if (_is_checking == true)
         {
-            Logger::Instance().LogToFile("[sv:dbg:speaker] : checking device stoped");
+            Logger::Instance().LogToFile("[sv:dbg:speaker] checking device stoped");
 
             if (BASS_ChannelStop(_channel_check) == FALSE)
             {
-                Logger::Instance().LogToFile("[sv:err:speaker] : failed to "
+                Logger::Instance().LogToFile("[sv:err:speaker] failed to "
                     "stop checking channel (code:%d)", BASS_ErrorGetCode());
             }
 
@@ -403,7 +403,7 @@ public:
         {
             if (BASS_ChannelPause(_channel_record) == FALSE)
             {
-                Logger::Instance().LogToFile("[sv:err:speaker] : failed to "
+                Logger::Instance().LogToFile("[sv:err:speaker] failed to "
                     "pause record channel (code:%d)", BASS_ErrorGetCode());
             }
         }

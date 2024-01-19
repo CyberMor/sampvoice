@@ -51,31 +51,31 @@ public:
 
     bool Initialize() noexcept
     {
-        Logger::Instance().LogToFile("[sv:dbg:listener:initialize] : module initializing...");
+        Logger::Instance().LogToFile("[sv:dbg:listener:initialize] module initializing...");
 
         if (!_bass_initialization_hook.Initialize(Addresses::Instance().BassInitialization(), BassInitializationHook))
         {
-            Logger::Instance().LogToFile("[sv:err:listener:initialize] : failed to initialize hook");
+            Logger::Instance().LogToFile("[sv:err:listener:initialize] failed to initialize hook");
             _bass_initialization_hook.Deinitialize();
             return false;
         }
 
         FillWithNops<8>(Addresses::Instance().BassConfiguration());
 
-        Logger::Instance().LogToFile("[sv:dbg:listener:initialize] : module initialized");
+        Logger::Instance().LogToFile("[sv:dbg:listener:initialize] module initialized");
 
         return true;
     }
 
     void Deinitialize() noexcept
     {
-        Logger::Instance().LogToFile("[sv:dbg:listener:deinitialize] : module releasing...");
+        Logger::Instance().LogToFile("[sv:dbg:listener:deinitialize] module releasing...");
 
         _bass_initialization_hook.Deinitialize();
 
         _is_loaded = false;
 
-        Logger::Instance().LogToFile("[sv:dbg:listener:deinitialize] : module released");
+        Logger::Instance().LogToFile("[sv:dbg:listener:deinitialize] module released");
     }
 
 public:
@@ -160,7 +160,7 @@ public:
                     balancer_fx_handle = BASS_ChannelSetFX(_channel_device, BASS_FX_BFX_COMPRESSOR2, 0);
                     if (balancer_fx_handle == NULL)
                     {
-                        Logger::Instance().LogToFile("[sv:err:listener:setsoundbalancer] : failed to "
+                        Logger::Instance().LogToFile("[sv:err:listener:setsoundbalancer] failed to "
                             "set balancer effect (code:%d)", BASS_ErrorGetCode());
                         return PluginConfig::Instance().SetSoundBalancer(false);
                     }
@@ -176,7 +176,7 @@ public:
 
                     if (BASS_FXSetParameters(balancer_fx_handle, &balancer_parameters) == FALSE)
                     {
-                        Logger::Instance().LogToFile("[sv:err:listener:setsoundbalancer] : failed to "
+                        Logger::Instance().LogToFile("[sv:err:listener:setsoundbalancer] failed to "
                             "set parameters (code:%d)", BASS_ErrorGetCode());
                         BASS_ChannelRemoveFX(_channel_device, balancer_fx_handle);
                         balancer_fx_handle = NULL;
@@ -209,7 +209,7 @@ public:
                     filter_fx_handle = BASS_ChannelSetFX(_channel_device, BASS_FX_BFX_BQF, 0);
                     if (filter_fx_handle == NULL)
                     {
-                        Logger::Instance().LogToFile("[sv:err:listener:setsoundfilter] : failed to "
+                        Logger::Instance().LogToFile("[sv:err:listener:setsoundfilter] failed to "
                             "set filter effect (code:%d)", BASS_ErrorGetCode());
                         return PluginConfig::Instance().SetSoundFilter(false);
                     }
@@ -227,7 +227,7 @@ public:
 
                     if (BASS_FXSetParameters(filter_fx_handle, &filter_parameters) == FALSE)
                     {
-                        Logger::Instance().LogToFile("[sv:err:listener:setsoundfilter] : failed to "
+                        Logger::Instance().LogToFile("[sv:err:listener:setsoundfilter] failed to "
                             "set parameters (code:%d)", BASS_ErrorGetCode());
                         BASS_ChannelRemoveFX(_channel_device, filter_fx_handle);
                         filter_fx_handle = NULL;
@@ -269,44 +269,44 @@ private:
     static BOOL WINAPI BassInitializationHook(const int device, const DWORD frequency,
         const DWORD flags, const HWND window, const GUID* const dsguid) noexcept
     {
-        Logger::Instance().LogToFile("[sv:dbg:listener:load] : module loading...");
+        Logger::Instance().LogToFile("[sv:dbg:listener:load] module loading...");
 
         if (BASS_SetConfig(BASS_CONFIG_UNICODE, TRUE) == FALSE)
-            Logger::Instance().LogToFile("[sv:err:listener:load] : failed to "
+            Logger::Instance().LogToFile("[sv:err:listener:load] failed to "
                 "set 'BASS_CONFIG_UNICODE' parameter (code:%d)", BASS_ErrorGetCode());
         if (BASS_SetConfig(BASS_CONFIG_UPDATEPERIOD, 0) == FALSE)
-            Logger::Instance().LogToFile("[sv:err:listener:load] : failed to "
+            Logger::Instance().LogToFile("[sv:err:listener:load] failed to "
                 "set 'BASS_CONFIG_UPDATEPERIOD' parameter (code:%d)", BASS_ErrorGetCode());
         if (BASS_SetConfig(BASS_CONFIG_UPDATETHREADS, 0) == FALSE)
-            Logger::Instance().LogToFile("[sv:err:listener:load] : failed to "
+            Logger::Instance().LogToFile("[sv:err:listener:load] failed to "
                 "set 'BASS_CONFIG_UPDATETHREADS' parameter (code:%d)", BASS_ErrorGetCode());
         if (BASS_SetConfig(BASS_CONFIG_DEV_PERIOD, kInterval) == FALSE)
-            Logger::Instance().LogToFile("[sv:err:listener:load] : failed to "
+            Logger::Instance().LogToFile("[sv:err:listener:load] failed to "
                 "set 'BASS_CONFIG_DEV_PERIOD' parameter (code:%d)", BASS_ErrorGetCode());
         if (BASS_SetConfig(BASS_CONFIG_DEV_BUFFER, kSourcePlayingBuffer * kInterval) == FALSE)
-            Logger::Instance().LogToFile("[sv:err:listener:load] : failed to "
+            Logger::Instance().LogToFile("[sv:err:listener:load] failed to "
                 "set 'BASS_CONFIG_DEV_BUFFER' parameter (code:%d)", BASS_ErrorGetCode());
         if (BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_LIGHT) == FALSE)
-            Logger::Instance().LogToFile("[sv:err:listener:load] : failed to "
+            Logger::Instance().LogToFile("[sv:err:listener:load] failed to "
                 "set 'BASS_CONFIG_3DALGORITHM' parameter (code:%d)", BASS_ErrorGetCode());
 
-        Logger::Instance().LogToFile("[sv:dbg:listener:load] : hooked function BASS_Init(device:%d, "
+        Logger::Instance().LogToFile("[sv:dbg:listener:load] hooked function BASS_Init(device:%d, "
             "frequency:%u, flags:0x%X, window:0x%X, dsguid:0x%X)...", device, frequency, flags, window, dsguid);
 
-        Logger::Instance().LogToFile("[sv:dbg:listener:load] : calling function BASS_Init(device:%d, "
+        Logger::Instance().LogToFile("[sv:dbg:listener:load] calling function BASS_Init(device:%d, "
             "frequency:%u, flags:0x%X, window:0x%X, dsguid:0x%X)...",
             device, kFrequency, (BASS_DEVICE_MONO | BASS_DEVICE_3D) | flags, window, dsguid);
 
         if (BASS_Init(device, kFrequency, (BASS_DEVICE_MONO | BASS_DEVICE_3D) | flags, window, dsguid) == FALSE)
         {
-            Logger::Instance().LogToFile("[sv:err:listener:load] : failed to "
+            Logger::Instance().LogToFile("[sv:err:listener:load] failed to "
                 "initialize bass library (code:%d)", BASS_ErrorGetCode());
             return FALSE;
         }
 
         if (HIWORD(BASS_FX_GetVersion()) != BASSVERSION)
         {
-            Logger::Instance().LogToFile("[sv:err:listener:load] : failed to "
+            Logger::Instance().LogToFile("[sv:err:listener:load] failed to "
                 "check version bassfx library (code:%d)", BASS_ErrorGetCode());
             return FALSE;
         }
@@ -314,12 +314,12 @@ private:
         Instance()._channel_device = BASS_StreamCreate(0, 0, NULL, STREAMPROC_DEVICE, nullptr);
         if (Instance()._channel_device == NULL)
         {
-            Logger::Instance().LogToFile("[sv:err:listener:load] : failed to "
+            Logger::Instance().LogToFile("[sv:err:listener:load] failed to "
                 "create device output channel (code:%d)", BASS_ErrorGetCode());
             return FALSE;
         }
 
-        Logger::Instance().LogToFile("[sv:dbg:listener:load] : volume(%.2f)", BASS_GetVolume());
+        Logger::Instance().LogToFile("[sv:dbg:listener:load] volume(%.2f)", BASS_GetVolume());
 
         const BASS_3DVECTOR kZeroVector { 0, 0, 0 };
 
@@ -327,7 +327,7 @@ private:
         BASS_Set3DPosition(&kZeroVector, &kZeroVector, &kZeroVector, &kZeroVector);
         BASS_Apply3D();
 
-        Logger::Instance().LogToFile("[sv:dbg:listener:load] : module loaded");
+        Logger::Instance().LogToFile("[sv:dbg:listener:load] module loaded");
 
         Instance()._is_loaded = true;
         Instance().SyncConfigs();

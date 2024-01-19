@@ -254,7 +254,11 @@ private:
             {
                 auto& content = *reinterpret_cast<ClientInitialize*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:ClientInitialize] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -270,7 +274,11 @@ private:
             {
                 auto& content = *reinterpret_cast<SpeakerActiveChannels*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:SpeakerActiveChannels] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -283,7 +291,11 @@ private:
             {
                 auto& content = *reinterpret_cast<SpeakerPlayedChannels*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:SpeakerPlayedChannels] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -296,7 +308,11 @@ private:
             {
                 auto& content = *reinterpret_cast<SpeakerSetKey*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:SpeakerSetKey] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -309,7 +325,11 @@ private:
             {
                 auto& content = *reinterpret_cast<StreamCreate*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:StreamCreate] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -323,7 +343,11 @@ private:
             {
                 auto& content = *reinterpret_cast<StreamSetVolume*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:StreamSetVolume] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -337,7 +361,11 @@ private:
             {
                 auto& content = *reinterpret_cast<StreamSetPanning*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:StreamSetPanning] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -351,7 +379,11 @@ private:
             {
                 auto& content = *reinterpret_cast<StreamSetDistance*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:StreamSetDistance] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -365,7 +397,11 @@ private:
             {
                 auto& content = *reinterpret_cast<StreamSetPosition*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:StreamSetPosition] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -381,7 +417,11 @@ private:
             {
                 auto& content = *reinterpret_cast<StreamSetTarget*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:StreamSetTarget] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -395,7 +435,11 @@ private:
             {
                 auto& content = *reinterpret_cast<StreamSetEffect*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:StreamSetEffect] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -409,7 +453,11 @@ private:
             {
                 auto& content = *reinterpret_cast<StreamSetIcon*>(static_cast<adr_t>(data) + 2);
 
-                if (size <= 2 + sizeof(content)) return false;
+                if (size <= 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:StreamSetIcon] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -422,7 +470,11 @@ private:
             {
                 auto& content = *reinterpret_cast<StreamDelete*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:StreamDelete] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -435,7 +487,11 @@ private:
             {
                 auto& content = *reinterpret_cast<EffectCreate*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:EffectCreate] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -448,12 +504,21 @@ private:
             {
                 auto& content = *reinterpret_cast<EffectAppendFilter*>(static_cast<adr_t>(data) + 2);
 
+                if (size < 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:EffectAppendFilter] invalid packet size(%u)", size);
+                    return false;
+                }
+
                 switch (content.type)
                 {
                     case Filter::Chorus:
                     {
                         if (size != 2 + sizeof(content) + sizeof(ChorusParameters))
+                        {
+                            Logger::Instance().LogToFile("[err:control:EffectAppendFilter:Chorus] invalid packet size(%u)", size);
                             return false;
+                        }
 
                         if constexpr (HostEndian != NetEndian)
                         {
@@ -471,7 +536,10 @@ private:
                     case Filter::Compressor:
                     {
                         if (size != 2 + sizeof(content) + sizeof(CompressorParameters))
+                        {
+                            Logger::Instance().LogToFile("[err:control:EffectAppendFilter:Compressor] invalid packet size(%u)", size);
                             return false;
+                        }
 
                         if constexpr (HostEndian != NetEndian)
                         {
@@ -488,7 +556,10 @@ private:
                     case Filter::Distortion:
                     {
                         if (size != 2 + sizeof(content) + sizeof(DistortionParameters))
+                        {
+                            Logger::Instance().LogToFile("[err:control:EffectAppendFilter:Distortion] invalid packet size(%u)", size);
                             return false;
+                        }
 
                         if constexpr (HostEndian != NetEndian)
                         {
@@ -504,7 +575,10 @@ private:
                     case Filter::Echo:
                     {
                         if (size != 2 + sizeof(content) + sizeof(EchoParameters))
+                        {
+                            Logger::Instance().LogToFile("[err:control:EffectAppendFilter:Echo] invalid packet size(%u)", size);
                             return false;
+                        }
 
                         if constexpr (HostEndian != NetEndian)
                         {
@@ -519,7 +593,10 @@ private:
                     case Filter::Flanger:
                     {
                         if (size != 2 + sizeof(content) + sizeof(FlangerParameters))
+                        {
+                            Logger::Instance().LogToFile("[err:control:EffectAppendFilter:Flanger] invalid packet size(%u)", size);
                             return false;
+                        }
 
                         if constexpr (HostEndian != NetEndian)
                         {
@@ -537,7 +614,10 @@ private:
                     case Filter::Gargle:
                     {
                         if (size != 2 + sizeof(content) + sizeof(GargleParameters))
+                        {
+                            Logger::Instance().LogToFile("[err:control:EffectAppendFilter:Gargle] invalid packet size(%u)", size);
                             return false;
+                        }
 
                         if constexpr (HostEndian != NetEndian)
                         {
@@ -550,7 +630,10 @@ private:
                     case Filter::I3dl2reverb:
                     {
                         if (size != 2 + sizeof(content) + sizeof(I3dl2reverbParameters))
+                        {
+                            Logger::Instance().LogToFile("[err:control:EffectAppendFilter:I3dl2reverb] invalid packet size(%u)", size);
                             return false;
+                        }
 
                         if constexpr (HostEndian != NetEndian)
                         {
@@ -573,7 +656,10 @@ private:
                     case Filter::Parameq:
                     {
                         if (size != 2 + sizeof(content) + sizeof(ParameqParameters))
+                        {
+                            Logger::Instance().LogToFile("[err:control:EffectAppendFilter:Parameq] invalid packet size(%u)", size);
                             return false;
+                        }
 
                         if constexpr (HostEndian != NetEndian)
                         {
@@ -587,7 +673,10 @@ private:
                     case Filter::Reverb:
                     {
                         if (size != 2 + sizeof(content) + sizeof(ReverbParameters))
+                        {
+                            Logger::Instance().LogToFile("[err:control:EffectAppendFilter:Reverb] invalid packet size(%u)", size);
                             return false;
+                        }
 
                         if constexpr (HostEndian != NetEndian)
                         {
@@ -601,6 +690,7 @@ private:
                     }
                     default:
                     {
+                        Logger::Instance().LogToFile("[err:control:EffectAppendFilter] unknown effect type(%hhu)", content.type);
                         return false;
                     }
                 }
@@ -617,7 +707,11 @@ private:
             {
                 auto& content = *reinterpret_cast<EffectRemoveFilter*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:EffectRemoveFilter] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -631,7 +725,11 @@ private:
             {
                 auto& content = *reinterpret_cast<EffectDelete*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:EffectDelete] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -644,7 +742,11 @@ private:
             {
                 auto& content = *reinterpret_cast<UpdateKey*>(static_cast<adr_t>(data) + 2);
 
-                if (size != 2 + sizeof(content)) return false;
+                if (size != 2 + sizeof(content))
+                {
+                    Logger::Instance().LogToFile("[err:control:UpdateKey] invalid packet size(%u)", size);
+                    return false;
+                }
 
                 if constexpr (HostEndian != NetEndian)
                 {
@@ -655,6 +757,7 @@ private:
             }
             default:
             {
+                Logger::Instance().LogToFile("[err:control:packet] unknown packet type(%hhu)", static_cast<cadr_t>(data)[1]);
                 return false;
             }
         }

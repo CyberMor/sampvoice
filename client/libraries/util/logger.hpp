@@ -67,9 +67,8 @@ public:
     bool Initialize(const cstr_t path) noexcept
     {
         assert(path != nullptr);
-        if (_log_file != nullptr) std::fclose(_log_file);
-        _log_file = std::fopen(path, "at");
-        return _log_file != nullptr;
+
+        return (_log_file = (_log_file != nullptr ? std::freopen(path, "a", _log_file) : std::fopen(path, "a"))) != nullptr;
     }
 
     void Deinitialize() noexcept
@@ -94,7 +93,7 @@ public:
             const auto time_of_day = std::localtime(&c_time);
             assert(time_of_day != nullptr);
 
-            std::fprintf(_log_file, "[%.02d.%.02d.%.04d] (%.02d:%.02d:%.02d) : ",
+            std::fprintf(_log_file, "[%.02d.%.02d.%.04d](%.02d:%.02d:%.02d): ",
                 time_of_day->tm_mday, time_of_day->tm_mon + 1, time_of_day->tm_year + 1900,
                 time_of_day->tm_hour, time_of_day->tm_min, time_of_day->tm_sec);
             std::fprintf(_log_file, message, arguments...);
@@ -118,7 +117,7 @@ public:
             }
             else
             {
-                LogToFile("[inf:logger:logtochat] : message is too long to display in chat");
+                LogToFile("[inf:logger:logtochat] message is too long to display in chat");
             }
         }
     }

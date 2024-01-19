@@ -48,12 +48,12 @@ public:
 
     bool Initialize() noexcept
     {
-        Logger::Instance().LogToFile("[dbg:samp:initialize] : module initializing...");
+        Logger::Instance().LogToFile("[dbg:samp:initialize] module initializing...");
 
         if (!_samp_destruction_hook.Initialize(Addresses::Instance().SampDestruction(), SampDestructionHook) ||
             !_samp_initialization_hook.Initialize(Addresses::Instance().SampInitialization(), SampInitializationHook))
         {
-            Logger::Instance().LogToFile("[err:samp:initialize] : failed to initialize hooks");
+            Logger::Instance().LogToFile("[err:samp:initialize] failed to initialize hooks");
             _samp_initialization_hook.Deinitialize();
             _samp_destruction_hook.Deinitialize();
             return false;
@@ -61,14 +61,14 @@ public:
 
         SAMP::InitSamp(reinterpret_cast<DWORD>(Addresses::Instance().Base()));
 
-        Logger::Instance().LogToFile("[dbg:samp:initialize] : module initialized");
+        Logger::Instance().LogToFile("[dbg:samp:initialize] module initialized");
 
         return true;
     }
 
     void Deinitialize() noexcept
     {
-        Logger::Instance().LogToFile("[dbg:samp:deinitialize] : module releasing...");
+        Logger::Instance().LogToFile("[dbg:samp:deinitialize] module releasing...");
 
         _samp_initialization_hook.Deinitialize();
         _samp_destruction_hook.Deinitialize();
@@ -81,7 +81,7 @@ public:
             _is_loaded = false;
         }
 
-        Logger::Instance().LogToFile("[dbg:samp:deinitialize] : module released");
+        Logger::Instance().LogToFile("[dbg:samp:deinitialize] module released");
     }
 
 public:
@@ -105,7 +105,7 @@ public:
                 if (const auto pInputBox = SAMP::pInputBox(); pInputBox != nullptr &&
                     pInputBox->m_nCommandCount < kMaxCommands && std::strlen(name) <= kMaxCommandLength)
                 {
-                    Logger::Instance().LogToFile("[dbg:samp:addclientcommand] : command '%s' adding...", name);
+                    Logger::Instance().LogToFile("[dbg:samp:addclientcommand] command '%s' adding...", name);
                     pInputBox->AddCommand(name, handler);
                 }
             }
@@ -192,7 +192,7 @@ void __declspec(naked) Samp::SampInitializationHook() noexcept
         sub esp, __LOCAL_SIZE
     }
 
-    Logger::Instance().LogToFile("[dbg:samp:load] : module loading...");
+    Logger::Instance().LogToFile("[dbg:samp:load] module loading...");
 
     return_address = Instance()._samp_initialization_hook.Address();
     Instance()._samp_initialization_hook.Deinitialize();
@@ -202,7 +202,7 @@ void __declspec(naked) Samp::SampInitializationHook() noexcept
 
     Instance()._is_loaded = true;
 
-    Logger::Instance().LogToFile("[dbg:samp:load] : module loaded");
+    Logger::Instance().LogToFile("[dbg:samp:load] module loaded");
 
     __asm
     {

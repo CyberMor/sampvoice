@@ -82,7 +82,7 @@ public:
 
         if (!_speaker_icon.Initialize(device, resource_speaker_icon))
         {
-            Logger::Instance().LogToFile("[sv:err:speakerlist:initialize] : failed to create speaker icon");
+            Logger::Instance().LogToFile("[sv:err:speakerlist:initialize] failed to create speaker icon");
             return false;
         }
 
@@ -91,7 +91,7 @@ public:
 
             if (!Render::Instance().ConvertBaseYValueToScreenYValue(kBaseFontSize, font_size))
             {
-                Logger::Instance().LogToFile("[sv:err:speakerlist:initialize] : failed to convert font size");
+                Logger::Instance().LogToFile("[sv:err:speakerlist:initialize] failed to convert font size");
                 _speaker_icon.Deinitialize();
                 return false;
             }
@@ -100,7 +100,7 @@ public:
                 font_size, NULL, ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
             if (_speaker_font == nullptr)
             {
-                Logger::Instance().LogToFile("[sv:err:speakerlist:initialize] : failed to create speaker font");
+                Logger::Instance().LogToFile("[sv:err:speakerlist:initialize] failed to create speaker font");
                 _speaker_icon.Deinitialize();
                 return false;
             }
@@ -123,7 +123,7 @@ public:
 
         if (!Storage::Instance().ForEachResourceFile(callback))
         {
-            Logger::Instance().LogToFile("[sv:err:speakerlist:initialize] : failed to initialize icons table");
+            Logger::Instance().LogToFile("[sv:err:speakerlist:initialize] failed to initialize icons table");
             _speaker_icon.Deinitialize();
             // delete _speaker_font;
             _speaker_font = nullptr;

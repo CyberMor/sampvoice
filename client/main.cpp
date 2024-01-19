@@ -110,13 +110,13 @@ static void MainLoop(const Time moment = Clock::Now()) noexcept
     {
         if (gGameStatus == true && game_utils::is_game_active() == false)
         {
-            Logger::Instance().LogToFile("[sv:dbg:plugin] : game paused");
+            Logger::Instance().LogToFile("[sv:dbg:plugin] game paused");
             OnGamePause();
             gGameStatus = false;
         }
         if (gGameStatus == false && game_utils::is_game_active() == true)
         {
-            Logger::Instance().LogToFile("[sv:dbg:plugin] : game resumed");
+            Logger::Instance().LogToFile("[sv:dbg:plugin] game resumed");
             OnGameResume(moment);
             gGameStatus = true;
         }
@@ -241,9 +241,9 @@ static void OnControlConnect(const cstr_t host, const uword_t port) noexcept
     gServerAddress = IPv4Address::FromString(host, port);
 
     if (!BlackList::Instance().Initialize())
-        Logger::Instance().LogToFile("[sv:err:plugin] : failed to initialize blacklist");
+        Logger::Instance().LogToFile("[sv:err:plugin] failed to initialize blacklist");
     if (!BlackList::Instance().Load(Storage::Instance().GetBlacklistFile(gServerAddress)))
-        Logger::Instance().LogToFile("[sv:inf:plugin] : failed to load blacklist");
+        Logger::Instance().LogToFile("[sv:inf:plugin] failed to load blacklist");
 }
 
 static void OnControlHandshake(ConnectData& connect_data) noexcept
@@ -268,14 +268,14 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
             if (voice_address.IsAny()) voice_address.SetHost<false>(gServerAddress.GetHost<false>());
 
             if (char buffer[IPv4Address::HostLengthLimit + 1]; voice_address.PrintHost(buffer))
-                Logger::Instance().LogToFile("[sv:dbg:ClientInitialize] : host(%s), port(%hu), key(0x%X), id(%hu)",
+                Logger::Instance().LogToFile("[sv:dbg:ClientInitialize] host(%s), port(%hu), key(0x%X), id(%hu)",
                     buffer, content.voice_port, content.voice_key, content.voice_id);
 
             VoiceService::Instance().Initiailize(voice_address, content.voice_id);
             VoiceService::Instance().SetKey(content.voice_key);
 
             if (!VoiceService::Instance().Open())
-                Logger::Instance().LogToFile("[sv:err:plugin] : failed to open voice client");
+                Logger::Instance().LogToFile("[sv:err:plugin] failed to open voice client");
 
             // Speaker Initializing
             // ----------------------------------------------------------------
@@ -285,7 +285,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                 &VoiceService::Instance(), std::placeholders::_1);
 
             if (!Speaker::Instance().Initialize())
-                Logger::Instance().LogToFile("[sv:err:plugin] : failed to initialize speaker module");
+                Logger::Instance().LogToFile("[sv:err:plugin] failed to initialize speaker module");
 
             // Sources Initializing
             // ----------------------------------------------------------------
@@ -298,7 +298,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                     static_cast<uword_t>(player), std::placeholders::_1);
 
                 if (!gSources[player].Initialize())
-                    Logger::Instance().LogToFile("[sv:err:plugin] : failed to initialize source #%u", player);
+                    Logger::Instance().LogToFile("[sv:err:plugin] failed to initialize source #%u", player);
             }
 
             // ----------------------------------------------------------------
@@ -309,7 +309,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const SpeakerActiveChannels*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:SpeakerActiveChannels] : channels(0x%X)",
+            Logger::Instance().LogToFile("[sv:dbg:SpeakerActiveChannels] channels(0x%X)",
                 content.channels);
 
             gActiveChannels = content.channels;
@@ -320,7 +320,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const SpeakerPlayedChannels*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:SpeakerPlayedChannels] : channels(0x%X)",
+            Logger::Instance().LogToFile("[sv:dbg:SpeakerPlayedChannels] channels(0x%X)",
                 content.channels);
 
             gPlayedChannels = content.channels;
@@ -331,7 +331,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const SpeakerSetKey*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:SpeakerSetKey] : channels(0x%X), key(0x%hhX)",
+            Logger::Instance().LogToFile("[sv:dbg:SpeakerSetKey] channels(0x%X), key(0x%hhX)",
                 content.channels, content.key);
 
             BitsetForEach(channel, content.channels)
@@ -343,11 +343,11 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const StreamCreate*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:StreamCreate] : stream(%hu), distance(%.2f)",
+            Logger::Instance().LogToFile("[sv:dbg:StreamCreate] stream(%hu), distance(%.2f)",
                 content.stream, content.distance);
 
             if (!gStreams.EmplaceAt(content.stream, true, content.distance))
-                Logger::Instance().LogToFile("[sv:err:StreamCreate] : failed to create stream");
+                Logger::Instance().LogToFile("[sv:err:StreamCreate] failed to create stream");
 
             return true;
         }
@@ -355,7 +355,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const StreamSetVolume*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:StreamSetVolume] : stream(%hu), volume(%.2f)",
+            Logger::Instance().LogToFile("[sv:dbg:StreamSetVolume] stream(%hu), volume(%.2f)",
                 content.stream, content.volume);
 
             if (gStreams.Acquire<0>(content.stream))
@@ -369,7 +369,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const StreamSetPanning*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:StreamSetPanning] : stream(%hu), panning(%.2f)",
+            Logger::Instance().LogToFile("[sv:dbg:StreamSetPanning] stream(%hu), panning(%.2f)",
                 content.stream, content.panning);
 
             if (gStreams.Acquire<0>(content.stream))
@@ -383,7 +383,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const StreamSetDistance*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:StreamSetDistance] : stream(%hu), distance(%.2f)",
+            Logger::Instance().LogToFile("[sv:dbg:StreamSetDistance] stream(%hu), distance(%.2f)",
                 content.stream, content.distance);
 
             if (gStreams.Acquire<0>(content.stream))
@@ -397,7 +397,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const StreamSetPosition*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:StreamSetPosition] : stream(%hu), x(%.2f), y(%.2f), z(%.2f)",
+            Logger::Instance().LogToFile("[sv:dbg:StreamSetPosition] stream(%hu), x(%.2f), y(%.2f), z(%.2f)",
                 content.stream, content.x, content.y, content.z);
 
             if (gStreams.Acquire<0>(content.stream))
@@ -411,7 +411,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const StreamSetTarget*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:StreamSetTarget] : stream(%hu), target(0x%hX)",
+            Logger::Instance().LogToFile("[sv:dbg:StreamSetTarget] stream(%hu), target(0x%hX)",
                 content.stream, content.target);
 
             if (gStreams.Acquire<0>(content.stream))
@@ -426,7 +426,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const StreamSetEffect*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:StreamSetEffect] : stream(%hu), effect(%hu)",
+            Logger::Instance().LogToFile("[sv:dbg:StreamSetEffect] stream(%hu), effect(%hu)",
                 content.stream, content.effect);
 
             if (gStreams.Acquire<0>(content.stream))
@@ -440,7 +440,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const StreamSetIcon*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:StreamSetIcon] : stream(%hu), icon(%s)",
+            Logger::Instance().LogToFile("[sv:dbg:StreamSetIcon] stream(%hu), icon(%s)",
                 content.stream, content.icon);
 
             if (gStreams.Acquire<0>(content.stream))
@@ -455,7 +455,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const StreamDelete*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:StreamDelete] : stream(%hu)",
+            Logger::Instance().LogToFile("[sv:dbg:StreamDelete] stream(%hu)",
                 content.stream);
 
             gStreams.Remove(content.stream, false);
@@ -466,11 +466,11 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const EffectCreate*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:EffectCreate] : effect(%hu)",
+            Logger::Instance().LogToFile("[sv:dbg:EffectCreate] effect(%hu)",
                 content.effect);
 
             if (!gEffects.EmplaceAt(content.effect, true))
-                Logger::Instance().LogToFile("[sv:err:EffectCreate] : failed to create effect");
+                Logger::Instance().LogToFile("[sv:err:EffectCreate] failed to create effect");
 
             return true;
         }
@@ -484,7 +484,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
             {
                 case Filter::Chorus:
                 {
-                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Chorus] : effect(%hu), type(%hhu), priority(%hd), "
+                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Chorus] effect(%hu), type(%hhu), priority(%hd), "
                         "wetdrymix(%.2f), depth(%.2f), feedback(%.2f), frequency(%.2f), waveform(%u), delay(%.2f), phase(%u)",
                         content.effect, content.type, content.priority,
                         reinterpret_cast<const ChorusParameters*>(content.parameters)->wetdrymix,
@@ -501,7 +501,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                 }
                 case Filter::Compressor:
                 {
-                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Compressor] : effect(%hu), type(%hhu), priority(%hd), "
+                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Compressor] effect(%hu), type(%hhu), priority(%hd), "
                         "gain(%.2f), attack(%.2f), release(%.2f), threshold(%.2f), ratio(%.2f), predelay(%.2f)",
                         content.effect, content.type, content.priority,
                         reinterpret_cast<const CompressorParameters*>(content.parameters)->gain,
@@ -517,7 +517,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                 }
                 case Filter::Distortion:
                 {
-                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Distortion] : effect(%hu), type(%hhu), priority(%hd), "
+                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Distortion] effect(%hu), type(%hhu), priority(%hd), "
                         "gain(%.2f), edge(%.2f), posteqcenterfrequency(%.2f), posteqbandwidth(%.2f), prelowpasscutoff(%.2f)",
                         content.effect, content.type, content.priority,
                         reinterpret_cast<const DistortionParameters*>(content.parameters)->gain,
@@ -532,7 +532,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                 }
                 case Filter::Echo:
                 {
-                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Echo] : effect(%hu), type(%hhu), priority(%hd), "
+                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Echo] effect(%hu), type(%hhu), priority(%hd), "
                         "wetdrymix(%.2f), feedback(%.2f), leftdelay(%.2f), rightdelay(%.2f), pandelay(%hhu)",
                         content.effect, content.type, content.priority,
                         reinterpret_cast<const EchoParameters*>(content.parameters)->wetdrymix,
@@ -547,7 +547,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                 }
                 case Filter::Flanger:
                 {
-                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Flanger] : effect(%hu), type(%hhu), priority(%hd), "
+                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Flanger] effect(%hu), type(%hhu), priority(%hd), "
                         "wetdrymix(%.2f), depth(%.2f), feedback(%.2f), frequency(%.2f), waveform(%u), delay(%.2f), phase(%u)",
                         content.effect, content.type, content.priority,
                         reinterpret_cast<const FlangerParameters*>(content.parameters)->wetdrymix,
@@ -564,7 +564,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                 }
                 case Filter::Gargle:
                 {
-                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Gargle] : effect(%hu), type(%hhu), priority(%hd), "
+                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Gargle] effect(%hu), type(%hhu), priority(%hd), "
                         "ratehz(%u), waveshape(%u)",
                         content.effect, content.type, content.priority,
                         reinterpret_cast<const GargleParameters*>(content.parameters)->ratehz,
@@ -576,7 +576,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                 }
                 case Filter::I3dl2reverb:
                 {
-                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:I3dl2reverb] : effect(%hu), type(%hhu), priority(%hd), "
+                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:I3dl2reverb] effect(%hu), type(%hhu), priority(%hd), "
                         "room(%d), roomhf(%d), roomrollofffactor(%.2f), decaytime(%.2f), decayhfratio(%u), reflections(%d), "
                         "reflectionsdelay(%.2f), reverb(%d), reverbdelay(%.2f), diffusion(%.2f), density(%.2f), hfreference(%.2f)",
                         content.effect, content.type, content.priority,
@@ -599,7 +599,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                 }
                 case Filter::Parameq:
                 {
-                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Parameq] : effect(%hu), type(%hhu), priority(%hd), "
+                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Parameq] effect(%hu), type(%hhu), priority(%hd), "
                         "center(%.2f), bandwidth(%.2f), gain(%.2f)",
                         content.effect, content.type, content.priority,
                         reinterpret_cast<const ParameqParameters*>(content.parameters)->center,
@@ -612,7 +612,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
                 }
                 case Filter::Reverb:
                 {
-                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Reverb] : effect(%hu), type(%hhu), priority(%hd), "
+                    Logger::Instance().LogToFile("[sv:dbg:EffectAppendFilter:Reverb] effect(%hu), type(%hhu), priority(%hd), "
                         "ingain(%.2f), reverbmix(%.2f), reverbtime(%.2f), highfreqrtratio(%.2f)",
                         content.effect, content.type, content.priority,
                         reinterpret_cast<const ReverbParameters*>(content.parameters)->ingain,
@@ -653,7 +653,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const EffectRemoveFilter*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:EffectRemoveFilter] : effect(%hu), type(%hhu), priority(%hd)",
+            Logger::Instance().LogToFile("[sv:dbg:EffectRemoveFilter] effect(%hu), type(%hhu), priority(%hd)",
                 content.effect, content.type, content.priority);
 
             if (gEffects.Acquire<0>(content.effect))
@@ -667,7 +667,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const EffectDelete*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:EffectDelete] : effect(%hu)",
+            Logger::Instance().LogToFile("[sv:dbg:EffectDelete] effect(%hu)",
                 content.effect);
 
             gEffects.Remove(content.effect, false);
@@ -678,7 +678,7 @@ static bool OnControlPacket(const ubyte_t packet, const cptr_t data) noexcept
         {
             const auto& content = *static_cast<const UpdateKey*>(data);
 
-            Logger::Instance().LogToFile("[sv:dbg:UpdateKey] : key(%u)",
+            Logger::Instance().LogToFile("[sv:dbg:UpdateKey] key(%u)",
                 content.key);
 
             VoiceService::Instance().SetKey(content.key);
@@ -694,7 +694,7 @@ static void OnControlDisconnect() noexcept
 {
     if (!BlackList::Instance().Save(Storage::Instance().GetBlacklistFile(gServerAddress)))
     {
-        Logger::Instance().LogToFile("[sv:err:plugin] : failed to save blacklist");
+        Logger::Instance().LogToFile("[sv:err:plugin] failed to save blacklist");
     }
 
     VoiceService::Instance().Deinitialize();
@@ -736,10 +736,10 @@ static void DrawRadarHook() noexcept
 static void OnGameLoad() noexcept
 {
     // if (!SocketLibraryStartup())
-    //     Logger::Instance().LogToFile("[sv:err:plugin] : failed to initialize socket library");
+    //     Logger::Instance().LogToFile("[sv:err:plugin] failed to initialize socket library");
 
     if (!ChannelPool::Instance().Initialize())
-        Logger::Instance().LogToFile("[sv:err:plugin] : failed to initialize channel pool");
+        Logger::Instance().LogToFile("[sv:err:plugin] failed to initialize channel pool");
 
     gDrawRadarHook.Initialize(reinterpret_cast<LPVOID>(0x58FC53), DrawRadarHook);
 
@@ -749,7 +749,7 @@ static void OnGameLoad() noexcept
 static void OnGameExit() noexcept
 {
     if (!PluginConfig::Instance().Save(Storage::Instance().GetConfigFile()))
-        Logger::Instance().LogToFile("[sv:inf:plugin] : failed to save config");
+        Logger::Instance().LogToFile("[sv:inf:plugin] failed to save config");
 
     BlackList::Instance().Deinitialize();
 
@@ -945,7 +945,7 @@ static bool OnPluginLoad(const HMODULE module) noexcept
 
     if (!PluginConfig::Instance().Load(Storage::Instance().GetConfigFile()))
     {
-        Logger::Instance().LogToFile("[sv:inf:plugin] : failed to load config (default config will be applied)");
+        Logger::Instance().LogToFile("[sv:inf:plugin] failed to load config (default config will be applied)");
     }
 
     if (!Localization::Instance().Initialize())

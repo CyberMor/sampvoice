@@ -73,7 +73,7 @@ public:
         File file { path, "wb" };
         if (file.Invalid())
         {
-            Logger::Instance().LogToFile("[sv:inf:pluginconfig:save] : failed to "
+            Logger::Instance().LogToFile("[sv:inf:pluginconfig:save] failed to "
                 "open file for writing (%s)", path);
             return false;
         }
@@ -93,7 +93,7 @@ public:
         File file { path, "rb" };
         if (file.Invalid())
         {
-            Logger::Instance().LogToFile("[sv:inf:pluginconfig:load] : failed to "
+            Logger::Instance().LogToFile("[sv:inf:pluginconfig:load] failed to "
                 "open file for reading (%s)", path);
             return false;
         }
@@ -105,7 +105,7 @@ public:
 
         if (version != kConfigVersion)
         {
-            Logger::Instance().LogToFile("[sv:inf:pluginconfig:load] : unsupported "
+            Logger::Instance().LogToFile("[sv:inf:pluginconfig:load] unsupported "
                 "config version (file:%hhu.%hhu.%hu) (host:%hhu.%hhu.%hu)",
                 GetVersionMajor(version), GetVersionMinor(version), GetVersionPatch(version),
                 GetVersionMajor(kConfigVersion), GetVersionMinor(kConfigVersion),

@@ -90,7 +90,7 @@ public:
             !_open_scoreboard_patch.Initialize(Addresses::Instance().OpenScoreboardFunction(), &return_opcode, false) ||
             !_switch_mode_patch.Initialize(Addresses::Instance().SwitchModeFunction(), &return_opcode, false))
         {
-            Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] : failed to initialize patches");
+            Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] failed to initialize patches");
             _open_chat_patch.Deinitialize();
             _open_scoreboard_patch.Deinitialize();
             _switch_mode_patch.Deinitialize();
@@ -110,7 +110,7 @@ public:
         if (!_blur_effect.Initialize(device, resource_shader) ||
             !_logo_texture.Initialize(device, resource_logo))
         {
-            Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] : failed to initialize resources");
+            Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] failed to initialize resources");
             _blur_effect.Deinitialize();
             _logo_texture.Deinitialize();
             return false;
@@ -192,7 +192,7 @@ public:
 
             if (!Render::Instance().ConvertBaseYValueToScreenYValue(kBaseFontTitleSize, title_font_size))
             {
-                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] : failed to convert title font size");
+                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] failed to convert title font size");
                 return false;
             }
 
@@ -200,7 +200,7 @@ public:
                 title_font_size, NULL, ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
             if (_title_font == nullptr)
             {
-                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] : failed to create title font");
+                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] failed to create title font");
                 return false;
             }
         }
@@ -221,7 +221,7 @@ public:
 
             if (!Render::Instance().ConvertBaseYValueToScreenYValue(kBaseFontTabSize, tab_font_size))
             {
-                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] : failed to convert tab font size");
+                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] failed to convert tab font size");
                 return false;
             }
 
@@ -229,7 +229,7 @@ public:
                 tab_font_size, NULL, ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
             if (_tab_font == nullptr)
             {
-                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] : failed to create tab font");
+                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] failed to create tab font");
                 return false;
             }
         }
@@ -250,7 +250,7 @@ public:
 
             if (!Render::Instance().ConvertBaseYValueToScreenYValue(kBaseFontDescSize, desc_font_size))
             {
-                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] : failed to convert description font size");
+                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] failed to convert description font size");
                 return false;
             }
 
@@ -258,7 +258,7 @@ public:
                 desc_font_size, NULL, ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
             if (_desc_font == nullptr)
             {
-                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] : failed to create description font");
+                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] failed to create description font");
                 return false;
             }
         }
@@ -279,7 +279,7 @@ public:
 
             if (!Render::Instance().ConvertBaseYValueToScreenYValue(kBaseFontSize, font_size))
             {
-                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] : failed to convert default font size");
+                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] failed to convert default font size");
                 return false;
             }
 
@@ -287,7 +287,7 @@ public:
                 font_size, NULL, ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
             if (_def_font == nullptr)
             {
-                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] : failed to create default font");
+                Logger::Instance().LogToFile("[sv:err:pluginmenu:initialize] failed to create default font");
                 return false;
             }
         }

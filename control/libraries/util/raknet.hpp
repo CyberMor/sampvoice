@@ -131,39 +131,39 @@ public:
 
     bool Initialize(const cptr_t base) noexcept
     {
-        Logger::Instance().Log("[dbg:raknet:initialize] : module initializing...");
+        Logger::Instance().Log("[dbg:raknet:initialize] module initializing...");
 
         const auto [address, length] = GetModuleInfo(base);
         if (address == nullptr)
         {
-            Logger::Instance().Log("[err:raknet:initialize] : failed to get module info");
+            Logger::Instance().Log("[err:raknet:initialize] failed to get module info");
             return false;
         }
 
         const ptr_t pointer = Scanner(address, length).Find(kGetRakServerInterfacePattern, kGetRakServerInterfaceMask);
         if (pointer == nullptr)
         {
-            Logger::Instance().Log("[err:raknet:initialize] : failed to find 'GetRakServerInterface' function address");
+            Logger::Instance().Log("[err:raknet:initialize] failed to find 'GetRakServerInterface' function address");
             return false;
         }
 
         if (!_hook_get_rak_server_interface.Initialize(static_cast<adr_t>(pointer) - 7, GetRakServerInterfaceHook) ||
             !_hook_disconnect.Initialize(reinterpret_cast<ptr_t>(kOnPlayerDisconnectAddress), DisconnectHook))
         {
-            Logger::Instance().Log("[err:raknet:initialize] : failed to initialize hooks");
+            Logger::Instance().Log("[err:raknet:initialize] failed to initialize hooks");
             _hook_get_rak_server_interface.Deinitialize();
             _hook_disconnect.Deinitialize();
             return false;
         }
 
-        Logger::Instance().Log("[dbg:raknet:initialize] : module initialized");
+        Logger::Instance().Log("[dbg:raknet:initialize] module initialized");
 
         return true;
     }
 
     void Deinitialize() noexcept
     {
-        Logger::Instance().Log("[dbg:raknet:deinitialize] : module releasing...");
+        Logger::Instance().Log("[dbg:raknet:deinitialize] module releasing...");
 
         if (_rak_server_interface != nullptr)
         {
@@ -211,7 +211,7 @@ public:
         _hook_get_rak_server_interface.Deinitialize();
         _hook_disconnect.Deinitialize();
 
-        Logger::Instance().Log("[dbg:raknet:deinitialize] : module released");
+        Logger::Instance().Log("[dbg:raknet:deinitialize] module released");
     }
 
 public:

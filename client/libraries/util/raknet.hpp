@@ -52,7 +52,7 @@ public:
 
     bool Initialize() noexcept
     {
-        Logger::Instance().LogToFile("[dbg:raknet:initialize] : module initializing...");
+        Logger::Instance().LogToFile("[dbg:raknet:initialize] module initializing...");
 
         if (*static_cast<const uword_t*>(Addresses::Instance().RakClientInitialization()) == static_cast<uword_t>(0x4689))
         {
@@ -66,31 +66,31 @@ public:
         }
         if (_rakclient_offset == None<udword_t>)
         {
-            Logger::Instance().LogToFile("[err:raknet:initialize] : failed to find rakclient interface");
+            Logger::Instance().LogToFile("[err:raknet:initialize] failed to find rakclient interface");
             return false;
         }
 
-        Logger::Instance().LogToFile("[dbg:raknet:initialize] : finded rakclient interface "
+        Logger::Instance().LogToFile("[dbg:raknet:initialize] finded rakclient interface "
             "offset (value:0x%X)", _rakclient_offset);
 
         if (!_rak_client_init_hook.Initialize(Addresses::Instance().RakClientInitialization(), RakClientInitializationHook) ||
             !_samp_destruct_hook.Initialize(Addresses::Instance().SampDestruction(), SampDestructionHook))
         {
-            Logger::Instance().LogToFile("[err:raknet:initialize] : failed to initialize hooks");
+            Logger::Instance().LogToFile("[err:raknet:initialize] failed to initialize hooks");
             _rakclient_offset = None<udword_t>;
             _rak_client_init_hook.Deinitialize();
             _samp_destruct_hook.Deinitialize();
             return false;
         }
 
-        Logger::Instance().LogToFile("[dbg:raknet:initialize] : module initialized");
+        Logger::Instance().LogToFile("[dbg:raknet:initialize] module initialized");
 
         return true;
     }
 
     void Deinitialize() noexcept
     {
-        Logger::Instance().LogToFile("[dbg:raknet:deinitialize] : module releasing...");
+        Logger::Instance().LogToFile("[dbg:raknet:deinitialize] module releasing...");
 
         _rak_client_init_hook.Deinitialize();
         _samp_destruct_hook.Deinitialize();
@@ -118,7 +118,7 @@ public:
 
         _rakclient_offset = None<udword_t>;
 
-        Logger::Instance().LogToFile("[dbg:raknet:deinitialize] : module released");
+        Logger::Instance().LogToFile("[dbg:raknet:deinitialize] module released");
     }
 
 public:
@@ -219,14 +219,14 @@ private:
         bool Connect(const cstr_t host_ip, const uword_t server_port,
             const uword_t client_port, const udword_t depreciated, const int thread_sleep_timer) noexcept override
         {
-            Logger::Instance().LogToFile("[dbg:raknet:client:connect] : connecting to game server '%s:%hu'...",
+            Logger::Instance().LogToFile("[dbg:raknet:client:connect] connecting to game server '%s:%hu'...",
                 host_ip, server_port);
 
             Instance()._is_connected = _orig_interface->Connect(host_ip, server_port,
                 client_port, depreciated, thread_sleep_timer);
             if (Instance()._is_connected)
             {
-                Logger::Instance().LogToFile("[dbg:raknet:client:connect] : connected");
+                Logger::Instance().LogToFile("[dbg:raknet:client:connect] connected");
 
                 if (Instance().OnConnect != nullptr)
                     Instance().OnConnect(host_ip, server_port);
@@ -237,7 +237,7 @@ private:
 
         void Disconnect(const udword_t block_duration, const ubyte_t ordering_channel) noexcept override
         {
-            Logger::Instance().LogToFile("[dbg:raknet:client:disconnect] : disconnecting from server...");
+            Logger::Instance().LogToFile("[dbg:raknet:client:disconnect] disconnecting from server...");
 
             if (Instance()._is_connected)
             {
@@ -574,7 +574,7 @@ void __declspec(naked) RakNet::RakClientInitializationHook() noexcept
 
     Instance()._rak_client_interface = reinterpret_cast<RakClientInterface*>(temporary_buffer);
 
-    Logger::Instance().LogToFile("[dbg:raknet:load] : module loading...");
+    Logger::Instance().LogToFile("[dbg:raknet:load] module loading...");
 
     return_address = Instance()._rak_client_init_hook.Address();
     Instance()._rak_client_init_hook.Deinitialize();
@@ -593,13 +593,13 @@ void __declspec(naked) RakNet::RakClientInitializationHook() noexcept
     return_interface = new (std::nothrow) RakClientHookInterface { Instance()._rak_client_interface };
     if (return_interface == nullptr)
     {
-        Logger::Instance().LogToFile("[err:raknet:load] : failed to load module");
+        Logger::Instance().LogToFile("[err:raknet:load] failed to load module");
         return_interface = Instance()._rak_client_interface;
         Instance().Deinitialize();
     }
     else
     {
-        Logger::Instance().LogToFile("[dbg:raknet:load] : module loaded");
+        Logger::Instance().LogToFile("[dbg:raknet:load] module loaded");
         Instance()._is_loaded = true;
     }
 

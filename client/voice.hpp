@@ -17,6 +17,8 @@
 #include <memory/view.hpp>
 #include <network/socket.hpp>
 
+#include <util/logger.hpp>
+
 #include "main.hpp"
 
 // Packets
@@ -135,9 +137,31 @@ public:
 
         IPv4UdpSocket socket;
 
-        if (!socket.Initialize(true)) return false;
-        if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1)) return false;
-        if (!socket.Connect(_address)) return false;
+        if (!socket.Initialize(true))
+        {
+            Logger::Instance().LogToFile("[err:voice:open] failed to initialize socket (%d)", GetSocketError());
+            return false;
+        }
+
+        if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1))
+        {
+            Logger::Instance().LogToFile("[err:voice:open] failed to set option(SO_REUSEADDR) (%d)", GetSocketError());
+            return false;
+        }
+
+        if (!socket.Connect(_address))
+        {
+            char buffer[IPv4Address::LengthLimit + 1];
+
+            if (!_address.Print(buffer))
+            {
+                buffer[0] = 'I'; buffer[1] = 'N'; buffer[2] = 'V'; buffer[3] = 'A';
+                buffer[4] = 'L'; buffer[5] = 'I'; buffer[6] = 'D'; buffer[7] = '\0';
+            }
+
+            Logger::Instance().LogToFile("[err:voice:open] failed to connect(%s) (%d)", buffer, GetSocketError());
+            return false;
+        }
 
         _socket = std::move(socket);
 

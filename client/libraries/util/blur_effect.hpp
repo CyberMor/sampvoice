@@ -121,7 +121,7 @@ public:
         if (const HRESULT result = device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO,
             &_device_backbuffer); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:constructor] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:constructor] failed to "
                 "get device backbuffer (code:%ld)", result);
             return;
         }
@@ -140,7 +140,7 @@ public:
 
             if (const HRESULT result = _device_backbuffer->GetDesc(&backbuffer_desc); FAILED(result))
             {
-                Logger::Instance().LogToFile("[err:blureffect:constructor] : failed to "
+                Logger::Instance().LogToFile("[err:blureffect:constructor] failed to "
                     "get backbuffer description (code:%ld)", result);
                 return;
             }
@@ -165,7 +165,7 @@ public:
                 NULL, NULL, D3DXFX_DONOTSAVESTATE | D3DXFX_NOT_CLONEABLE | D3DXSHADER_ENABLE_BACKWARDS_COMPATIBILITY,
                 NULL, &_effect, &error_buffer); FAILED(result))
             {
-                Logger::Instance().LogToFile("[err:blureffect:constructor] : failed to create effect (code:%ld) (%.*s)",
+                Logger::Instance().LogToFile("[err:blureffect:constructor] failed to create effect (code:%ld) (%.*s)",
                     result, error_buffer->GetBufferSize() - 1, error_buffer->GetBufferPointer());
                 error_buffer->Release();
                 return;
@@ -199,7 +199,7 @@ public:
 
         if (const HRESULT result = device->CreateVertexDeclaration(vertex_elements, &_vertex_declaration); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:constructor] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:constructor] failed to "
                 "create vertex declaration (code:%ld)", result);
             return;
         }
@@ -217,7 +217,7 @@ public:
             _backbuffer_height, D3DX_DEFAULT, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
             &_backbuffer_texture); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:constructor] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:constructor] failed to "
                 "create back-buffer texture (code:%ld)", result);
             return;
         }
@@ -233,7 +233,7 @@ public:
 
         if (const HRESULT result = _backbuffer_texture->GetSurfaceLevel(0, &_backbuffer_surface); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:constructor] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:constructor] failed to "
                 "get back-buffer surface (code:%ld)", result);
             return;
         }
@@ -251,7 +251,7 @@ public:
             _backbuffer_height, D3DX_DEFAULT, D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP,
             D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &_tempbuffer_texture); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:constructor] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:constructor] failed to "
                 "create temp-buffer texture (code:%ld)", result);
             return;
         }
@@ -267,7 +267,7 @@ public:
 
         if (const HRESULT result = _tempbuffer_texture->GetSurfaceLevel(0, &_tempbuffer_surface); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:constructor] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:constructor] failed to "
                 "get temp-buffer surface (code:%ld)", result);
             return;
         }
@@ -285,7 +285,7 @@ public:
             _backbuffer_height, D3DX_DEFAULT, D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP,
             D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &_frontbuffer_texture); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:constructor] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:constructor] failed to "
                 "create front-buffer texture (code:%ld)", result);
             return;
         }
@@ -301,7 +301,7 @@ public:
 
         if (const HRESULT result = _frontbuffer_texture->GetSurfaceLevel(0, &_frontbuffer_surface); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:constructor] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:constructor] failed to "
                 "get front-buffer surface (code:%ld)", result);
             return;
         }
@@ -385,7 +385,7 @@ public:
         if (const HRESULT result = device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO,
             &_device_backbuffer); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:initialize] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:initialize] failed to "
                 "get device backbuffer (code:%ld)", result);
             return false;
         }
@@ -404,7 +404,7 @@ public:
 
             if (const HRESULT result = _device_backbuffer->GetDesc(&backbuffer_desc); FAILED(result))
             {
-                Logger::Instance().LogToFile("[err:blureffect:initialize] : failed to "
+                Logger::Instance().LogToFile("[err:blureffect:initialize] failed to "
                     "get backbuffer description (code:%ld)", result);
                 return false;
             }
@@ -429,7 +429,7 @@ public:
                 NULL, NULL, D3DXFX_DONOTSAVESTATE | D3DXFX_NOT_CLONEABLE | D3DXSHADER_ENABLE_BACKWARDS_COMPATIBILITY,
                 NULL, &_effect, &error_buffer); FAILED(result))
             {
-                Logger::Instance().LogToFile("[err:blureffect:initialize] : failed to create effect (code:%ld) (%.*s)",
+                Logger::Instance().LogToFile("[err:blureffect:initialize] failed to create effect (code:%ld) (%.*s)",
                     result, error_buffer->GetBufferSize() - 1, error_buffer->GetBufferPointer());
                 error_buffer->Release();
                 return false;
@@ -463,7 +463,7 @@ public:
 
         if (const HRESULT result = device->CreateVertexDeclaration(vertex_elements, &_vertex_declaration); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:initialize] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:initialize] failed to "
                 "create vertex declaration (code:%ld)", result);
             return false;
         }
@@ -481,7 +481,7 @@ public:
             _backbuffer_height, D3DX_DEFAULT, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
             &_backbuffer_texture); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:initialize] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:initialize] failed to "
                 "create back-buffer texture (code:%ld)", result);
             return false;
         }
@@ -497,7 +497,7 @@ public:
 
         if (const HRESULT result = _backbuffer_texture->GetSurfaceLevel(0, &_backbuffer_surface); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:initialize] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:initialize] failed to "
                 "get back-buffer surface (code:%ld)", result);
             return false;
         }
@@ -515,7 +515,7 @@ public:
             _backbuffer_height, D3DX_DEFAULT, D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP,
             D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &_tempbuffer_texture); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:initialize] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:initialize] failed to "
                 "create temp-buffer texture (code:%ld)", result);
             return false;
         }
@@ -531,7 +531,7 @@ public:
 
         if (const HRESULT result = _tempbuffer_texture->GetSurfaceLevel(0, &_tempbuffer_surface); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:initialize] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:initialize] failed to "
                 "get temp-buffer surface (code:%ld)", result);
             return false;
         }
@@ -549,7 +549,7 @@ public:
             _backbuffer_height, D3DX_DEFAULT, D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP,
             D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &_frontbuffer_texture); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:initialize] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:initialize] failed to "
                 "create front-buffer texture (code:%ld)", result);
             return false;
         }
@@ -565,7 +565,7 @@ public:
 
         if (const HRESULT result = _frontbuffer_texture->GetSurfaceLevel(0, &_frontbuffer_surface); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:blureffect:initialize] : failed to "
+            Logger::Instance().LogToFile("[err:blureffect:initialize] failed to "
                 "get front-buffer surface (code:%ld)", result);
             return false;
         }

@@ -63,23 +63,23 @@ public:
 
     bool Initialize() noexcept
     {
-        Logger::Instance().LogToFile("[dbg:render:initialize] : module initializing...");
+        Logger::Instance().LogToFile("[dbg:render:initialize] module initializing...");
 
         if (!_direct3d_create_hook.Initialize(GameDirect3DCreate9, Direct3DCreate9Hook))
         {
-            Logger::Instance().LogToFile("[err:render:initialize] : failed to initialize hook");
+            Logger::Instance().LogToFile("[err:render:initialize] failed to initialize hook");
             _direct3d_create_hook.Deinitialize();
             return false;
         }
 
-        Logger::Instance().LogToFile("[dbg:render:initialize] : module initialized");
+        Logger::Instance().LogToFile("[dbg:render:initialize] module initialized");
 
         return true;
     }
 
     void Deinitialize() noexcept
     {
-        Logger::Instance().LogToFile("[dbg:render:deinitialize] : module releasing...");
+        Logger::Instance().LogToFile("[dbg:render:deinitialize] module releasing...");
 
         _direct3d_create_hook.Deinitialize();
 
@@ -88,7 +88,7 @@ public:
         _device_interface = nullptr;
         _device_lock.Unlock();
 
-        Logger::Instance().LogToFile("[dbg:render:deinitialize] : module released");
+        Logger::Instance().LogToFile("[dbg:render:deinitialize] module released");
     }
 
 public:
@@ -1187,7 +1187,7 @@ private:
             if (FAILED(result) || this != gGameDirect || out_returned_device_interface != &gGameDevice)
                 return result;
 
-            Logger::Instance().LogToFile("[dbg:render:direct] : device interface (ptr:%p) success created with "
+            Logger::Instance().LogToFile("[dbg:render:direct] device interface (ptr:%p) success created with "
                 "hwnd (value:%u) windowed (value:%d) screenwidth (value:%u) screenheight (value:%u)",
                 *out_returned_device_interface, focus_window, presentation_parameters->Windowed,
                 presentation_parameters->BackBufferWidth, presentation_parameters->BackBufferHeight);
@@ -1195,12 +1195,12 @@ private:
             const auto hook_device = new (std::nothrow) IDirect3DDevice9Hook { *out_returned_device_interface };
             if (hook_device == nullptr)
             {
-                Logger::Instance().LogToFile("[err:render:direct] : failed to "
+                Logger::Instance().LogToFile("[err:render:direct] failed to "
                     "allocate memory for hook interface");
                 return result;
             }
 
-            Logger::Instance().LogToFile("[dbg:render:direct] : pointer successfully replaced "
+            Logger::Instance().LogToFile("[dbg:render:direct] pointer successfully replaced "
                 "from orig (ptr:%p) to hook (ptr:%p)", *out_returned_device_interface, hook_device);
 
             if (Instance()._direct_interface != nullptr)
@@ -1240,13 +1240,13 @@ private:
 
         if (orig_direct != nullptr)
         {
-            Logger::Instance().LogToFile("[dbg:render:hookdirect3dcreate9] : intercepted instance "
+            Logger::Instance().LogToFile("[dbg:render:hookdirect3dcreate9] intercepted instance "
                 "(ptr:%p) of IDirect3D9", orig_direct);
 
             if (const auto hook_direct = new (std::nothrow) IDirect3D9Hook { orig_direct };
                            hook_direct != nullptr)
             {
-                Logger::Instance().LogToFile("[dbg:render:hookdirect3dcreate9] : pointer successfully "
+                Logger::Instance().LogToFile("[dbg:render:hookdirect3dcreate9] pointer successfully "
                     "replaced from orig (ptr:%p) to hook (ptr:%p)", orig_direct, hook_direct);
 
                 orig_direct = hook_direct;

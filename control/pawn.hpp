@@ -170,12 +170,12 @@ private:
         if (player >= kMaxPlayers) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvGetVersion:begin] : player(%hu)", player);
+            ("[sv:dbg:pawn:SvGetVersion:begin] player(%hu)", player);
 
         const auto result = Instance().OnGetVersion(player);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvGetVersion:end] : result(0x%X)", result);
+            ("[sv:dbg:pawn:SvGetVersion:end] result(0x%X)", result);
 
         return static_cast<cell>(result);
     }
@@ -189,12 +189,12 @@ private:
         if (player >= kMaxPlayers) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvHasMicro:begin] : player(%hu)", player);
+            ("[sv:dbg:pawn:SvHasMicro:begin] player(%hu)", player);
 
         const auto result = Instance().OnHasMicro(player);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvHasMicro:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvHasMicro:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -208,12 +208,12 @@ private:
         if (player >= kMaxPlayers) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvEnableListener:begin] : player(%hu)", player);
+            ("[sv:dbg:pawn:SvEnableListener:begin] player(%hu)", player);
 
         const auto result = Instance().OnEnableListener(player);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvEnableListener:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvEnableListener:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -227,12 +227,12 @@ private:
         if (player >= kMaxPlayers) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvDisableListener:begin] : player(%hu)", player);
+            ("[sv:dbg:pawn:SvDisableListener:begin] player(%hu)", player);
 
         const auto result = Instance().OnDisableListener(player);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvDisableListener:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvDisableListener:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -246,12 +246,12 @@ private:
         if (player >= kMaxPlayers) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvCheckListener:begin] : player(%hu)", player);
+            ("[sv:dbg:pawn:SvCheckListener:begin] player(%hu)", player);
 
         const auto result = Instance().OnCheckListener(player);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvCheckListener:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvCheckListener:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -270,13 +270,13 @@ private:
                 channels |= HighBit<udword_t> >> *physical_address;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvEnableSpeaker:begin] : player(%hu), channels(0x%X)",
+            ("[sv:dbg:pawn:SvEnableSpeaker:begin] player(%hu), channels(0x%X)",
              player, channels);
 
         const auto result = Instance().OnEnableSpeaker(player, channels);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvEnableSpeaker:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvEnableSpeaker:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -295,13 +295,13 @@ private:
                 channels |= HighBit<udword_t> >> *physical_address;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvDisableSpeaker:begin] : player(%hu), channels(0x%X)",
+            ("[sv:dbg:pawn:SvDisableSpeaker:begin] player(%hu), channels(0x%X)",
              player, channels);
 
         const auto result = Instance().OnDisableSpeaker(player, channels);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvDisableSpeaker:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvDisableSpeaker:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -320,13 +320,13 @@ private:
                 channels |= HighBit<udword_t> >> *physical_address;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvCheckSpeaker:begin] : player(%hu), channels(0x%X)",
+            ("[sv:dbg:pawn:SvCheckSpeaker:begin] player(%hu), channels(0x%X)",
              player, channels);
 
         const auto result = Instance().OnCheckSpeaker(player, channels);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvCheckSpeaker:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvCheckSpeaker:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -348,13 +348,13 @@ private:
                 channels |= HighBit<udword_t> >> *physical_address;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvAttachStream:begin] : player(%hu), stream(%hu), channels(0x%X)",
+            ("[sv:dbg:pawn:SvAttachStream:begin] player(%hu), stream(%hu), channels(0x%X)",
              player, stream, channels);
 
         const auto result = Instance().OnAttachStream(player, stream, channels);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvAttachStream:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvAttachStream:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -377,13 +377,13 @@ private:
                 channels |= HighBit<udword_t> >> *physical_address;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvDetachStream:begin] : player(%hu), stream(%hu), channels(0x%X)",
+            ("[sv:dbg:pawn:SvDetachStream:begin] player(%hu), stream(%hu), channels(0x%X)",
              player, stream, channels);
 
         const auto result = Instance().OnDetachStream(player, stream, channels);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvDetachStream:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvDetachStream:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -406,13 +406,13 @@ private:
                 channels |= HighBit<udword_t> >> *physical_address;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvHasStream:begin] : player(%hu), stream(%hu), channels(0x%X)",
+            ("[sv:dbg:pawn:SvHasStream:begin] player(%hu), stream(%hu), channels(0x%X)",
              player, stream, channels);
 
         const auto result = Instance().OnHasStream(player, stream, channels);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvHasStream:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvHasStream:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -433,13 +433,13 @@ private:
                 channels |= HighBit<udword_t> >> *physical_address;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvSetKey:begin] : player(%hu), key(0x%hhX), channels(0x%X)",
+            ("[sv:dbg:pawn:SvSetKey:begin] player(%hu), key(0x%hhX), channels(0x%X)",
              player, key, channels);
 
         const auto result = Instance().OnSetKey(player, key, channels);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvSetKey:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvSetKey:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -456,13 +456,13 @@ private:
         if (channel >= Bits<udword_t>) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvGetKey:begin] : player(%hu), channel(%hhu)",
+            ("[sv:dbg:pawn:SvGetKey:begin] player(%hu), channel(%hhu)",
              player, channel);
 
         const auto result = Instance().OnGetKey(player, channel);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvGetKey:end] : result(0x%hhX)", result);
+            ("[sv:dbg:pawn:SvGetKey:end] result(0x%hhX)", result);
 
         return static_cast<cell>(result);
     }
@@ -481,13 +481,13 @@ private:
                 channels |= HighBit<udword_t> >> *physical_address;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvPlay:begin] : player(%hu), channels(0x%X)",
+            ("[sv:dbg:pawn:SvPlay:begin] player(%hu), channels(0x%X)",
              player, channels);
 
         const auto result = Instance().OnPlay(player, channels);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvPlay:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvPlay:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -506,13 +506,13 @@ private:
                 channels |= HighBit<udword_t> >> *physical_address;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvStop:begin] : player(%hu), channels(0x%X)",
+            ("[sv:dbg:pawn:SvStop:begin] player(%hu), channels(0x%X)",
              player, channels);
 
         const auto result = Instance().OnStop(player, channels);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvStop:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvStop:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -534,7 +534,7 @@ private:
         const auto result = Instance().OnCreateStream(distance);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvCreateStream:end] : result(%hu)", result);
+            ("[sv:dbg:pawn:SvCreateStream:end] result(%hu)", result);
 
         return result != None<decltype(result)> ? static_cast<cell>(result) : None<cell>;
     }
@@ -548,12 +548,12 @@ private:
         if (stream >= kMaxStreams) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvEnableTransiter:begin] : stream(%hu)", stream);
+            ("[sv:dbg:pawn:SvEnableTransiter:begin] stream(%hu)", stream);
 
         const auto result = Instance().OnEnableTransiter(stream);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvEnableTransiter:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvEnableTransiter:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -567,12 +567,12 @@ private:
         if (stream >= kMaxStreams) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvDisableTransiter:begin] : stream(%hu)", stream);
+            ("[sv:dbg:pawn:SvDisableTransiter:begin] stream(%hu)", stream);
 
         const auto result = Instance().OnDisableTransiter(stream);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvDisableTransiter:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvDisableTransiter:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -586,12 +586,12 @@ private:
         if (stream >= kMaxStreams) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvCheckTransiter:begin] : stream(%hu)", stream);
+            ("[sv:dbg:pawn:SvCheckTransiter:begin] stream(%hu)", stream);
 
         const auto result = Instance().OnCheckTransiter(stream);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvCheckTransiter:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvCheckTransiter:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -608,13 +608,13 @@ private:
         if (player >= kMaxPlayers) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvAttachListener:begin] : stream(%hu), player(%hu)",
+            ("[sv:dbg:pawn:SvAttachListener:begin] stream(%hu), player(%hu)",
              stream, player);
 
         const auto result = Instance().OnAttachListener(stream, player);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvAttachListener:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvAttachListener:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -632,13 +632,13 @@ private:
             return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvDetachListener:begin] : stream(%hu), player(%hu)",
+            ("[sv:dbg:pawn:SvDetachListener:begin] stream(%hu), player(%hu)",
              stream, player);
 
         const auto result = Instance().OnDetachListener(stream, player);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvDetachListener:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvDetachListener:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -656,13 +656,13 @@ private:
             return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvHasListener:begin] : stream(%hu), player(%hu)",
+            ("[sv:dbg:pawn:SvHasListener:begin] stream(%hu), player(%hu)",
              stream, player);
 
         const auto result = Instance().OnHasListener(stream, player);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvHasListener:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvHasListener:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -679,7 +679,7 @@ private:
         if (volume < Zero<float>) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvSetVolume:begin] : stream(%hu), volume(%.2f)",
+            ("[sv:dbg:pawn:SvSetVolume:begin] stream(%hu), volume(%.2f)",
              stream, volume);
 
         Instance().OnSetVolume(stream, volume);
@@ -703,7 +703,7 @@ private:
             return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvSetPanning:begin] : stream(%hu), panning(%.2f)",
+            ("[sv:dbg:pawn:SvSetPanning:begin] stream(%hu), panning(%.2f)",
              stream, panning);
 
         Instance().OnSetPanning(stream, panning);
@@ -726,7 +726,7 @@ private:
         if (distance <= Zero<float>) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvSetDistance:begin] : stream(%hu), distance(%.2f)",
+            ("[sv:dbg:pawn:SvSetDistance:begin] stream(%hu), distance(%.2f)",
              stream, distance);
 
         Instance().OnSetDistance(stream, distance);
@@ -750,7 +750,7 @@ private:
         const auto z = amx_ctof(params[4]);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvSetPosition:begin] : stream(%hu), x(%.2f), y(%.2f), z(%.2f)",
+            ("[sv:dbg:pawn:SvSetPosition:begin] stream(%hu), x(%.2f), y(%.2f), z(%.2f)",
              stream, x, y, z);
 
         Instance().OnSetPosition(stream, x, y, z);
@@ -778,7 +778,7 @@ private:
         }
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvSetTarget:begin] : stream(%hu), target(%hu)",
+            ("[sv:dbg:pawn:SvSetTarget:begin] stream(%hu), target(%hu)",
              stream, target);
 
         Instance().OnSetTarget(stream, target);
@@ -802,7 +802,7 @@ private:
             return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvSetEffect:begin] : stream(%hu), effect(%hu)",
+            ("[sv:dbg:pawn:SvSetEffect:begin] stream(%hu), effect(%hu)",
              stream, effect);
 
         Instance().OnSetEffect(stream, effect);
@@ -834,7 +834,7 @@ private:
             return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvSetIcon:begin] : stream(%hu), icon(%s)",
+            ("[sv:dbg:pawn:SvSetIcon:begin] stream(%hu), icon(%s)",
              stream, string_buffer.Data());
 
         Instance().OnSetIcon(stream, std::move(string_buffer));
@@ -854,7 +854,7 @@ private:
         if (stream >= kMaxStreams) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvDeleteStream:begin] : stream(%hu)", stream);
+            ("[sv:dbg:pawn:SvDeleteStream:begin] stream(%hu)", stream);
 
         Instance().OnDeleteStream(stream);
 
@@ -878,7 +878,7 @@ private:
         const auto result = Instance().OnCreateEffect();
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvCreateEffect:end] : result(%hu)", result);
+            ("[sv:dbg:pawn:SvCreateEffect:end] result(%hu)", result);
 
         return result != None<decltype(result)> ? static_cast<cell>(result) : None<cell>;
     }
@@ -922,7 +922,7 @@ private:
                     reinterpret_cast<ChorusParameters*>(parameters.Data())->phase = *physical_address;
 
                 if (Instance()._debug) Logger::Instance().Log
-                    ("[sv:dbg:pawn:SvAppendFilter:begin] : effect(%hu), filter(%hhu), priority(%hd), "
+                    ("[sv:dbg:pawn:SvAppendFilter:begin] effect(%hu), filter(%hhu), priority(%hd), "
                      "wetdrymix(%.2f), depth(%.2f), feedback(%.2f), frequency(%.2f), waveform(%u), delay(%.2f), phase(%u)",
                      effect, filter, priority,
                      reinterpret_cast<const ChorusParameters*>(parameters.Data())->wetdrymix,
@@ -957,7 +957,7 @@ private:
                     reinterpret_cast<CompressorParameters*>(parameters.Data())->predelay = amx_ctof(*physical_address);
 
                 if (Instance()._debug) Logger::Instance().Log
-                    ("[sv:dbg:pawn:SvAppendFilter:begin] : effect(%hu), filter(%hhu), priority(%hd), "
+                    ("[sv:dbg:pawn:SvAppendFilter:begin] effect(%hu), filter(%hhu), priority(%hd), "
                      "gain(%.2f), attack(%.2f), release(%.2f), threshold(%.2f), ratio(%.2f), predelay(%.2f)",
                      effect, filter, priority,
                      reinterpret_cast<const CompressorParameters*>(parameters.Data())->gain,
@@ -989,7 +989,7 @@ private:
                     reinterpret_cast<DistortionParameters*>(parameters.Data())->prelowpasscutoff = amx_ctof(*physical_address);
 
                 if (Instance()._debug) Logger::Instance().Log
-                    ("[sv:dbg:pawn:SvAppendFilter:begin] : effect(%hu), filter(%hhu), priority(%hd), "
+                    ("[sv:dbg:pawn:SvAppendFilter:begin] effect(%hu), filter(%hhu), priority(%hd), "
                      "gain(%.2f), edge(%.2f), posteqcenterfrequency(%.2f), posteqbandwidth(%.2f), prelowpasscutoff(%.2f)",
                      effect, filter, priority,
                      reinterpret_cast<const DistortionParameters*>(parameters.Data())->gain,
@@ -1020,7 +1020,7 @@ private:
                     reinterpret_cast<EchoParameters*>(parameters.Data())->pandelay = static_cast<bool>(*physical_address);
 
                 if (Instance()._debug) Logger::Instance().Log
-                    ("[sv:dbg:pawn:SvAppendFilter:begin] : effect(%hu), filter(%hhu), priority(%hd), "
+                    ("[sv:dbg:pawn:SvAppendFilter:begin] effect(%hu), filter(%hhu), priority(%hd), "
                      "wetdrymix(%.2f), feedback(%.2f), leftdelay(%.2f), rightdelay(%.2f), pandelay(%hhu)",
                      effect, filter, priority,
                      reinterpret_cast<const EchoParameters*>(parameters.Data())->wetdrymix,
@@ -1055,7 +1055,7 @@ private:
                     reinterpret_cast<FlangerParameters*>(parameters.Data())->phase = *physical_address;
 
                 if (Instance()._debug) Logger::Instance().Log
-                    ("[sv:dbg:pawn:SvAppendFilter:begin] : effect(%hu), filter(%hhu), priority(%hd), "
+                    ("[sv:dbg:pawn:SvAppendFilter:begin] effect(%hu), filter(%hhu), priority(%hd), "
                      "wetdrymix(%.2f), depth(%.2f), feedback(%.2f), frequency(%.2f), waveform(%u), delay(%.2f), phase(%u)",
                      effect, filter, priority,
                      reinterpret_cast<const FlangerParameters*>(parameters.Data())->wetdrymix,
@@ -1082,7 +1082,7 @@ private:
                     reinterpret_cast<GargleParameters*>(parameters.Data())->waveshape = *physical_address;
 
                 if (Instance()._debug) Logger::Instance().Log
-                    ("[sv:dbg:pawn:SvAppendFilter:begin] : effect(%hu), filter(%hhu), priority(%hd), "
+                    ("[sv:dbg:pawn:SvAppendFilter:begin] effect(%hu), filter(%hhu), priority(%hd), "
                      "ratehz(%u), waveshape(%u)", effect, filter, priority,
                      reinterpret_cast<const GargleParameters*>(parameters.Data())->ratehz,
                      reinterpret_cast<const GargleParameters*>(parameters.Data())->waveshape);
@@ -1123,7 +1123,7 @@ private:
                     reinterpret_cast<I3dl2reverbParameters*>(parameters.Data())->hfreference = amx_ctof(*physical_address);
 
                 if (Instance()._debug) Logger::Instance().Log
-                    ("[sv:dbg:pawn:SvAppendFilter:begin] : effect(%hu), filter(%hhu), priority(%hd), "
+                    ("[sv:dbg:pawn:SvAppendFilter:begin] effect(%hu), filter(%hhu), priority(%hd), "
                      "room(%d), roomhf(%d), roomrollofffactor(%.2f), decaytime(%.2f), "
                      "decayhfratio(%.2f), reflections(%d), reflectionsdelay(%.2f), reverb(%d), "
                      "reverbdelay(%.2f), diffusion(%.2f), density(%.2f), hfreference(%.2f)",
@@ -1159,7 +1159,7 @@ private:
                     reinterpret_cast<ParameqParameters*>(parameters.Data())->gain = amx_ctof(*physical_address);
 
                 if (Instance()._debug) Logger::Instance().Log
-                    ("[sv:dbg:pawn:SvAppendFilter:begin] : effect(%hu), filter(%hhu), priority(%hd), "
+                    ("[sv:dbg:pawn:SvAppendFilter:begin] effect(%hu), filter(%hhu), priority(%hd), "
                      "center(%.2f), bandwidth(%.2f), gain(%.2f)", effect, filter, priority,
                      reinterpret_cast<const ParameqParameters*>(parameters.Data())->center,
                      reinterpret_cast<const ParameqParameters*>(parameters.Data())->bandwidth,
@@ -1185,7 +1185,7 @@ private:
                     reinterpret_cast<ReverbParameters*>(parameters.Data())->highfreqrtratio = amx_ctof(*physical_address);
 
                 if (Instance()._debug) Logger::Instance().Log
-                    ("[sv:dbg:pawn:SvAppendFilter:begin] : effect(%hu), filter(%hhu), priority(%hd), "
+                    ("[sv:dbg:pawn:SvAppendFilter:begin] effect(%hu), filter(%hhu), priority(%hd), "
                      "ingain(%.2f), reverbmix(%.2f), reverbtime(%.2f), highfreqrtratio(%.2f)",
                      effect, filter, priority,
                      reinterpret_cast<const ReverbParameters*>(parameters.Data())->ingain,
@@ -1204,7 +1204,7 @@ private:
         const auto result = Instance().OnAppendFilter(effect, filter, priority, std::move(parameters));
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvAppendFilter:end] : result(%hhu)", result);
+            ("[sv:dbg:pawn:SvAppendFilter:end] result(%hhu)", result);
 
         return static_cast<cell>(result);
     }
@@ -1223,7 +1223,7 @@ private:
         const auto priority = static_cast<sword_t>(params[3]);
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvRemoveFilter:begin] : effect(%hu), filter(%hhu), priority(%hd)",
+            ("[sv:dbg:pawn:SvRemoveFilter:begin] effect(%hu), filter(%hhu), priority(%hd)",
              effect, filter, priority);
 
         Instance().OnRemoveFilter(effect, filter, priority);
@@ -1243,7 +1243,7 @@ private:
         if (effect >= kMaxEffects) return None<cell>;
 
         if (Instance()._debug) Logger::Instance().Log
-            ("[sv:dbg:pawn:SvDeleteEffect:begin] : effect(%hu)", effect);
+            ("[sv:dbg:pawn:SvDeleteEffect:begin] effect(%hu)", effect);
 
         Instance().OnDeleteEffect(effect);
 

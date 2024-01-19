@@ -1756,7 +1756,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** const ppData) noexcept
 
     if (!Logger::Instance().Initialize("control.log", logprintf))
     {
-        logprintf("[sv:err:plugin] : failed to initialize logger");
+        logprintf("[sv:err:plugin] failed to initialize logger");
         return false;
     }
 
@@ -1824,7 +1824,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** const ppData) noexcept
 
         if (!CommandService::Instance().Initialize(control, command))
         {
-            Logger::Instance().Log("[sv:err:plugin] : failed to initialize command service");
+            Logger::Instance().Log("[sv:err:plugin] failed to initialize command service");
             Logger::Instance().Deinitialize();
             return false;
         }
@@ -1838,7 +1838,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** const ppData) noexcept
 
     if (!ControlService::Instance().Initialize(logprintf))
     {
-        Logger::Instance().Log("[sv:err:plugin] : failed to initialize control service");
+        Logger::Instance().Log("[sv:err:plugin] failed to initialize control service");
         CommandService::Instance().Deinitialize();
         Logger::Instance().Deinitialize();
         return false;

@@ -135,7 +135,7 @@ public:
             File file { path, "rt" };
             if (file.Invalid())
             {
-                Logger::Instance().LogToFile("[sv:err:localization:initialize] : failed to open language file (%s)", path);
+                Logger::Instance().LogToFile("[sv:err:localization:initialize] failed to open language file (%s)", path);
                 return;
             }
 
@@ -149,9 +149,9 @@ public:
                 {
                     switch (result)
                     {
-                        case  0: Logger::Instance().LogToFile("[sv:err:localization:initialize] : not all strings translated"); break;
-                        case -1: Logger::Instance().LogToFile("[sv:err:localization:initialize] : file descriptor error"); break;
-                        case -2: Logger::Instance().LogToFile("[sv:err:localization:initialize] : too long string"); break;
+                        case  0: Logger::Instance().LogToFile("[sv:err:localization:initialize] not all strings translated"); break;
+                        case -1: Logger::Instance().LogToFile("[sv:err:localization:initialize] file descriptor error"); break;
+                        case -2: Logger::Instance().LogToFile("[sv:err:localization:initialize] too long string"); break;
                     }
 
                     return;

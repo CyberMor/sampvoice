@@ -72,7 +72,7 @@ public:
         if (const HRESULT result = D3DXCreateTextureFromFileInMemory
             (device, resource.Data(), resource.Size(), &_texture); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:texture:constructor] : failed to create texture (code:%ld)", result);
+            Logger::Instance().LogToFile("[err:texture:constructor] failed to create texture (code:%ld)", result);
             return;
         }
 
@@ -87,7 +87,7 @@ public:
 
         if (const HRESULT result = D3DXCreateSprite(device, &_sprite); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:texture:constructor] : failed to create sprite (code:%ld)", result);
+            Logger::Instance().LogToFile("[err:texture:constructor] failed to create sprite (code:%ld)", result);
             return;
         }
 
@@ -105,7 +105,7 @@ public:
 
             if (const HRESULT result = _texture->GetLevelDesc(0, &texture_info); FAILED(result))
             {
-                Logger::Instance().LogToFile("[err:texture:constructor] : failed to get texture info (code:%ld)", result);
+                Logger::Instance().LogToFile("[err:texture:constructor] failed to get texture info (code:%ld)", result);
                 return;
             }
 
@@ -152,7 +152,7 @@ public:
         if (const HRESULT result = D3DXCreateTextureFromFileInMemory
             (device, resource.Data(), resource.Size(), &_texture); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:texture:initialize] : failed to create texture (code:%ld)", result);
+            Logger::Instance().LogToFile("[err:texture:initialize] failed to create texture (code:%ld)", result);
             return false;
         }
 
@@ -167,7 +167,7 @@ public:
 
         if (const HRESULT result = D3DXCreateSprite(device, &_sprite); FAILED(result))
         {
-            Logger::Instance().LogToFile("[err:texture:initialize] : failed to create sprite (code:%ld)", result);
+            Logger::Instance().LogToFile("[err:texture:initialize] failed to create sprite (code:%ld)", result);
             return false;
         }
 
@@ -185,7 +185,7 @@ public:
 
             if (const HRESULT result = _texture->GetLevelDesc(0, &texture_info); FAILED(result))
             {
-                Logger::Instance().LogToFile("[err:texture:initialize] : failed to get texture info (code:%ld)", result);
+                Logger::Instance().LogToFile("[err:texture:initialize] failed to get texture info (code:%ld)", result);
                 return false;
             }
 

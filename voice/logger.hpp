@@ -39,11 +39,11 @@ public:
 
 public:
 
-    bool Initialize(const cstr_t log_file) noexcept
+    bool Initialize(const cstr_t path) noexcept
     {
         assert(log_file != nullptr);
 
-        return (_log_file = (_log_file != nullptr ? std::freopen(log_file, "a", _log_file) : std::fopen(log_file, "a"))) != nullptr;
+        return (_log_file = (_log_file != nullptr ? std::freopen(path, "a", _log_file) : std::fopen(path, "a"))) != nullptr;
     }
 
     void Deinitialize() noexcept

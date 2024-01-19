@@ -61,7 +61,7 @@ public:
             !_texture_active_icon.Initialize(device, resource_active_icon) ||
             !_texture_muted_icon.Initialize(device, resource_muted_icon))
         {
-            Logger::Instance().LogToFile("[sv:err:microicon:initialize] : failed to create icons");
+            Logger::Instance().LogToFile("[sv:err:microicon:initialize] failed to create icons");
             _texture_passive_icon.Deinitialize();
             _texture_active_icon.Deinitialize();
             _texture_muted_icon.Deinitialize();

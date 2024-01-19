@@ -77,7 +77,7 @@ public:
             !_delete_player_from_pool_hook.Initialize
             (Addresses::Instance().DeletePlayerFromPoolFunction(), DeletePlayerFromPoolHook))
         {
-            Logger::Instance().LogToFile("[sv:err:blacklist:initialize] : "
+            Logger::Instance().LogToFile("[sv:err:blacklist:initialize] "
                 "failed to initialize hooks");
             _create_player_in_pool_hook.Deinitialize();
             _delete_player_from_pool_hook.Deinitialize();
@@ -104,7 +104,7 @@ public:
         File file { path, "wt" };
         if (file.Invalid())
         {
-            Logger::Instance().LogToFile("[sv:err:blacklist:save] : "
+            Logger::Instance().LogToFile("[sv:err:blacklist:save] "
                 "failed to open file (%s)", path);
             return false;
         }
@@ -113,7 +113,7 @@ public:
         {
             if (!file.PutLine(player->name, '\n'))
             {
-                Logger::Instance().LogToFile("[sv:err:blacklist:save] : "
+                Logger::Instance().LogToFile("[sv:err:blacklist:save] "
                     "failed to write string to file", path);
                 return false;
             }
@@ -129,7 +129,7 @@ public:
         File file { path, "rt" };
         if (file.Invalid())
         {
-            Logger::Instance().LogToFile("[sv:err:blacklist:load] : "
+            Logger::Instance().LogToFile("[sv:err:blacklist:load] "
                 "failed to open file (%s)", path);
             return false;
         }
@@ -149,8 +149,8 @@ public:
             {
                 switch (result)
                 {
-                    case -1: Logger::Instance().LogToFile("[sv:err:blacklist:load] : file descriptor error"); break;
-                    case -2: Logger::Instance().LogToFile("[sv:err:blacklist:load] : too long player name"); break;
+                    case -1: Logger::Instance().LogToFile("[sv:err:blacklist:load] file descriptor error"); break;
+                    case -2: Logger::Instance().LogToFile("[sv:err:blacklist:load] too long player name"); break;
                 }
 
                 return result == 0;
@@ -165,7 +165,7 @@ public:
             const auto pointer = _locked_players.Construct(name, id);
             if (pointer == nullptr)
             {
-                Logger::Instance().LogToFile("[sv:err:blacklist:load] : "
+                Logger::Instance().LogToFile("[sv:err:blacklist:load] "
                     "failed to allocate memory for player name");
                 return false;
             }
@@ -191,7 +191,7 @@ public:
 
         if (std::strlen(pPlayerName) >= sizeof(LockedPlayer::name))
         {
-            Logger::Instance().LogToFile("[sv:err:blacklist:lockplayer] : "
+            Logger::Instance().LogToFile("[sv:err:blacklist:lockplayer] "
                 "too long player name '%s' (must be no more than %u)",
                 pPlayerName, static_cast<uint_t>(sizeof(LockedPlayer::name) - 1));
             return false;
@@ -203,13 +203,13 @@ public:
                 return false;
         }
 
-        Logger::Instance().LogToFile("[sv:dbg:blacklist:lockplayer] : "
+        Logger::Instance().LogToFile("[sv:dbg:blacklist:lockplayer] "
             "adding player (id:%hu;name:%s) to blacklist...", id, pPlayerName);
 
         const auto pointer = _locked_players.Construct(pPlayerName, id);
         if (pointer == nullptr)
         {
-            Logger::Instance().LogToFile("[sv:err:blacklist:lockplayer] : "
+            Logger::Instance().LogToFile("[sv:err:blacklist:lockplayer] "
                 "failed to allocate memory for player name");
             return false;
         }
@@ -225,7 +225,7 @@ public:
 
         if (std::strlen(name) >= sizeof(LockedPlayer::name))
         {
-            Logger::Instance().LogToFile("[sv:err:blacklist:lockplayer] : "
+            Logger::Instance().LogToFile("[sv:err:blacklist:lockplayer] "
                 "too long player name '%s' (must be no more than %u)",
                 name, static_cast<uint_t>(sizeof(LockedPlayer::name) - 1));
             return false;
@@ -251,13 +251,13 @@ public:
             }
         }
 
-        Logger::Instance().LogToFile("[sv:dbg:blacklist:lockplayer] : "
+        Logger::Instance().LogToFile("[sv:dbg:blacklist:lockplayer] "
             "adding player (id:%hu;name:%s) to blacklist...", id, name);
 
         const auto pointer = _locked_players.Construct(name, id);
         if (pointer == nullptr)
         {
-            Logger::Instance().LogToFile("[sv:err:blacklist:lockplayer] : "
+            Logger::Instance().LogToFile("[sv:err:blacklist:lockplayer] "
                 "failed to allocate memory for player name");
             return false;
         }
@@ -273,7 +273,7 @@ public:
     {
         assert(id < MAX_PLAYERS);
 
-        Logger::Instance().LogToFile("[sv:dbg:blacklist:unlockplayer] : "
+        Logger::Instance().LogToFile("[sv:dbg:blacklist:unlockplayer] "
             "removing player (%hu) from blacklist...", id);
 
         ListRemove(iterator, _locked_players, id == iterator->id);
@@ -283,7 +283,7 @@ public:
     {
         assert(name != nullptr);
 
-        Logger::Instance().LogToFile("[sv:dbg:blacklist:unlockplayer] : "
+        Logger::Instance().LogToFile("[sv:dbg:blacklist:unlockplayer] "
             "removing player (%s) from blacklist...", name);
 
         ListRemove(iterator, _locked_players, std::strcmp(name, iterator->name) == 0);

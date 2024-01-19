@@ -54,7 +54,7 @@ public:
 
                 if (const HRESULT result = device->GetSwapChain(0, &swapchain); FAILED(result))
                 {
-                    Logger::Instance().LogToFile("[err:imgui:initialize] : failed to "
+                    Logger::Instance().LogToFile("[err:imgui:initialize] failed to "
                         "get swapchain (code:%ld)", result);
                     return false;
                 }
@@ -65,7 +65,7 @@ public:
                 swapchain->Release();
                 if (FAILED(result))
                 {
-                    Logger::Instance().LogToFile("[err:imgui:initialize] : failed to "
+                    Logger::Instance().LogToFile("[err:imgui:initialize] failed to "
                         "get present parameters (code:%ld)", result);
                     return false;
                 }
