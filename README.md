@@ -150,7 +150,7 @@ cd sampvoice
 
 ### Windows (Client/Server)
 ---------------------------------
-To compile the client side of the plugin, you need the *DirectX SDK*. By default, the client part is compiled for version **SA: MP 0.3.7 (R1)**, but you can also explicitly tell the compiler the version for the build using the **SAMP_R1** and **SAMP_R3** macros. In order to build the client and server parts of the plugin for the *Win32* platform, open the *sampvoice.sln* project in Visual Studio 2019 (or higher) and compile it:
+To compile the client side of the plugin, you need the *DirectX 9 SDK*. By default, the client part is compiled for version **SA: MP 0.3.7 (R1)**, but you can also explicitly tell the compiler the version for the build using the **SAMP_R1** and **SAMP_R3** macros. In order to build the client and server parts of the plugin for the *Win32* platform, open the *sampvoice.sln* project in Visual Studio 2019 (or higher) and compile it:
 > Build -> Build Solution (F7)
 
 ### Linux (Ubuntu 20.04) (Server)
