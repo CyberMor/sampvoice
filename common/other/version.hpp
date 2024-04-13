@@ -30,12 +30,12 @@ constexpr VersionMajor GetVersionMajor(const Version version) noexcept
 
 constexpr VersionMinor GetVersionMinor(const Version version) noexcept
 {
-    return static_cast<VersionMinor>(version >> 16 & 0xFF);
+    return static_cast<VersionMinor>(version >> 16);
 }
 
 constexpr VersionPatch GetVersionPatch(const Version version) noexcept
 {
-    return static_cast<VersionPatch>(version & 0xFFFF);
+    return static_cast<VersionPatch>(version);
 }
 
 // ----------------------------------------------------------------

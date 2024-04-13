@@ -81,10 +81,13 @@ using cptr_t = const void*;       // const universal pointer type
 using  adr_t = ubyte_t*;          // memory address type
 using cadr_t = const ubyte_t*;    // const memory address type
 
-using  str_t = char*;             // string type
-using cstr_t = const char*;       // const string type
+using  str_t = char*;             // string pointer type
+using cstr_t = const char*;       // const string pointer type
 
 // ----------------------------------------------------------------
+
+template <class Type> constexpr Type Zero =  static_cast<Type>(0);
+template <class Type> constexpr Type None = ~static_cast<Type>(0);
 
 template <class Type> constexpr size_t Bits = sizeof(Type) * CHAR_BIT;
 
@@ -93,6 +96,3 @@ template <class Type> constexpr Type  LowBit = static_cast<Type>(1);
 
 template <class Type> constexpr Type HighByte = static_cast<Type>(0xFF) << (Bits<Type> - CHAR_BIT);
 template <class Type> constexpr Type  LowByte = static_cast<Type>(0xFF);
-
-template <class Type> constexpr Type None = ~static_cast<Type>(0);
-template <class Type> constexpr Type Zero =  static_cast<Type>(0);

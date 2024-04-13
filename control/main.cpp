@@ -73,8 +73,7 @@ static bool OnEnableListener(const uword_t player) noexcept
     command->status = true;
 
     CommandService::Instance().EndCommand();
-    if (!CommandService::Instance().SendCommand())
-        return false;
+    CommandService::Instance().SendCommand();
 
     // -------------------------------------------------
 
@@ -101,8 +100,7 @@ static bool OnDisableListener(const uword_t player) noexcept
     command->status = false;
 
     CommandService::Instance().EndCommand();
-    if (!CommandService::Instance().SendCommand())
-        return false;
+    CommandService::Instance().SendCommand();
 
     // -------------------------------------------------
 
@@ -147,8 +145,7 @@ static bool OnEnableSpeaker(const uword_t player, const udword_t channels) noexc
     command->channels = active_channels;
 
     CommandService::Instance().EndCommand();
-    if (!CommandService::Instance().SendCommand())
-        return false;
+    CommandService::Instance().SendCommand();
 
     // Sending Packet to Player...
     // -------------------------------------------------
@@ -189,8 +186,7 @@ static bool OnDisableSpeaker(const uword_t player, const udword_t channels) noex
     command->channels = active_channels;
 
     CommandService::Instance().EndCommand();
-    if (!CommandService::Instance().SendCommand())
-        return false;
+    CommandService::Instance().SendCommand();
 
     // Sending Packet to Player...
     // -------------------------------------------------
@@ -253,8 +249,7 @@ static bool OnAttachStream(const uword_t player, const uword_t stream, const udw
         command->channels = active_channels;
 
         CommandService::Instance().EndCommand();
-        if (!CommandService::Instance().SendCommand())
-            return false;
+        CommandService::Instance().SendCommand();
     }
 
     // -------------------------------------------------
@@ -267,8 +262,7 @@ static bool OnAttachStream(const uword_t player, const uword_t stream, const udw
     command->stream = stream;
 
     CommandService::Instance().EndCommand();
-    if (!CommandService::Instance().SendCommand())
-        return false;
+    CommandService::Instance().SendCommand();
 
     // Sending Packet to Player...
     // -------------------------------------------------
@@ -352,8 +346,7 @@ static bool OnDetachStream(const uword_t player, const uword_t stream, const udw
         command->channels = active_channels;
 
         CommandService::Instance().EndCommand();
-        if (!CommandService::Instance().SendCommand())
-            return false;
+        CommandService::Instance().SendCommand();
     }
     
     // -------------------------------------------------
@@ -366,8 +359,7 @@ static bool OnDetachStream(const uword_t player, const uword_t stream, const udw
     command->stream = stream;
 
     CommandService::Instance().EndCommand();
-    if (!CommandService::Instance().SendCommand())
-        return false;
+    CommandService::Instance().SendCommand();
 
     // Sending Packet to Player...
     // -------------------------------------------------
@@ -573,8 +565,7 @@ static bool OnEnableTransiter(const uword_t stream) noexcept
     command->status = true;
 
     CommandService::Instance().EndCommand();
-    if (!CommandService::Instance().SendCommand())
-        return false;
+    CommandService::Instance().SendCommand();
 
     // -------------------------------------------------
 
@@ -601,8 +592,7 @@ static bool OnDisableTransiter(const uword_t stream) noexcept
     command->status = false;
 
     CommandService::Instance().EndCommand();
-    if (!CommandService::Instance().SendCommand())
-        return false;
+    CommandService::Instance().SendCommand();
 
     // -------------------------------------------------
 
@@ -639,8 +629,7 @@ static bool OnAttachListener(const uword_t stream, const uword_t player) noexcep
         command->player = player;
 
         CommandService::Instance().EndCommand();
-        if (!CommandService::Instance().SendCommand())
-            return false;
+        CommandService::Instance().SendCommand();
     }
 
     // Sending Packet To Player...
@@ -833,8 +822,7 @@ static bool OnDetachListener(const uword_t stream, const uword_t player) noexcep
             command->player = player;
 
             CommandService::Instance().EndCommand();
-            if (!CommandService::Instance().SendCommand())
-                return false;
+            CommandService::Instance().SendCommand();
         }
 
         // Sending Packet To Player...
@@ -1438,7 +1426,7 @@ static void OnControlDisconnect(const uword_t player) noexcept
 */
 static void OnSynchronize() noexcept
 {
-    for (size_t player; player != kMaxPlayers; ++player)
+    for (size_t player = 0; player != kMaxPlayers; ++player)
     {
         if (gPlayers.Acquire<0>(player))
         {
@@ -1516,7 +1504,7 @@ static void OnSynchronize() noexcept
         }
     }
 
-    for (size_t stream; stream != kMaxStreams; ++stream)
+    for (size_t stream = 0; stream != kMaxStreams; ++stream)
     {
         if (gStreams.Acquire<0>(stream))
         {
@@ -1788,9 +1776,9 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** const ppData) noexcept
         config.Register(PARAMETER_VOICE_HOST, "voice_host"s);
         config.Register(PARAMETER_VOICE_PORT, "voice_port"s);
 
-        if (config.Load("control.cfg") < 0)
+        if (const int result = config.Load("control.cfg"); result < 0)
         {
-            Logger::Instance().Log("Failed to load 'control.cfg'.");
+            Logger::Instance().Log("[sv:err:plugin] failed to load 'control.cfg' (%d)", result);
             Logger::Instance().Deinitialize();
             return false;
         }

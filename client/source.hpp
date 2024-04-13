@@ -271,7 +271,7 @@ private:
             for (const uword_t* iterator = streams; *iterator != None<uword_t>; ++iterator)
             {
                 if (const size_t position = utils::string::find(_streams[packet % kSourceChunk],
-                    *iterator, None<uword_t>); position == None<size_t>)
+                    *iterator, None<uword_t>); _streams[packet % kSourceChunk][position] != None<uword_t>)
                 {
                     if (_playing[*iterator] != 0)
                         _playing[*iterator] += kInterval;

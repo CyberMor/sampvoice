@@ -14,6 +14,8 @@
 
 #include <system/types.hpp>
 
+#include "array.hpp"
+
 template <size_t Capacity>
 struct Bitset {
 
@@ -23,6 +25,10 @@ public:
 
     Bitset() noexcept = default;
     ~Bitset() noexcept = default;
+    Bitset(const Bitset&) = delete;
+    Bitset(Bitset&&) = delete;
+    Bitset& operator=(const Bitset&) = delete;
+    Bitset& operator=(Bitset&&) = delete;
 
 public:
 
@@ -35,7 +41,7 @@ private:
 
     static constexpr size_t Chunks() noexcept
     {
-        return (Capacity - 1) / Bits<umaxint_t> + 1;
+        return (Size() - 1) / Bits<umaxint_t> + 1;
     }
 
 public:
@@ -113,7 +119,7 @@ public:
 
     bool Set(const size_t index) noexcept
     {
-        assert(index < Capacity);
+        assert(index < Size());
 
         const size_t chunk = index / Bits<umaxint_t>;
         const umaxint_t mask = HighBit<umaxint_t> >> (index % Bits<umaxint_t>);
@@ -124,7 +130,7 @@ public:
 
     bool Test(const size_t index) const noexcept
     {
-        assert(index < Capacity);
+        assert(index < Size());
 
         const size_t chunk = index / Bits<umaxint_t>;
         const umaxint_t mask = HighBit<umaxint_t> >> (index % Bits<umaxint_t>);
@@ -135,7 +141,7 @@ public:
 
     bool Reset(const size_t index) noexcept
     {
-        assert(index < Capacity);
+        assert(index < Size());
 
         const size_t chunk = index / Bits<umaxint_t>;
         const umaxint_t mask = HighBit<umaxint_t> >> (index % Bits<umaxint_t>);

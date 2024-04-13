@@ -41,9 +41,10 @@ public:
 
     bool Initialize(const cstr_t path) noexcept
     {
-        assert(log_file != nullptr);
+        assert(path != nullptr && *path != '\0');
 
-        return (_log_file = (_log_file != nullptr ? std::freopen(path, "a", _log_file) : std::fopen(path, "a"))) != nullptr;
+        _log_file = (_log_file != nullptr ? std::freopen(path, "a", _log_file) : std::fopen(path, "a"));
+        return _log_file != nullptr;
     }
 
     void Deinitialize() noexcept
@@ -61,28 +62,28 @@ public:
 
         char buffer[1024];
 
-        _log_lock.lock();
-
         const auto c_time = std::time(nullptr);
         const auto time_of_day = std::localtime(&c_time);
         assert(time_of_day != nullptr);
 
-        std::sprintf(buffer, "[%.02d.%.02d.%.04d](%.02d:%.02d:%.02d): ",
+        std::sprintf(buffer, "[%.02d.%.02d.%.04d](%.02d:%.02d:%.02d) ",
             time_of_day->tm_mday, time_of_day->tm_mon + 1, time_of_day->tm_year + 1900,
             time_of_day->tm_hour, time_of_day->tm_min, time_of_day->tm_sec);
 
-        std::sprintf(buffer + std::strlen(buffer), message, arguments...);
+        std::sprintf(buffer + 23, message, arguments...);
 
         if (_log_file != nullptr)
         {
+            _log_lock.lock();
+
             std::fputs(buffer, _log_file);
             std::fputc('\n', _log_file);
             std::fflush(_log_file);
+
+            _log_lock.unlock();
         }
 
         std::puts(buffer);
-
-        _log_lock.unlock();
     }
 
 private:

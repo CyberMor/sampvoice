@@ -72,40 +72,23 @@ public:
 
 public:
 
-    void Deinitialize() noexcept
-    {
-        ForwardForEach(slot, _slots)
-        {
-            if (slot->references != 0)
-            {
-                delete slot->value;
-
-                slot->references = 0;
-            }
-        }
-    }
-
-public:
-
     template <size_t References = 1, class... Arguments>
     size_t Emplace(Arguments&&... arguments) noexcept
     {
-        bool selected;
-        bool emplaced;
-
         ForwardForEach(slot, _slots)
         {
             slot->lock.Lock();
 
-            if (selected = (slot->references == 0))
+            const bool emplaced = slot->references == 0;
+            if (emplaced)
             {
-                slot->value = new (std::nothrow) Type { std::forward<Arguments>(arguments)... };
-                if (emplaced = (slot->value != nullptr)) slot->references = References;
+                slot->value = new Type { std::forward<Arguments>(arguments)... };
+                slot->references = References;
             }
 
             slot->lock.Unlock();
 
-            if (selected) return emplaced ? slot - _slots.Begin() : None<size_t>;
+            if (emplaced) return slot - _slots.Begin();
         }
 
         return None<size_t>;
@@ -114,8 +97,6 @@ public:
     template <size_t References = 1, class... Arguments>
     bool EmplaceAt(const size_t index, const bool block, Arguments&&... arguments) noexcept
     {
-        bool emplaced = false;
-
         _slots[index].lock.Lock();
 
         if (block) while (_slots[index].references & HighBit<size_t>)
@@ -125,10 +106,11 @@ public:
             _slots[index].lock.Lock();
         }
 
-        if (_slots[index].references == 0)
+        const bool emplaced = _slots[index].references == 0;
+        if (emplaced)
         {
-            _slots[index].value = new (std::nothrow) Type { std::forward<Arguments>(arguments)... };
-            if (emplaced = (_slots[index].value != nullptr)) _slots[index].references = References;
+            _slots[index].value = new Type { std::forward<Arguments>(arguments)... };
+            _slots[index].references = References;
         }
 
         _slots[index].lock.Unlock();
@@ -141,20 +123,18 @@ public:
     {
         _slots[index].lock.Lock();
 
-        if ((_slots[index].references & HighBit<size_t>) == 0)
+        assert((_slots[index].references & ~HighBit<size_t>) >= References);
+
+        _slots[index].references -= References;
+        if ((_slots[index].references & ~HighBit<size_t>) == 0)
+            { delete _slots[index].value; _slots[index].references = 0; }
+        else _slots[index].references |= HighBit<size_t>;
+
+        if (block) while (_slots[index].references != 0)
         {
-            assert(_slots[index].references >= References);
-
-            _slots[index].references -= References;
-            if (_slots[index].references == 0) delete _slots[index].value;
-            else _slots[index].references |= HighBit<size_t>;
-
-            if (block) while (_slots[index].references != 0)
-            {
-                _slots[index].lock.Unlock();
-                std::this_thread::yield();
-                _slots[index].lock.Lock();
-            }
+            _slots[index].lock.Unlock();
+            std::this_thread::yield();
+            _slots[index].lock.Lock();
         }
 
         _slots[index].lock.Unlock();

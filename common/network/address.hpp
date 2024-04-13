@@ -47,11 +47,11 @@ public:
         result.sin_family = AF_INET;
 
         if constexpr (HostEndian != NetEndian && ConvertToNetworkEndian)
-            result.sin_addr.s_addr = utils::bswap(host);
+             result.sin_addr.s_addr = utils::bswap(host);
         else result.sin_addr.s_addr = host;
 
         if constexpr (HostEndian != NetEndian && ConvertToNetworkEndian)
-            result.sin_port = utils::bswap(port);
+             result.sin_port = utils::bswap(port);
         else result.sin_port = port;
 
         return result;
@@ -67,7 +67,7 @@ public:
             result.sin_family = AF_INET;
 
             if constexpr (HostEndian != NetEndian && ConvertToNetworkEndian)
-                result.sin_port = utils::bswap(port);
+                 result.sin_port = utils::bswap(port);
             else result.sin_port = port;
         }
 
@@ -98,7 +98,7 @@ public:
                 static_cast<udword_t>(INADDR_LOOPBACK));
 
         if constexpr (HostEndian != NetEndian && ConvertToNetworkEndian)
-            result.sin_port = utils::bswap(port);
+             result.sin_port = utils::bswap(port);
         else result.sin_port = port;
 
         return result;
@@ -113,7 +113,7 @@ public:
         result.sin_addr.s_addr = INADDR_ANY;
 
         if constexpr (HostEndian != NetEndian && ConvertToNetworkEndian)
-            result.sin_port = utils::bswap(port);
+             result.sin_port = utils::bswap(port);
         else result.sin_port = port;
 
         return result;
@@ -163,9 +163,8 @@ public:
         assert(sin_family         == AF_UNSPEC || sin_family         == AF_INET);
         assert(address.sin_family == AF_UNSPEC || address.sin_family == AF_INET);
 
-        return address.sin_family != AF_UNSPEC &&
-            (sin_family == AF_UNSPEC || (sin_addr.s_addr <= address.sin_addr.s_addr &&
-                sin_port < address.sin_port));
+        return address.sin_family != AF_UNSPEC && (sin_family == AF_UNSPEC ||
+            (sin_port < address.sin_port || (sin_port == address.sin_port && sin_addr.s_addr < address.sin_addr.s_addr)));
     }
 
     bool operator>(const Address& address) const noexcept
@@ -173,33 +172,26 @@ public:
         assert(sin_family         == AF_UNSPEC || sin_family         == AF_INET);
         assert(address.sin_family == AF_UNSPEC || address.sin_family == AF_INET);
 
-        return sin_family != AF_UNSPEC &&
-            (address.sin_family == AF_UNSPEC || (address.sin_addr.s_addr <= sin_addr.s_addr &&
-                address.sin_port < sin_port));
+        return sin_family != AF_UNSPEC && (address.sin_family == AF_UNSPEC ||
+            (address.sin_port < sin_port || (address.sin_port == sin_port && address.sin_addr.s_addr < sin_addr.s_addr)));
     }
 
     bool operator<=(const Address& address) const noexcept
     {
-        static_assert(AF_UNSPEC == 0 && AF_INET != 0);
-
         assert(sin_family         == AF_UNSPEC || sin_family         == AF_INET);
         assert(address.sin_family == AF_UNSPEC || address.sin_family == AF_INET);
 
-        return (sin_family * address.sin_family == 0 &&
-            sin_family == AF_UNSPEC) || (sin_addr.s_addr <= address.sin_addr.s_addr &&
-                sin_port <= address.sin_port);
+        return sin_family == AF_UNSPEC || (address.sin_family != AF_UNSPEC &&
+            (sin_port < address.sin_port || (sin_port == address.sin_port && sin_addr.s_addr <= address.sin_addr.s_addr)));
     }
 
     bool operator>=(const Address& address) const noexcept
     {
-        static_assert(AF_UNSPEC == 0 && AF_INET != 0);
-
         assert(sin_family         == AF_UNSPEC || sin_family         == AF_INET);
         assert(address.sin_family == AF_UNSPEC || address.sin_family == AF_INET);
 
-        return (address.sin_family * sin_family == 0 &&
-            address.sin_family == AF_UNSPEC) || (address.sin_addr.s_addr <= sin_addr.s_addr &&
-                address.sin_port <= sin_port);
+        return address.sin_family == AF_UNSPEC || (sin_family != AF_UNSPEC &&
+            (address.sin_port < sin_port || (address.sin_port == sin_port && address.sin_addr.s_addr <= sin_addr.s_addr)));
     }
 
     bool operator==(const Address& address) const noexcept
@@ -207,9 +199,8 @@ public:
         assert(sin_family         == AF_UNSPEC || sin_family         == AF_INET);
         assert(address.sin_family == AF_UNSPEC || address.sin_family == AF_INET);
 
-        return sin_family == address.sin_family &&
-            (sin_family == AF_UNSPEC || (sin_addr.s_addr == address.sin_addr.s_addr &&
-                sin_port == address.sin_port));
+        return sin_family == address.sin_family && (sin_family == AF_UNSPEC ||
+            (sin_addr.s_addr == address.sin_addr.s_addr && sin_port == address.sin_port));
     }
 
     bool operator!=(const Address& address) const noexcept
@@ -217,9 +208,8 @@ public:
         assert(sin_family         == AF_UNSPEC || sin_family         == AF_INET);
         assert(address.sin_family == AF_UNSPEC || address.sin_family == AF_INET);
 
-        return sin_family != address.sin_family ||
-            (sin_family != AF_UNSPEC && (sin_addr.s_addr != address.sin_addr.s_addr ||
-                sin_port != address.sin_port));
+        return sin_family != address.sin_family || (sin_family != AF_UNSPEC &&
+            (sin_addr.s_addr != address.sin_addr.s_addr || sin_port != address.sin_port));
     }
 
 public:
@@ -249,7 +239,7 @@ public:
         assert(sin_family == AF_INET);
 
         if constexpr (HostEndian != NetEndian && ConvertToHostEndian)
-            return utils::bswap(static_cast<udword_t>(sin_addr.s_addr));
+             return utils::bswap(static_cast<udword_t>(sin_addr.s_addr));
         else return static_cast<udword_t>(sin_addr.s_addr);
     }
 
@@ -259,7 +249,7 @@ public:
         assert(sin_family == AF_INET);
 
         if constexpr (HostEndian != NetEndian && ConvertToHostEndian)
-            return utils::bswap(static_cast<uword_t>(sin_port));
+             return utils::bswap(static_cast<uword_t>(sin_port));
         else return static_cast<uword_t>(sin_port);
     }
 
@@ -271,7 +261,7 @@ public:
         assert(sin_family == AF_INET);
 
         if constexpr (HostEndian != NetEndian && ConvertToNetworkEndian)
-            sin_addr.s_addr = utils::bswap(host);
+             sin_addr.s_addr = utils::bswap(host);
         else sin_addr.s_addr = host;
     }
 
@@ -288,7 +278,7 @@ public:
         assert(sin_family == AF_INET);
 
         if constexpr (HostEndian != NetEndian && ConvertToNetworkEndian)
-            sin_port = utils::bswap(port);
+             sin_port = utils::bswap(port);
         else sin_port = port;
     }
 
@@ -301,8 +291,7 @@ public:
 
     bool PrintHost(const str_t buffer) const noexcept
     {
-        return inet_ntop(AF_INET, const_cast<in_addr*>(&sin_addr),
-            buffer, HostLengthLimit + 1) != nullptr;
+        return inet_ntop(AF_INET, const_cast<in_addr*>(&sin_addr), buffer, HostLengthLimit + 1) != nullptr;
     }
 
     bool PrintPort(const str_t buffer) const noexcept
@@ -379,7 +368,9 @@ bool ResolveAddress(const cstr_t host, const uword_t port, Callback&& callback) 
     char service[6];
 
     const auto [p, e] = std::to_chars(service, service + 5, port);
-    if (e != std::errc()) return false; else *p = '\0';
+    if (e != std::errc()) return false;
+
+    *p = '\0';
 
     if (addrinfo* output; getaddrinfo(host, service, &hints, &output) == 0)
     {

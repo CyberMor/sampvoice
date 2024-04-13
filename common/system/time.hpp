@@ -190,6 +190,6 @@ public:
 
 private:
 
-    sqword_t _milliseconds = {};
+    sqword_t _milliseconds = 0;
 
 };

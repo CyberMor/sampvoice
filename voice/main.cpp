@@ -7,8 +7,6 @@
     Copyright (c) Daniel (CyberMor) 2020 All rights reserved
 */
 
-#include <mutex>
-
 #include <system/types.hpp>
 #include <memory/structures/array.hpp>
 #include <memory/structures/bitset.hpp>
@@ -75,7 +73,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const PlayerCreate*>(buffer);
 
-                if (gControlTrace) Logger::Instance().Log("[PlayerCreate] player(%hu) key(0x%X)",
+                if (gControlTrace) Logger::Instance().Log("[dbg:control:PlayerCreate] player(%hu) key(0x%X)",
                     content.player, content.key);
 
                 if (content.player < kMaxPlayers && content.key != 0)
@@ -92,7 +90,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const PlayerListener*>(buffer);
 
-                if (gControlTrace) Logger::Instance().Log("[PlayerListener] player(%hu) status(%hhu)",
+                if (gControlTrace) Logger::Instance().Log("[dbg:control:PlayerListener] player(%hu) status(%hhu)",
                     content.player, content.status);
 
                 if (content.player < kMaxPlayers)
@@ -109,7 +107,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const PlayerSpeaker*>(buffer);
 
-                if (gControlTrace) Logger::Instance().Log("[PlayerSpeaker] player(%hu) channels(0x%X)",
+                if (gControlTrace) Logger::Instance().Log("[dbg:control:PlayerSpeaker] player(%hu) channels(0x%X)",
                     content.player, content.channels);
 
                 if (content.player < kMaxPlayers)
@@ -126,7 +124,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const PlayerAttachStream*>(buffer);
 
-                if (gControlTrace) Logger::Instance().Log("[PlayerAttachStream] player(%hu) channels(0x%X) stream(%hu)",
+                if (gControlTrace) Logger::Instance().Log("[dbg:control:PlayerAttachStream] player(%hu) channels(0x%X) stream(%hu)",
                     content.player, content.channels, content.stream);
 
                 if (content.player < kMaxPlayers && content.channels != 0 && content.stream < kMaxStreams)
@@ -146,7 +144,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const PlayerDetachStream*>(buffer);
 
-                if (gControlTrace) Logger::Instance().Log("[PlayerDetachStream] player(%hu) channels(0x%X) stream(%hu)",
+                if (gControlTrace) Logger::Instance().Log("[dbg:control:PlayerDetachStream] player(%hu) channels(0x%X) stream(%hu)",
                     content.player, content.channels, content.stream);
 
                 if (content.player < kMaxPlayers && content.channels != 0 && content.stream < kMaxStreams)
@@ -166,7 +164,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const PlayerDelete*>(buffer);
 
-                if (gControlTrace) Logger::Instance().Log("[PlayerDelete] player(%hu)", content.player);
+                if (gControlTrace) Logger::Instance().Log("[dbg:control:PlayerDelete] player(%hu)", content.player);
 
                 if (content.player < kMaxPlayers)
                 {
@@ -192,7 +190,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const StreamCreate*>(buffer);
 
-                if (gControlTrace) Logger::Instance().Log("[StreamCreate] stream(%hu)", content.stream);
+                if (gControlTrace) Logger::Instance().Log("[dbg:control:StreamCreate] stream(%hu)", content.stream);
 
                 if (content.stream < kMaxStreams)
                 {
@@ -205,7 +203,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const StreamTransiter*>(buffer);
 
-                if (gControlTrace) Logger::Instance().Log("[StreamTransiter] stream(%hu) status(%hhu)",
+                if (gControlTrace) Logger::Instance().Log("[dbg:control:StreamTransiter] stream(%hu) status(%hhu)",
                     content.stream, content.status);
 
                 if (content.stream < kMaxStreams)
@@ -222,7 +220,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const StreamAttachListener*>(buffer);
 
-                if (gControlTrace) Logger::Instance().Log("[StreamAttachListener] stream(%hu) player(%hu)",
+                if (gControlTrace) Logger::Instance().Log("[dbg:control:StreamAttachListener] stream(%hu) player(%hu)",
                     content.stream, content.player);
 
                 if (content.stream < kMaxStreams && content.player < kMaxPlayers)
@@ -239,7 +237,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const StreamDetachListener*>(buffer);
 
-                if (gControlTrace) Logger::Instance().Log("[StreamDetachListener] stream(%hu) player(%hu)",
+                if (gControlTrace) Logger::Instance().Log("[dbg:control:StreamDetachListener] stream(%hu) player(%hu)",
                     content.stream, content.player);
 
                 if (content.stream < kMaxStreams && content.player < kMaxPlayers)
@@ -256,7 +254,7 @@ static void ControlWorker() noexcept
             {
                 const auto& content = *reinterpret_cast<const StreamDelete*>(buffer);
 
-                if (gControlTrace) Logger::Instance().Log("[StreamDelete] stream(%hu)", content.stream);
+                if (gControlTrace) Logger::Instance().Log("[dbg:control:StreamDelete] stream(%hu)", content.stream);
 
                 if (content.stream < kMaxStreams)
                 {
@@ -418,25 +416,25 @@ int main(const int argc, const char* const* const argv) noexcept
         }
         else
         {
-            std::printf("[Main] Unknown option '%s'.\n", argv[i]);
+            std::printf("[err:main] unknown option '%s'\n", argv[i]);
             return help(*argv), 0;
         }
     }
 
     if (!Logger::Instance().Initialize("voice.log"))
     {
-        std::printf("[Main] Failed to initialize logger.\n");
+        std::printf("[err:main] failed to initialize logger\n");
         return -1;
     }
 
-    Logger::Instance().Log("[Main] Voice Server %hhu.%hhu.%hu starting...",
+    Logger::Instance().Log("[dbg:main] voice server %hhu.%hhu.%hu starting...",
         GetVersionMajor(kCurrentVersion),
         GetVersionMinor(kCurrentVersion),
         GetVersionPatch(kCurrentVersion));
 
     if (!SocketLibraryStartup())
     {
-        Logger::Instance().Log("[Main] Failed to initialize socket library.");
+        Logger::Instance().Log("[err:main] failed to initialize socket library");
         return -1;
     }
 
@@ -456,7 +454,7 @@ int main(const int argc, const char* const* const argv) noexcept
         PARAMETERS_COUNT
     };
 
-    Logger::Instance().Log("[Main] Loading 'voice.cfg' file...");
+    Logger::Instance().Log("[dbg:main] loading 'voice.cfg' file...");
 
     Config config;
     {
@@ -472,9 +470,9 @@ int main(const int argc, const char* const* const argv) noexcept
         config.Register(PARAMETER_VOICE_PORT, "voice_port"s);
         config.Register(PARAMETER_WORKERS, "workers"s);
 
-        if (config.Load("voice.cfg") < 0)
+        if (const int result = config.Load("voice.cfg"); result < 0)
         {
-            Logger::Instance().Log("[Main] Failed to load 'voice.cfg'.");
+            Logger::Instance().Log("[err:main] failed to load 'voice.cfg' (%d)", result);
             return -1;
         }
     }
@@ -498,18 +496,17 @@ int main(const int argc, const char* const* const argv) noexcept
             if (config.HasParameter(PARAMETER_COMMAND_PORT))
                 command.SetPort(std::stoi(config.GetValueByIndex(PARAMETER_COMMAND_PORT)));
 
-            if (char buffer[IPv4Address::LengthLimit + 1]; control.Print(buffer))
-                Logger::Instance().Log("[Main] Connecting to control server '%s'...", buffer);
-
-            CommandService::Instance().Logger = stdout;
+            char buffer[IPv4Address::LengthLimit + 1];
+            if (!control.Print(buffer)) std::strcpy(buffer, "INVALID");
+            Logger::Instance().Log("[dbg:main] connecting to control server '%s'...", buffer);
 
             if (!CommandService::Instance().Initialize(command, control))
             {
-                Logger::Instance().Log("[Main] Failed to initialize command service.");
+                Logger::Instance().Log("[err:main] failed to initialize command service");
                 return -1;
             }
 
-            Logger::Instance().Log("[Main] Connection to control server established.");
+            Logger::Instance().Log("[dbg:main] connection to control server established");
         }
 
         // Voice Service
@@ -523,19 +520,18 @@ int main(const int argc, const char* const* const argv) noexcept
             if (config.HasParameter(PARAMETER_VOICE_PORT))
                 voice.SetPort(std::stoi(config.GetValueByIndex(PARAMETER_VOICE_PORT)));
 
-            if (char buffer[IPv4Address::LengthLimit + 1]; voice.Print(buffer))
-                Logger::Instance().Log("[Main] Opening voice service at '%s'...", buffer);
-
-            VoiceService::Instance().Logger = stdout;
+            char buffer[IPv4Address::LengthLimit + 1];
+            if (!voice.Print(buffer)) std::strcpy(buffer, "INVALID");
+            Logger::Instance().Log("[dbg:main] opening voice service at '%s'...", buffer);
 
             if (!VoiceService::Instance().Initialize(voice))
             {
-                Logger::Instance().Log("[Main] Failed to initialize voice service.");
+                Logger::Instance().Log("[err:main] failed to initialize voice service");
                 CommandService::Instance().Deinitialize();
                 return -1;
             }
 
-            Logger::Instance().Log("[Main] Voice service opened.");
+            Logger::Instance().Log("[dbg:main] voice service opened");
         }
 
         // Workers
@@ -563,7 +559,7 @@ int main(const int argc, const char* const* const argv) noexcept
 
         gWorkStatus.store(true, std::memory_order_release);
 
-        Logger::Instance().Log("[Main] Launching %d voice workers...", workers);
+        Logger::Instance().Log("[dbg:main] launching %d voice workers...", workers);
 
         for (int i = 0; i != workers; ++i)
         {
@@ -575,7 +571,7 @@ int main(const int argc, const char* const* const argv) noexcept
         // Stopping and Deinitialization
         // -----------------------------------------------
 
-        Logger::Instance().Log("[Main] Finishing work...");
+        Logger::Instance().Log("[dbg:main] finishing work...");
 
         gWorkStatus.store(false, std::memory_order_release);
 

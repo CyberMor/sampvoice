@@ -12,6 +12,7 @@
 #include <cassert>
 
 #include <system/types.hpp>
+#include <system/time.hpp>
 #include <network/address.hpp>
 #include <network/socket.hpp>
 #include <other/utils.hpp>
@@ -169,49 +170,24 @@ public:
 
         if (!socket.Initialize(false))
         {
-            if (Logger != nullptr)
-            {
-                Logger::Instance().Log("[Command] Failed to initialize socket (%d)", GetSocketError());
-            }
-
+            Logger::Instance().Log("[err:command:initialize] failed to initialize socket (%d)", GetSocketError());
             return false;
         }
-
         if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1))
         {
-            if (Logger != nullptr)
-            {
-                Logger::Instance().Log("[Command] Failed to set option(SO_REUSEADDR) (%d)", GetSocketError());
-            }
-
+            Logger::Instance().Log("[err:command:initialize] failed to set option(SO_REUSEADDR) (%d)", GetSocketError());
             return false;
         }
-
         if (!socket.SetOption(IPPROTO_TCP, TCP_NODELAY, 1))
         {
-            if (Logger != nullptr)
-            {
-                Logger::Instance().Log("[Command] Failed to set option(TCP_NODELAY) (%d)", GetSocketError());
-            }
-
+            Logger::Instance().Log("[err:command:initialize] failed to set option(TCP_NODELAY) (%d)", GetSocketError());
             return false;
         }
-
         if (!socket.Bind(command))
         {
-            if (Logger != nullptr)
-            {
-                char buffer[IPv4Address::LengthLimit + 1];
-
-                if (!command.Print(buffer))
-                {
-                    buffer[0] = 'I'; buffer[1] = 'N'; buffer[2] = 'V'; buffer[3] = 'A';
-                    buffer[4] = 'L'; buffer[5] = 'I'; buffer[6] = 'D'; buffer[7] = '\0';
-                }
-
-                Logger::Instance().Log("[Command] Failed to bind(%s) (%d)", buffer, GetSocketError());
-            }
-
+            char address[IPv4Address::LengthLimit + 1];
+            if (!command.Print(address)) std::strcpy(address, "INVALID");
+            Logger::Instance().Log("[err:command:initialize] failed to bind(%s) (%d)", address, GetSocketError());
             return false;
         }
 
@@ -221,11 +197,7 @@ public:
 
         if (!socket.Shutdown(SHUT_WR))
         {
-            if (Logger != nullptr)
-            {
-                Logger::Instance().Log("[Command] Failed to shutdown(SHUT_WR) (%d)", GetSocketError());
-            }
-
+            Logger::Instance().Log("[err:command:initialize] failed to shutdown(SHUT_WR) (%d)", GetSocketError());
             return false;
         }
 
@@ -255,23 +227,20 @@ public:
             case Poll::WaitEmpty: return WaitEmpty;
             case Poll::WaitError:
             {
-#ifndef _WIN32
+#ifdef _WIN32
+                if (GetSocketError() == WSAEINTR)
+#else
                 if (GetSocketError() == EINTR)
+#endif
                 {
-                    if (Logger != nullptr)
-                    {
-                        Logger::Instance().Log("[Command] poll(%d, POLLIN) interrupted", static_cast<int>(timeout.Milliseconds()));
-                    }
-
+                    Logger::Instance().Log("[inf:command:wait] poll(%d, POLLIN) interrupted", static_cast<int>(timeout.Milliseconds()));
                     return WaitEmpty;
                 }
-#endif
-                if (Logger != nullptr)
+                else
                 {
-                    Logger::Instance().Log("[Command] Failed to poll(%d, POLLIN) (%d)", static_cast<int>(timeout.Milliseconds()), GetSocketError());
+                    Logger::Instance().Log("[err:command:wait] failed to poll(%d, POLLIN) (%d)", static_cast<int>(timeout.Milliseconds()), GetSocketError());
+                    return WaitError;
                 }
-
-                return WaitError;
             }
         }
 
@@ -284,23 +253,20 @@ public:
             case Poll::WaitEmpty: return WaitEmpty;
             case Poll::WaitError:
             {
-#ifndef _WIN32
+#ifdef _WIN32
+                if (GetSocketError() == WSAEINTR)
+#else
                 if (GetSocketError() == EINTR)
+#endif
                 {
-                    if (Logger != nullptr)
-                    {
-                        Logger::Instance().Log("[Command] poll(0, POLLIN) interrupted");
-                    }
-
+                    Logger::Instance().Log("[inf:command:wait] poll(0, POLLIN) interrupted");
                     return WaitEmpty;
                 }
-#endif
-                if (Logger != nullptr)
+                else
                 {
-                    Logger::Instance().Log("[Command] Failed to poll(0, POLLIN) (%d)", GetSocketError());
+                    Logger::Instance().Log("[err:command:wait] failed to poll(0, POLLIN) (%d)", GetSocketError());
+                    return WaitError;
                 }
-
-                return WaitError;
             }
         }
         
@@ -316,20 +282,14 @@ public:
             if (GetSocketError() == EINTR)
 #endif
             {
-                if (Logger != nullptr)
-                {
-                    Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Repeat call.");
-                }
-
+                Logger::Instance().Log("[inf:command:wait] repeat interrupted recv(MSG_WAITALL)");
                 goto ReceiveCommand;
             }
-
-            if (Logger != nullptr)
+            else
             {
-                Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                Logger::Instance().Log("[err:command:wait] failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                return WaitError;
             }
-
-            return WaitError;
         }
 
     ReceiveBody:
@@ -352,20 +312,14 @@ public:
                     if (GetSocketError() == EINTR)
 #endif
                     {
-                        if (Logger != nullptr)
-                        {
-                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
-                        }
-
+                        Logger::Instance().Log("[inf:command:wait:PlayerCreate] repeat interrupted recv(MSG_WAITALL)");
                         goto ReceiveBody;
                     }
-
-                    if (Logger != nullptr)
+                    else
                     {
-                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        Logger::Instance().Log("[err:command:wait:PlayerCreate] failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        return WaitError;
                     }
-
-                    return WaitError;
                 }
 
                 if constexpr (HostEndian != NetEndian)
@@ -388,20 +342,14 @@ public:
                     if (GetSocketError() == EINTR)
 #endif
                     {
-                        if (Logger != nullptr)
-                        {
-                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
-                        }
-
+                        Logger::Instance().Log("[inf:command:wait:PlayerListener] repeat interrupted recv(MSG_WAITALL)");
                         goto ReceiveBody;
                     }
-
-                    if (Logger != nullptr)
+                    else
                     {
-                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        Logger::Instance().Log("[err:command:wait:PlayerListener] failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        return WaitError;
                     }
-
-                    return WaitError;
                 }
 
                 if constexpr (HostEndian != NetEndian)
@@ -423,20 +371,14 @@ public:
                     if (GetSocketError() == EINTR)
 #endif
                     {
-                        if (Logger != nullptr)
-                        {
-                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
-                        }
-
+                        Logger::Instance().Log("[inf:command:wait:PlayerSpeaker] repeat interrupted recv(MSG_WAITALL)");
                         goto ReceiveBody;
                     }
-
-                    if (Logger != nullptr)
+                    else
                     {
-                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        Logger::Instance().Log("[err:command:wait:PlayerSpeaker] failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        return WaitError;
                     }
-
-                    return WaitError;
                 }
 
                 if constexpr (HostEndian != NetEndian)
@@ -459,20 +401,14 @@ public:
                     if (GetSocketError() == EINTR)
 #endif
                     {
-                        if (Logger != nullptr)
-                        {
-                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
-                        }
-
+                        Logger::Instance().Log("[inf:command:wait:PlayerAttachStream] repeat interrupted recv(MSG_WAITALL)");
                         goto ReceiveBody;
                     }
-
-                    if (Logger != nullptr)
+                    else
                     {
-                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        Logger::Instance().Log("[err:command:wait:PlayerAttachStream] failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        return WaitError;
                     }
-
-                    return WaitError;
                 }
 
                 if constexpr (HostEndian != NetEndian)
@@ -496,20 +432,14 @@ public:
                     if (GetSocketError() == EINTR)
 #endif
                     {
-                        if (Logger != nullptr)
-                        {
-                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
-                        }
-
+                        Logger::Instance().Log("[inf:command:wait:PlayerDetachStream] repeat interrupted recv(MSG_WAITALL)");
                         goto ReceiveBody;
                     }
-
-                    if (Logger != nullptr)
+                    else
                     {
-                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        Logger::Instance().Log("[err:command:wait:PlayerDetachStream] failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        return WaitError;
                     }
-
-                    return WaitError;
                 }
 
                 if constexpr (HostEndian != NetEndian)
@@ -533,20 +463,14 @@ public:
                     if (GetSocketError() == EINTR)
 #endif
                     {
-                        if (Logger != nullptr)
-                        {
-                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
-                        }
-
+                        Logger::Instance().Log("[inf:command:wait:PlayerDelete] repeat interrupted recv(MSG_WAITALL)");
                         goto ReceiveBody;
                     }
-
-                    if (Logger != nullptr)
+                    else
                     {
-                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        Logger::Instance().Log("[err:command:wait:PlayerDelete] failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        return WaitError;
                     }
-
-                    return WaitError;
                 }
 
                 if constexpr (HostEndian != NetEndian)
@@ -568,20 +492,14 @@ public:
                     if (GetSocketError() == EINTR)
 #endif
                     {
-                        if (Logger != nullptr)
-                        {
-                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
-                        }
-
+                        Logger::Instance().Log("[inf:command:wait:StreamCreate] repeat interrupted recv(MSG_WAITALL)");
                         goto ReceiveBody;
                     }
-
-                    if (Logger != nullptr)
+                    else
                     {
-                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        Logger::Instance().Log("[err:command:wait:StreamCreate] failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        return WaitError;
                     }
-
-                    return WaitError;
                 }
 
                 if constexpr (HostEndian != NetEndian)
@@ -603,20 +521,14 @@ public:
                     if (GetSocketError() == EINTR)
 #endif
                     {
-                        if (Logger != nullptr)
-                        {
-                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
-                        }
-
+                        Logger::Instance().Log("[inf:command:wait:StreamTransiter] repeat interrupted recv(MSG_WAITALL)");
                         goto ReceiveBody;
                     }
-
-                    if (Logger != nullptr)
+                    else
                     {
-                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        Logger::Instance().Log("[err:command:wait:StreamTransiter] failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        return WaitError;
                     }
-
-                    return WaitError;
                 }
 
                 if constexpr (HostEndian != NetEndian)
@@ -638,20 +550,14 @@ public:
                     if (GetSocketError() == EINTR)
 #endif
                     {
-                        if (Logger != nullptr)
-                        {
-                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
-                        }
-
+                        Logger::Instance().Log("[inf:command:wait:StreamAttachListener] repeat interrupted recv(MSG_WAITALL)");
                         goto ReceiveBody;
                     }
-
-                    if (Logger != nullptr)
+                    else
                     {
-                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        Logger::Instance().Log("[err:command:wait:StreamAttachListener] failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        return WaitError;
                     }
-
-                    return WaitError;
                 }
 
                 if constexpr (HostEndian != NetEndian)
@@ -674,20 +580,14 @@ public:
                     if (GetSocketError() == EINTR)
 #endif
                     {
-                        if (Logger != nullptr)
-                        {
-                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
-                        }
-
+                        Logger::Instance().Log("[inf:command:wait:StreamDetachListener] repeat interrupted recv(MSG_WAITALL)");
                         goto ReceiveBody;
                     }
-
-                    if (Logger != nullptr)
+                    else
                     {
-                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        Logger::Instance().Log("[err:command:wait:StreamDetachListener] failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        return WaitError;
                     }
-
-                    return WaitError;
                 }
 
                 if constexpr (HostEndian != NetEndian)
@@ -710,20 +610,14 @@ public:
                     if (GetSocketError() == EINTR)
 #endif
                     {
-                        if (Logger != nullptr)
-                        {
-                            Logger::Instance().Log("[Command] recv(MSG_WAITALL) interrupted. Command(%hhu). Repeat call.", command);
-                        }
-
+                        Logger::Instance().Log("[inf:command:wait:StreamDelete] repeat interrupted recv(MSG_WAITALL)");
                         goto ReceiveBody;
                     }
-
-                    if (Logger != nullptr)
+                    else
                     {
-                        Logger::Instance().Log("[Command] Failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        Logger::Instance().Log("[err:command:wait:StreamDelete] failed to recv(MSG_WAITALL) (%d)", GetSocketError());
+                        return WaitError;
                     }
-
-                    return WaitError;
                 }
 
                 if constexpr (HostEndian != NetEndian)
@@ -735,21 +629,13 @@ public:
             }
             default:
             {
-                if (Logger != nullptr)
-                {
-                    Logger::Instance().Log("[Command] Failed to recognize command(%hhu)", command);
-                }
-
+                Logger::Instance().Log("[err:command:wait] failed to recognize command(%hhu)", command);
                 return WaitError;
             }
         }
 
         return command;
     }
-
-public:
-
-    std::FILE* Logger = nullptr;
 
 private:
 

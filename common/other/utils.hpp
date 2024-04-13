@@ -51,20 +51,17 @@ namespace utils
         }
 
         template <class Character>
-        constexpr size_t length(const Character* string,
-            const Character rterminator = {}) noexcept
+        constexpr size_t length(const Character* string, const Character rterminator = {}) noexcept
         {
             assert(string != nullptr);
 
-            size_t result = 0;
-            while (*string++ != rterminator) ++result;
-            return result;
+            const auto begin = string;
+            while (*string != rterminator) ++string;
+            return string - begin;
         }
 
         template <class Character>
-        inline void copy(const Character* source, Character* target, size_t limit,
-            const Character rterminator = {},
-            const Character wterminator = {}) noexcept
+        static inline void copy(const Character* source, Character* target, size_t limit, const Character rterminator = {}, const Character wterminator = {}) noexcept
         {
             if (limit != 0)
             {
@@ -83,19 +80,17 @@ namespace utils
         }
 
         template <class Character>
-        constexpr size_t find(const Character* string, const Character symbol,
-            const Character rterminator = {}) noexcept
+        constexpr size_t find(const Character* string, const Character symbol, const Character rterminator = {}) noexcept
         {
             assert(string != nullptr);
 
-            const Character* const begin = string;
+            const auto begin = string;
             while (*string != symbol && *string != rterminator) ++string;
-            return *string == symbol ? string - begin : None<size_t>;
+            return string - begin;
         }
 
         template <class Character>
-        constexpr bool has(const Character* string, const Character symbol,
-            const Character rterminator = {}) noexcept
+        constexpr bool has(const Character* string, const Character symbol, const Character rterminator = {}) noexcept
         {
             assert(string != nullptr);
 
@@ -106,9 +101,9 @@ namespace utils
 
     namespace crypto
     {
-        inline udword_t random() noexcept
+        static inline uint_t random() noexcept
         {
-            udword_t value;
+            uint_t value;
 #ifdef _WIN32
             if (rand_s(&value) != 0)
                 value = 0;
@@ -122,7 +117,7 @@ namespace utils
 
     namespace thread
     {
-        inline void sleep(const Time time) noexcept
+        static inline void sleep(const Time time) noexcept
         {
             assert(time.Milliseconds() >= 0);
 
@@ -133,7 +128,7 @@ namespace utils
     namespace bitset
     {
         template <class Type, typename = std::enable_if_t<!std::is_const_v<Type> && std::is_integral_v<Type>>>
-        inline bool set(Type& bits, const size_t bit) noexcept
+        static inline bool set(Type& bits, const size_t bit) noexcept
         {
             assert(bit < Bits<Type>);
 
@@ -151,7 +146,7 @@ namespace utils
         }
 
         template <class Type, typename = std::enable_if_t<!std::is_const_v<Type> && std::is_integral_v<Type>>>
-        inline bool reset(Type& bits, const size_t bit) noexcept
+        static inline bool reset(Type& bits, const size_t bit) noexcept
         {
             assert(bit < Bits<Type>);
 
@@ -190,16 +185,16 @@ namespace utils
     }
 
     template <size_t Size>
-    inline void bswap(const ptr_t target, const cptr_t source) noexcept
+    static inline void bswap(const ptr_t target, const cptr_t source) noexcept
     {
         for (size_t i = 0; i != Size; ++i)
             static_cast<adr_t>(target)[i] = static_cast<cadr_t>(source)[(Size - 1) - i];
     }
 
     template <size_t Size>
-    inline void bswap(const ptr_t target) noexcept
+    static inline void bswap(const ptr_t target) noexcept
     {
-        for (size_t i = 0; i != Size; ++i)
+        for (size_t i = 0; i != Size / 2; ++i)
             std::swap(static_cast<adr_t>(target)[i], static_cast<adr_t>(target)[(Size - 1) - i]);
     }
 
@@ -210,47 +205,47 @@ namespace utils
     || std::is_same_v<Type, sqword_t> || std::is_same_v<Type, uqword_t>
     || std::is_same_v<Type, fdword_t> || std::is_same_v<Type, fqword_t>;
 
-    inline sword_t bswap(const sword_t value) noexcept { return bswap_16(value); }
-    inline uword_t bswap(const uword_t value) noexcept { return bswap_16(value); }
+    static inline sword_t bswap(const sword_t value) noexcept { return bswap_16(value); }
+    static inline uword_t bswap(const uword_t value) noexcept { return bswap_16(value); }
 
-    inline void bswap(sword_t* const value) noexcept { *value = bswap_16(*value); }
-    inline void bswap(uword_t* const value) noexcept { *value = bswap_16(*value); }
+    static inline void bswap(sword_t* const value) noexcept { *value = bswap_16(*value); }
+    static inline void bswap(uword_t* const value) noexcept { *value = bswap_16(*value); }
 
-    inline sdword_t bswap(const sdword_t value) noexcept { return bswap_32(value); }
-    inline udword_t bswap(const udword_t value) noexcept { return bswap_32(value); }
+    static inline sdword_t bswap(const sdword_t value) noexcept { return bswap_32(value); }
+    static inline udword_t bswap(const udword_t value) noexcept { return bswap_32(value); }
 
-    inline void bswap(sdword_t* const value) noexcept { *value = bswap_32(*value); }
-    inline void bswap(udword_t* const value) noexcept { *value = bswap_32(*value); }
+    static inline void bswap(sdword_t* const value) noexcept { *value = bswap_32(*value); }
+    static inline void bswap(udword_t* const value) noexcept { *value = bswap_32(*value); }
 
-    inline sqword_t bswap(const sqword_t value) noexcept { return bswap_64(value); }
-    inline uqword_t bswap(const uqword_t value) noexcept { return bswap_64(value); }
+    static inline sqword_t bswap(const sqword_t value) noexcept { return bswap_64(value); }
+    static inline uqword_t bswap(const uqword_t value) noexcept { return bswap_64(value); }
 
-    inline void bswap(sqword_t* const value) noexcept { *value = bswap_64(*value); }
-    inline void bswap(uqword_t* const value) noexcept { *value = bswap_64(*value); }
+    static inline void bswap(sqword_t* const value) noexcept { *value = bswap_64(*value); }
+    static inline void bswap(uqword_t* const value) noexcept { *value = bswap_64(*value); }
 
-    inline fdword_t bswap(const fdword_t value) noexcept
+    static inline fdword_t bswap(const fdword_t value) noexcept
     {
         fdword_t result;
         bswap<sizeof(fdword_t)>(&result, &value);
         return result;
     }
-    inline fqword_t bswap(const fqword_t value) noexcept
+    static inline fqword_t bswap(const fqword_t value) noexcept
     {
         fqword_t result;
         bswap<sizeof(fqword_t)>(&result, &value);
         return result;
     }
 
-    inline void bswap(fdword_t* const value) noexcept { bswap<sizeof(fdword_t)>(value); }
-    inline void bswap(fqword_t* const value) noexcept { bswap<sizeof(fqword_t)>(value); }
+    static inline void bswap(fdword_t* const value) noexcept { bswap<sizeof(fdword_t)>(value); }
+    static inline void bswap(fqword_t* const value) noexcept { bswap<sizeof(fqword_t)>(value); }
 
-    inline bool is_little_endian() noexcept
+    static inline bool is_little_endian() noexcept
     {
         const volatile uword_t word = 0xFF;
         return *reinterpret_cast<const volatile ubyte_t*>(&word) != 0;
     }
 
-    inline bool is_big_endian() noexcept
+    static inline bool is_big_endian() noexcept
     {
         const volatile uword_t word = 0xFF;
         return *reinterpret_cast<const volatile ubyte_t*>(&word) == 0;
@@ -262,48 +257,20 @@ namespace utils
         return number != 0 && (number & (number - 1)) == 0;
     }
 
-    template <class Number, typename = std::enable_if_t<std::is_unsigned_v<Number>>>
-    constexpr Number binlog(Number number) noexcept
-    {
-        if (number > HighBit<Number>) // too big number
-            return None<Number>;
-
-        if (number <= 1) return 1;
-
-        number = (number - 1) << 1;
-
-        Number result = 0;
-        while (number >>= 1) ++result;
-        return result;
-    }
-
-    template <class Number, typename = std::enable_if_t<std::is_unsigned_v<Number>>>
-    constexpr Number binceil(Number number) noexcept
-    {
-        if (number > HighBit<Number>) // too big number
-            return None<Number>;
-
-        Number result = 2;
-        while (result < number) result <<= 1;
-        return result;
-    }
-
     template <class Number>
-    constexpr Number align_down(const Number number,
-        const size_t align = alignof(std::max_align_t)) noexcept
+    constexpr Number align_down(const Number number, const size_t align = alignof(std::max_align_t)) noexcept
     {
         return (Number)((size_t)(number) & ~(align - 1));
     }
 
     template <class Number>
-    constexpr Number align_up(const Number number,
-        const size_t align = alignof(std::max_align_t)) noexcept
+    constexpr Number align_up(const Number number, const size_t align = alignof(std::max_align_t)) noexcept
     {
         return (Number)(((size_t)(number) + (align - 1)) & ~(align - 1));
     }
 
     template <size_t Align = alignof(std::max_align_t)>
-    inline ptr_t allocate(const size_t size) noexcept
+    static inline ptr_t allocate(const size_t size) noexcept
     {
         static_assert(is_two_power(Align));
 
@@ -317,8 +284,7 @@ namespace utils
     }
 
     template <size_t Align = alignof(std::max_align_t)>
-    inline ptr_t reallocate(const ptr_t old_pointer, [[maybe_unused]]
-        const size_t old_size, const size_t new_size) noexcept
+    static inline ptr_t reallocate(const ptr_t old_pointer, [[maybe_unused]] const size_t old_size, const size_t new_size) noexcept
     {
         static_assert(is_two_power(Align));
 
@@ -341,7 +307,7 @@ namespace utils
     }
 
     template <size_t Align = alignof(std::max_align_t)>
-    inline void free(const ptr_t pointer) noexcept
+    static inline void free(const ptr_t pointer) noexcept
     {
         static_assert(is_two_power(Align));
 

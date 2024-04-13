@@ -27,6 +27,33 @@ template <class Type>
 struct List {
 
     List() noexcept = default;
+    ~List() noexcept { Clear(); }
+
+    List(const List&) = delete;
+    List(List&& object) noexcept
+        : _head { object._head }
+        , _tail { object._tail }
+    {
+        object._head = nullptr;
+        object._tail = nullptr;
+    }
+
+    List& operator=(const List&) = delete;
+    List& operator=(List&& object) noexcept
+    {
+        if (&object != this)
+        {
+            Clear();
+
+            _head = object._head;
+            _tail = object._tail;
+
+            object._head = nullptr;
+            object._tail = nullptr;
+        }
+
+        return *this;
+    }
 
 private:
 
@@ -60,37 +87,6 @@ private:
 
 public:
 
-    ~List() noexcept
-    {
-        while (_head != nullptr)
-        {
-            Node* const next = _head->next;
-            delete _head;
-            _head = next;
-        }
-    }
-
-    List(const List&) = delete;
-    List(List&&) noexcept = default;
-    List& operator=(const List&) = delete;
-    List& operator=(List&&) noexcept = default;
-
-public:
-
-    void Deinitialize() noexcept
-    {
-        while (_head != nullptr)
-        {
-            Node* const next = _head->next;
-            delete _head;
-            _head = next;
-        }
-
-        _tail = nullptr;
-    }
-
-public:
-
     template <class... Arguments>
     Type* Construct(Arguments&&... arguments) noexcept
     {
@@ -116,83 +112,10 @@ public:
 
 public:
 
-    const Type* First() const noexcept
-    {
-        return reinterpret_cast<const Type*>(_head);
-    }
-
-    Type* First() noexcept
-    {
-        return reinterpret_cast<Type*>(_head);
-    }
-
-    const Type* Last() const noexcept
-    {
-        return reinterpret_cast<const Type*>(_tail);
-    }
-
-    Type* Last() noexcept
-    {
-        return reinterpret_cast<Type*>(_tail);
-    }
-
-public:
-
-    const Type* Begin() const noexcept
-    {
-        return reinterpret_cast<const Type*>(_head);
-    }
-
-    Type* Begin() noexcept
-    {
-        return reinterpret_cast<Type*>(_head);
-    }
-
-    const Type* End() const noexcept
-    {
-        return nullptr;
-    }
-
-    Type* End() noexcept
-    {
-        return nullptr;
-    }
-
-public:
-
-    const Type* Previous(const Type* const iterator) const noexcept
-    {
-        return iterator != nullptr ?
-            reinterpret_cast<const Type*>(reinterpret_cast<const Node*>(iterator)->prev) :
-            reinterpret_cast<const Type*>(_tail);
-    }
-
-    Type* Previous(Type* const iterator) noexcept
-    {
-        return iterator != nullptr ?
-            reinterpret_cast<Type*>(reinterpret_cast<const Node*>(iterator)->prev) :
-            reinterpret_cast<Type*>(_tail);
-    }
-
-    const Type* Next(const Type* const iterator) const noexcept
-    {
-        return iterator != nullptr ?
-            reinterpret_cast<const Type*>(reinterpret_cast<const Node*>(iterator)->next) :
-            reinterpret_cast<const Type*>(_head);
-    }
-
-    Type* Next(Type* const iterator) noexcept
-    {
-        return iterator != nullptr ?
-            reinterpret_cast<Type*>(reinterpret_cast<const Node*>(iterator)->next) :
-            reinterpret_cast<Type*>(_head);
-    }
-
-public:
-
     void PushBefore(Type* const iterator, Type* const pointer) noexcept
     {
-        assert(iterator != nullptr && pointer != nullptr);
+        assert(iterator != nullptr);
+        assert(pointer  != nullptr);
 
         const auto prev = reinterpret_cast<const Node*>(iterator)->prev;
         const auto next = reinterpret_cast<Node*>(iterator);
@@ -204,12 +127,13 @@ public:
         reinterpret_cast<Node*>(pointer)->next = next;
 
         if (_head == reinterpret_cast<Node*>(iterator))
-            _head = reinterpret_cast<Node*>(pointer);
+            _head  = reinterpret_cast<Node*>(pointer);
     }
 
     void PushAfter(Type* const iterator, Type* const pointer) noexcept
     {
-        assert(iterator != nullptr && pointer != nullptr);
+        assert(iterator != nullptr);
+        assert(pointer  != nullptr);
 
         const auto prev = reinterpret_cast<Node*>(iterator);
         const auto next = reinterpret_cast<const Node*>(iterator)->next;
@@ -221,7 +145,7 @@ public:
         reinterpret_cast<Node*>(pointer)->next = next;
 
         if (_tail == reinterpret_cast<Node*>(iterator))
-            _tail = reinterpret_cast<Node*>(pointer);
+            _tail  = reinterpret_cast<Node*>(pointer);
     }
 
 public:
@@ -233,6 +157,8 @@ public:
         if (_tail == nullptr) _tail = reinterpret_cast<Node*>(pointer);
         else _head->prev = reinterpret_cast<Node*>(pointer);
 
+        reinterpret_cast<Node*>(pointer)->next = _head;
+
         _head = reinterpret_cast<Node*>(pointer);
     }
 
@@ -242,6 +168,8 @@ public:
 
         if (_head == nullptr) _head = reinterpret_cast<Node*>(pointer);
         else _tail->next = reinterpret_cast<Node*>(pointer);
+
+        reinterpret_cast<Node*>(pointer)->prev = _tail;
 
         _tail = reinterpret_cast<Node*>(pointer);
     }
@@ -347,6 +275,72 @@ public:
         }
 
         _tail = nullptr;
+    }
+
+public:
+
+    const Type* Previous(const Type* const iterator) const noexcept
+    {
+        return iterator != End() ? reinterpret_cast<const Type*>(reinterpret_cast<const Node*>(iterator)->prev) : Last();
+    }
+
+    Type* Previous(Type* const iterator) noexcept
+    {
+        return iterator != End() ? reinterpret_cast<Type*>(reinterpret_cast<const Node*>(iterator)->prev) : Last();
+    }
+
+    const Type* Next(const Type* const iterator) const noexcept
+    {
+        return iterator != End() ? reinterpret_cast<const Type*>(reinterpret_cast<const Node*>(iterator)->next) : First();
+    }
+
+    Type* Next(Type* const iterator) noexcept
+    {
+        return iterator != End() ? reinterpret_cast<Type*>(reinterpret_cast<const Node*>(iterator)->next) : First();
+    }
+
+public:
+
+    const Type* First() const noexcept
+    {
+        return reinterpret_cast<const Type*>(_head);
+    }
+
+    Type* First() noexcept
+    {
+        return reinterpret_cast<Type*>(_head);
+    }
+
+    const Type* Last() const noexcept
+    {
+        return reinterpret_cast<const Type*>(_tail);
+    }
+
+    Type* Last() noexcept
+    {
+        return reinterpret_cast<Type*>(_tail);
+    }
+
+public:
+
+    const Type* Begin() const noexcept
+    {
+        return reinterpret_cast<const Type*>(_head);
+    }
+
+    Type* Begin() noexcept
+    {
+        return reinterpret_cast<Type*>(_head);
+    }
+
+    const Type* End() const noexcept
+    {
+        return nullptr;
+    }
+
+    Type* End() noexcept
+    {
+        return nullptr;
     }
 
 private:

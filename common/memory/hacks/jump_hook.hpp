@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include <cassert>
-
 #include <system/types.hpp>
 
 #include "patch.hpp"
@@ -62,11 +60,9 @@ private:
 public:
 
     JumpHook(const ptr_t inject, const cptr_t hook, const bool enabled = true) noexcept
-        : _patch { inject, &JumpInstruction(reinterpret_cast<sptrint_t>(hook) -
+        : _patch { hook != nullptr ? inject : nullptr, &JumpInstruction(reinterpret_cast<sptrint_t>(hook) -
             (reinterpret_cast<sptrint_t>(inject) + static_cast<sptrint_t>(sizeof(JumpInstruction)))), enabled }
-    {
-        assert(hook != nullptr);
-    }
+    {}
 
 public:
 
@@ -84,9 +80,7 @@ public:
 
     bool Initialize(const ptr_t inject, const cptr_t hook, const bool enabled = true) noexcept
     {
-        assert(hook != nullptr);
-
-        return _patch.Initialize(inject, &JumpInstruction(reinterpret_cast<sptrint_t>(hook) -
+        return _patch.Initialize(hook != nullptr ? inject : nullptr, &JumpInstruction(reinterpret_cast<sptrint_t>(hook) -
             (reinterpret_cast<sptrint_t>(inject) + static_cast<sptrint_t>(sizeof(JumpInstruction)))), enabled);
     }
 

@@ -51,7 +51,7 @@ public:
 
     void ToggleEndian() noexcept
     {
-        ubyte_t* iterator = _buffer;
+        adr_t iterator = _buffer;
         ((_bswap_helper(*reinterpret_cast<Types*>(iterator)),
             iterator += sizeof(Types)), ...);
     }
@@ -61,7 +61,7 @@ public:
     template <bool Endian = HostEndian>
     void Get(Types&... buffers) const noexcept
     {
-        const ubyte_t* iterator = _buffer;
+        cadr_t iterator = _buffer;
         ((buffers = *reinterpret_cast<const Types*>(iterator),
             iterator += sizeof(Types)), ...);
 
@@ -75,7 +75,7 @@ public:
         if constexpr (Endian != HostEndian)
             { ((_bswap_helper(values)), ...); }
 
-        ubyte_t* iterator = _buffer;
+        adr_t iterator = _buffer;
         ((*reinterpret_cast<Types*>(iterator) = values,
             iterator += sizeof(Types)), ...);
     }

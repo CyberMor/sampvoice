@@ -60,16 +60,16 @@ public:
 public:
 
     Patch(const ptr_t address, const cptr_t patch, const bool enabled = true) noexcept
-        : _upscope { address, false }
+        : _upscope { patch != nullptr ? address : nullptr, false }
     {
-        assert(address != nullptr);
-        assert(patch   != nullptr);
+        if (_upscope.Valid())
+        {
+            std::memcpy(_patch_bytes, patch, Size);
+            std::memcpy(_orig_bytes, address, Size);
 
-        std::memcpy(_patch_bytes, patch, Size);
-        std::memcpy(_orig_bytes, address, Size);
-
-        if (_upscope.Valid() && enabled == true && Enable() == false)
-            _upscope.Deinitialize();
+            if (enabled == true && Enable() == false)
+                _upscope.Deinitialize();
+        }
     }
 
 public:
@@ -90,14 +90,14 @@ public:
     {
         Disable();
 
-        assert(address != nullptr);
-        assert(patch   != nullptr);
+        if (_upscope.Initialize(patch != nullptr ? address : nullptr, false))
+        {
+            std::memcpy(_patch_bytes, patch, Size);
+            std::memcpy(_orig_bytes, address, Size);
 
-        std::memcpy(_patch_bytes, patch, Size);
-        std::memcpy(_orig_bytes, address, Size);
-
-        if (_upscope.Initialize(address, false) && enabled == true && Enable() == false)
-            _upscope.Deinitialize();
+            if (enabled == true && Enable() == false)
+                _upscope.Deinitialize();
+        }
 
         return _upscope.Valid();
     }
@@ -118,8 +118,13 @@ public:
             if (_upscope.Enable())
             {
                 std::memcpy(_upscope.Address(), _patch_bytes, Size);
-                _upscope.Disable();
-
+#ifndef NDEBUG
+                const bool disabled =
+#endif
+                    _upscope.Disable();
+#ifndef NDEBUG
+                assert(disabled);
+#endif
                 _enabled = true;
             }
         }
@@ -134,8 +139,13 @@ public:
             if (_upscope.Enable())
             {
                 std::memcpy(_upscope.Address(), _orig_bytes, Size);
-                _upscope.Disable();
-
+#ifndef NDEBUG
+                const bool disabled =
+#endif
+                    _upscope.Disable();
+#ifndef NDEBUG
+                assert(disabled);
+#endif
                 _enabled = false;
             }
         }
@@ -167,8 +177,12 @@ private:
 };
 
 template <size_t Size>
-inline void FillWithNops(const ptr_t address) noexcept
+static inline void FillWithNops(const ptr_t address) noexcept
 {
+    static_assert(Size != 0);
+
+    assert(address != nullptr);
+
     const UnprotectScope<Size> upscope { address };
     std::memset(address, 0x90, Size);
 }

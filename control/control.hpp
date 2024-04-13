@@ -599,6 +599,7 @@ private:
 
 private:
 
+    alignas (alignof(std::max_align_t))
     ubyte_t _packet_buffer[1024];
     uword_t _packet_length = 0;
 

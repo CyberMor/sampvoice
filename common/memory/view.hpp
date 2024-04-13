@@ -51,15 +51,6 @@ public:
         return { string, utils::string::length(string, terminator) };
     }
 
-    template <class MemoryDataType, class MemorySizeType>
-    static constexpr DataView FromMemory(const DataView<MemoryDataType, MemorySizeType>& memory) noexcept
-    {
-        assert(memory.Bytes() % sizeof(DataType) == 0);
-
-        return { reinterpret_cast<DataType*> (memory.Data()),
-                      static_cast<SizeType>  (memory.Bytes() / sizeof(DataType)) };
-    }
-
 public:
 
     constexpr bool operator<(const DataView& view) const noexcept
@@ -94,19 +85,8 @@ public:
 
 public:
 
-    constexpr const DataType& operator[](const SizeType index) const noexcept
+    DataType& operator[](const SizeType index) const noexcept
     {
-        assert(data != nullptr);
-
-        assert(index >= 0 && index < size);
-
-        return data[index];
-    }
-
-    DataType& operator[](const SizeType index) noexcept
-    {
-        assert(data != nullptr);
-
         assert(index >= 0 && index < size);
 
         return data[index];
@@ -149,7 +129,8 @@ public:
 
     constexpr DataView SubLeft(SizeType offset, SizeType length) const noexcept
     {
-        assert(offset >= 0 && length >= 0);
+        assert(offset >= 0);
+        assert(length >= 0);
 
         if (offset > size) offset = size;
 
@@ -172,7 +153,8 @@ public:
 
     constexpr DataView SubRight(SizeType offset, SizeType length) const noexcept
     {
-        assert(offset >= 0 && length >= 0);
+        assert(offset >= 0);
+        assert(length >= 0);
 
         if (offset > size) offset = size;
 
@@ -186,53 +168,12 @@ public:
 
     void FillWithZeros() const noexcept
     {
-        assert(size == 0 || data != nullptr);
-
-        std::memset(Data(), { 0x00 }, Bytes());
+        std::memset(Data(), 0x00, Bytes());
     }
 
     void FillWithOnes() const noexcept
     {
-        assert(size == 0 || data != nullptr);
-
-        std::memset(Data(), { 0xFF }, Bytes());
-    }
-
-public:
-
-    constexpr SizeType Bytes() const noexcept
-    {
-        return size * sizeof(DataType);
-    }
-
-public:
-
-    constexpr DataType* First() const noexcept
-    {
-        assert(data != nullptr);
-        assert(size != 0);
-
-        return Data();
-    }
-
-    constexpr DataType* Last() const noexcept
-    {
-        assert(data != nullptr);
-        assert(size != 0);
-
-        return Data() + Size() - 1;
-    }
-
-public:
-
-    constexpr DataType* Begin() const noexcept
-    {
-        return Data();
-    }
-
-    static constexpr DataType* End() noexcept
-    {
-        return nullptr;
+        std::memset(Data(), 0xFF, Bytes());
     }
 
 public:
@@ -245,6 +186,41 @@ public:
     constexpr DataType* Next(DataType* const iterator) const noexcept
     {
         return iterator != Last() ? (iterator != End() ? iterator + 1 : First()) : End();
+    }
+
+public:
+
+    constexpr DataType* First() const noexcept
+    {
+        assert(size != 0);
+
+        return Data();
+    }
+
+    constexpr DataType* Last() const noexcept
+    {
+        assert(size != 0);
+
+        return Data() + Size() - 1;
+    }
+
+public:
+
+    constexpr DataType* Begin() const noexcept
+    {
+        return Data();
+    }
+
+    constexpr DataType* End() const noexcept
+    {
+        return nullptr;
+    }
+
+public:
+
+    constexpr SizeType Bytes() const noexcept
+    {
+        return Size() * sizeof(DataType);
     }
 
 public:

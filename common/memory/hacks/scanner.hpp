@@ -38,40 +38,16 @@ public:
 
 public:
 
-    bool Valid() const noexcept
-    {
-        return _address != nullptr && _length != 0;
-    }
-
-    bool Invalid() const noexcept
-    {
-        return _address == nullptr || _length == 0;
-    }
-
-public:
-
-    bool Initialize(const cptr_t address, const size_t length) noexcept
-    {
-        return (_address = address) != nullptr &&
-               (_length  = length)  != 0;
-    }
-
-    void Deinitialize() noexcept
-    {
-        _address = nullptr;
-        _length  = 0;
-    }
-
-public:
-
     template <size_t Size>
     ptr_t Find(const char(&pattern)[Size], const char(&mask)[Size]) const noexcept
     {
-        assert(_address != nullptr);
+        static_assert(Size != 0);
+
+        assert(_length == 0 || _address != nullptr);
 
         if (_length >= Size - 1)
         {
-            const auto compare = [&](const char* const sequence) noexcept -> bool
+            const auto compare = [=](const char* const sequence) noexcept -> bool
             {
                 for (size_t i = 0; i != Size - 1; ++i)
                 {
@@ -82,7 +58,7 @@ public:
                 return true;
             };
 
-            const cstr_t border   = (static_cast<cstr_t>(_address) + _length) - (Size - 1);
+            const cstr_t border   = (static_cast<cstr_t>(_address) + _length) - (Size - 1) + 1;
                   cstr_t iterator =  static_cast<cstr_t>(_address);
 
             while (iterator != border)
@@ -104,11 +80,14 @@ private:
 
 };
 
-inline std::pair<cptr_t, size_t> GetModuleInfo(const cptr_t address) noexcept
+static inline std::pair<cptr_t, size_t> GetModuleInfo(const cptr_t address) noexcept
 {
+    assert(address != nullptr);
+
     std::pair<cptr_t, size_t> result;
+
 #ifdef _WIN32
-    if (MEMORY_BASIC_INFORMATION info; VirtualQuery(address, &info, sizeof(info)) != 0)
+    if (MEMORY_BASIC_INFORMATION info; VirtualQuery(address, &info, sizeof(info)) == sizeof(info))
     {
         if (info.AllocationBase != nullptr)
         {
@@ -135,5 +114,6 @@ inline std::pair<cptr_t, size_t> GetModuleInfo(const cptr_t address) noexcept
         }
     }
 #endif
+
     return result;
 }

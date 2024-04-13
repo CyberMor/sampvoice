@@ -178,7 +178,7 @@ public:
     bool SetOption(const int level, const int option, const Value& value) noexcept
     {
         return SetOption(level, option, reinterpret_cast<const std::remove_all_extents_t<Value>*>(&value),
-            sizeof(value) / sizeof(std::remove_all_extents_t<Value>));
+            sizeof(Value) / sizeof(std::remove_all_extents_t<Value>));
     }
 
     socklen_t GetOption(const int level, const int option, const ptr_t buffer, socklen_t length) const noexcept
@@ -203,7 +203,7 @@ public:
     socklen_t GetOption(const int level, const int option, Buffer& buffer) const noexcept
     {
         return GetOption(level, option, reinterpret_cast<std::remove_all_extents_t<Buffer>*>(&buffer),
-            sizeof(buffer) / sizeof(std::remove_all_extents_t<Buffer>));
+            sizeof(Buffer) / sizeof(std::remove_all_extents_t<Buffer>));
     }
 
 public:
@@ -423,7 +423,7 @@ public:
     auto PeekValue(Buffer& buffer, const int flags = 0) const noexcept
     {
         return Peek(reinterpret_cast<std::remove_all_extents_t<Buffer>*>(&buffer),
-            sizeof(buffer) / sizeof(std::remove_all_extents_t<Buffer>), flags);
+            sizeof(Buffer) / sizeof(std::remove_all_extents_t<Buffer>), flags);
     }
 
 public:
@@ -448,7 +448,7 @@ public:
     auto ReceiveValue(Buffer& buffer, const int flags = 0) noexcept
     {
         return Receive(reinterpret_cast<std::remove_all_extents_t<Buffer>*>(&buffer),
-            sizeof(buffer) / sizeof(std::remove_all_extents_t<Buffer>), flags);
+            sizeof(Buffer) / sizeof(std::remove_all_extents_t<Buffer>), flags);
     }
 
 public:
@@ -473,13 +473,12 @@ public:
     auto SendValue(const Value& value, const int flags = 0) noexcept
     {
         return Send(reinterpret_cast<const std::remove_all_extents_t<Value>*>(&value),
-            sizeof(value) / sizeof(std::remove_all_extents_t<Value>), flags);
+            sizeof(Value) / sizeof(std::remove_all_extents_t<Value>), flags);
     }
 
 public:
 
-    template <bool Endian = NetEndian, class... Buffers,
-        typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
+    template <bool Endian = NetEndian, class... Buffers, typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
     auto PeekPacket(Buffers&... buffers) const noexcept
     {
         DataPacket<Buffers...> packet;
@@ -488,8 +487,7 @@ public:
         return result;
     }
 
-    template <bool Endian = NetEndian, class... Buffers,
-        typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
+    template <bool Endian = NetEndian, class... Buffers, typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
     auto ReceivePacket(Buffers&... buffers) noexcept
     {
         DataPacket<Buffers...> packet;
@@ -508,23 +506,20 @@ public:
 
 public:
 
-    auto PeekFrom(const ptr_t buffer, const size_t length,
-        Address<Domain>& address, const int flags = 0) const noexcept
+    auto PeekFrom(const ptr_t buffer, const size_t length, Address<Domain>& address, const int flags = 0) const noexcept
     {
         assert(_handle != INVALID_SOCKET);
 
         assert(buffer != nullptr && length != 0);
 
         socklen_t address_size = address.Size();
-        const auto bytes = recvfrom(_handle, static_cast<char*>(buffer),
-            length, flags | MSG_PEEK, address.Data(), &address_size);
+        const auto bytes = recvfrom(_handle, static_cast<char*>(buffer), length, flags | MSG_PEEK, address.Data(), &address_size);
         assert(bytes <= 0 || address_size <= address.Size());
         return bytes;
     }
 
     template <class DataType, typename = std::enable_if_t<!std::is_const_v<DataType>>>
-    auto PeekFrom(DataType* const buffer, const size_t length,
-        Address<Domain>& address, const int flags = 0) const noexcept
+    auto PeekFrom(DataType* const buffer, const size_t length, Address<Domain>& address, const int flags = 0) const noexcept
     {
         const auto result = PeekFrom(static_cast<ptr_t>(buffer), length * sizeof(DataType), address, flags);
         return result > 0 ? result / static_cast<decltype(result)>(sizeof(DataType)) : result;
@@ -534,28 +529,25 @@ public:
     auto PeekValueFrom(Buffer& buffer, Address<Domain>& address, const int flags = 0) const noexcept
     {
         return PeekFrom(reinterpret_cast<std::remove_all_extents_t<Buffer>*>(&buffer),
-            sizeof(buffer) / sizeof(std::remove_all_extents_t<Buffer>), address, flags);
+            sizeof(Buffer) / sizeof(std::remove_all_extents_t<Buffer>), address, flags);
     }
 
 public:
 
-    auto ReceiveFrom(const ptr_t buffer, const size_t length,
-        Address<Domain>& address, const int flags = 0) noexcept
+    auto ReceiveFrom(const ptr_t buffer, const size_t length, Address<Domain>& address, const int flags = 0) noexcept
     {
         assert(_handle != INVALID_SOCKET);
 
         assert(buffer != nullptr && length != 0);
 
         socklen_t address_size = address.Size();
-        const auto bytes = recvfrom(_handle, static_cast<char*>(buffer),
-            length, flags, address.Data(), &address_size);
+        const auto bytes = recvfrom(_handle, static_cast<char*>(buffer), length, flags, address.Data(), &address_size);
         assert(bytes <= 0 || address_size <= address.Size());
         return bytes;
     }
 
     template <class DataType, typename = std::enable_if_t<!std::is_const_v<DataType>>>
-    auto ReceiveFrom(DataType* const buffer, const size_t length,
-        Address<Domain>& address, const int flags = 0) noexcept
+    auto ReceiveFrom(DataType* const buffer, const size_t length, Address<Domain>& address, const int flags = 0) noexcept
     {
         const auto result = ReceiveFrom(static_cast<ptr_t>(buffer), length * sizeof(DataType), address, flags);
         return result > 0 ? result / static_cast<decltype(result)>(sizeof(DataType)) : result;
@@ -565,26 +557,23 @@ public:
     auto ReceiveValueFrom(Buffer& buffer, Address<Domain>& address, const int flags = 0) noexcept
     {
         return ReceiveFrom(reinterpret_cast<std::remove_all_extents_t<Buffer>*>(&buffer),
-            sizeof(buffer) / sizeof(std::remove_all_extents_t<Buffer>), address, flags);
+            sizeof(Buffer) / sizeof(std::remove_all_extents_t<Buffer>), address, flags);
     }
 
 public:
 
-    auto SendTo(const cptr_t data, const size_t size,
-        const Address<Domain>& address, const int flags = 0) noexcept
+    auto SendTo(const cptr_t data, const size_t size, const Address<Domain>& address, const int flags = 0) noexcept
     {
         assert(_handle != INVALID_SOCKET);
 
         assert(size == 0 || data != nullptr);
         assert(address.Valid());
 
-        return sendto(_handle, static_cast<const char*>(data),
-            size, flags, address.Data(), address.Size());
+        return sendto(_handle, static_cast<const char*>(data), size, flags, address.Data(), address.Size());
     }
 
     template <class DataType>
-    auto SendTo(const DataType* const data, const size_t size,
-        const Address<Domain>& address, const int flags = 0) noexcept
+    auto SendTo(const DataType* const data, const size_t size, const Address<Domain>& address, const int flags = 0) noexcept
     {
         const auto result = SendTo(static_cast<cptr_t>(data), size * sizeof(DataType), address, flags);
         return result > 0 ? result / static_cast<decltype(result)>(sizeof(DataType)) : result;
@@ -594,13 +583,12 @@ public:
     auto SendValueTo(const Value& value, Address<Domain>& address, const int flags = 0) noexcept
     {
         return SendTo(reinterpret_cast<const std::remove_all_extents_t<Value>*>(&value),
-            sizeof(value) / sizeof(std::remove_all_extents_t<Value>), address, flags);
+            sizeof(Value) / sizeof(std::remove_all_extents_t<Value>), address, flags);
     }
 
 public:
 
-    template <bool Endian = NetEndian, class... Buffers,
-        typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
+    template <bool Endian = NetEndian, class... Buffers, typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
     auto PeekPacketFrom(Address<Domain>& address, Buffers&... buffers) const noexcept
     {
         DataPacket<Buffers...> packet;
@@ -609,8 +597,7 @@ public:
         return result;
     }
 
-    template <bool Endian = NetEndian, class... Buffers,
-        typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
+    template <bool Endian = NetEndian, class... Buffers, typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
     auto ReceivePacketFrom(Address<Domain>& address, Buffers&... buffers) noexcept
     {
         DataPacket<Buffers...> packet;

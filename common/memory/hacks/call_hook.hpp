@@ -62,52 +62,47 @@ private:
 public:
 
     CallHook(const ptr_t inject, const cptr_t hook, const bool enabled = true) noexcept
+        : _patch { hook != nullptr ? inject : nullptr, &CallInstruction(reinterpret_cast<sptrint_t>(hook) -
+            (reinterpret_cast<sptrint_t>(inject) + static_cast<sptrint_t>(sizeof(CallInstruction)))), enabled }
     {
-        assert(inject != nullptr);
-        assert(hook   != nullptr);
-
-        _target = reinterpret_cast<ptr_t>((reinterpret_cast<sptrint_t>(inject) +
-            static_cast<sptrint_t>(sizeof(CallInstruction))) + static_cast<const CallInstruction*>(inject)->Offset());
-
-        if (_target != nullptr && !_patch.Initialize(inject, &CallInstruction(reinterpret_cast<sptrint_t>(hook) -
-            (reinterpret_cast<sptrint_t>(inject) + static_cast<sptrint_t>(sizeof(CallInstruction)))), enabled))
-            _target = nullptr;
+        if (_patch.Valid())
+        {
+            _target = reinterpret_cast<ptr_t>((reinterpret_cast<sptrint_t>(inject) +
+                static_cast<sptrint_t>(sizeof(CallInstruction))) + static_cast<const CallInstruction*>(inject)->Offset());
+            assert(_target != nullptr);
+        }
     }
 
 public:
 
     bool Valid() const noexcept
     {
-        return _target != nullptr && _patch.Valid();
+        return _patch.Valid();
     }
 
     bool Invalid() const noexcept
     {
-        return _target == nullptr || _patch.Invalid();
+        return _patch.Invalid();
     }
 
 public:
 
     bool Initialize(const ptr_t inject, const cptr_t hook, const bool enabled = true) noexcept
     {
-        assert(inject != nullptr);
-        assert(hook   != nullptr);
-
-        _target = reinterpret_cast<ptr_t>((reinterpret_cast<sptrint_t>(inject) +
-            static_cast<sptrint_t>(sizeof(CallInstruction))) + static_cast<const CallInstruction*>(inject)->Offset());
-
-        if (_target != nullptr && !_patch.Initialize(inject, &CallInstruction(reinterpret_cast<sptrint_t>(hook) -
+        if (_patch.Initialize(hook != nullptr ? inject : nullptr, &CallInstruction(reinterpret_cast<sptrint_t>(hook) -
             (reinterpret_cast<sptrint_t>(inject) + static_cast<sptrint_t>(sizeof(CallInstruction)))), enabled))
-            _target = nullptr;
+        {
+            _target = reinterpret_cast<ptr_t>((reinterpret_cast<sptrint_t>(inject) +
+                static_cast<sptrint_t>(sizeof(CallInstruction))) + static_cast<const CallInstruction*>(inject)->Offset());
+            assert(_target != nullptr);
+        }
 
-        return _target != nullptr && _patch.Valid();
+        return _patch.Valid();
     }
 
     void Deinitialize() noexcept
     {
         _patch.Deinitialize();
-
-        _target = nullptr;
     }
 
 public:
@@ -126,7 +121,7 @@ public:
 
     ptr_t Target() const noexcept
     {
-        return _target;
+        return _patch.Valid() ? _target : nullptr;
     }
 
 public:
@@ -143,10 +138,10 @@ public:
 
 private:
 
-    ptr_t _target = nullptr;
+    Patch<sizeof(CallInstruction)> _patch;
 
 private:
 
-    Patch<sizeof(CallInstruction)> _patch;
+    ptr_t _target;
 
 };

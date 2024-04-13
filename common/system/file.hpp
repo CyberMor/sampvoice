@@ -92,7 +92,10 @@ public:
 
     File(const cstr_t file, const cstr_t modes) noexcept
         : File { std::fopen(file, modes) }
-    {}
+    {
+        assert(file  != nullptr && *file  != '\0');
+        assert(modes != nullptr && *modes != '\0');
+    }
 
 public:
 
@@ -209,9 +212,7 @@ public:
         assert(file  != nullptr && *file  != '\0');
         assert(modes != nullptr && *modes != '\0');
 
-        _handle = (_handle != nullptr
-            ? std::freopen(file, modes, _handle)
-            : std::fopen(file, modes));
+        _handle = (_handle != nullptr ? std::freopen(file, modes, _handle) : std::fopen(file, modes));
         return _handle != nullptr;
     }
 
@@ -231,11 +232,13 @@ public:
     int Descriptor() const noexcept
     {
         assert(_handle != nullptr);
-#ifdef _WIN32
-        return _fileno(_handle);
-#else
+
+#pragma warning(push)
+#pragma warning(disable : 4996)
+
         return fileno(_handle);
-#endif
+
+#pragma warning(pop)
     }
 
 public:
@@ -311,8 +314,7 @@ public:
     template <class Buffer, typename = std::enable_if_t<!std::is_const_v<Buffer>>>
     size_t PeekValue(Buffer& buffer) const noexcept
     {
-        return Peek(reinterpret_cast<std::remove_all_extents_t<Buffer>*>(&buffer),
-            sizeof(buffer) / sizeof(std::remove_all_extents_t<Buffer>));
+        return Peek(reinterpret_cast<std::remove_all_extents_t<Buffer>*>(&buffer), sizeof(Buffer) / sizeof(std::remove_all_extents_t<Buffer>));
     }
 
 public:
@@ -339,8 +341,7 @@ public:
     template <class Buffer, typename = std::enable_if_t<!std::is_const_v<Buffer>>>
     size_t ReadValue(Buffer& buffer) noexcept
     {
-        return Read(reinterpret_cast<std::remove_all_extents_t<Buffer>*>(&buffer),
-            sizeof(buffer) / sizeof(std::remove_all_extents_t<Buffer>));
+        return Read(reinterpret_cast<std::remove_all_extents_t<Buffer>*>(&buffer), sizeof(Buffer) / sizeof(std::remove_all_extents_t<Buffer>));
     }
 
 public:
@@ -367,15 +368,13 @@ public:
     template <class Value>
     size_t WriteValue(const Value& value) noexcept
     {
-        return Write(reinterpret_cast<const std::remove_all_extents_t<Value>*>(&value),
-            sizeof(value) / sizeof(std::remove_all_extents_t<Value>));
+        return Write(reinterpret_cast<const std::remove_all_extents_t<Value>*>(&value), sizeof(Value) / sizeof(std::remove_all_extents_t<Value>));
     }
 
 public:
 
-    template <bool Endian = HostEndian, class... Buffers,
-        typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
-        int PeekPacket(Buffers&... buffers) const noexcept
+    template <bool Endian = HostEndian, class... Buffers, typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
+    int PeekPacket(Buffers&... buffers) const noexcept
     {
         DataPacket<Buffers...> packet;
         if (PeekValue(packet) != 1) return Error() ? -1 : 0;
@@ -383,9 +382,8 @@ public:
         return 1;
     }
 
-    template <bool Endian = HostEndian, class... Buffers,
-        typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
-        int ReadPacket(Buffers&... buffers) noexcept
+    template <bool Endian = HostEndian, class... Buffers, typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
+    int ReadPacket(Buffers&... buffers) noexcept
     {
         DataPacket<Buffers...> packet;
         if (ReadValue(packet) != 1) return Error() ? -1 : 0;
@@ -408,9 +406,11 @@ public:
     {
         assert(_handle != nullptr);
 
+        assert(buffer != nullptr);
+
         if (std::fread(buffer, sizeof(char), 1, _handle) != 1)
         {
-            if (std::ferror(_handle) != 0 || std::feof(_handle) == 0)
+            if (std::ferror(_handle) != 0)
                 return -1; // error
 
             return 0; // end of file
@@ -420,7 +420,7 @@ public:
         {
             if (std::fread(buffer, sizeof(char), 1, _handle) != 1)
             {
-                if (std::ferror(_handle) != 0 || std::feof(_handle) == 0)
+                if (std::ferror(_handle) != 0)
                     return -1; // error
 
                 return 1; // success (end of file)
@@ -431,8 +431,6 @@ public:
             {
                 if (std::fseek(_handle, -1, SEEK_CUR) != 0)
                     return -1; // error
-
-                std::clearerr(_handle);
             }
         }
 
@@ -444,9 +442,11 @@ public:
     {
         assert(_handle != nullptr);
 
+        assert(buffer != nullptr);
+
         if (std::fread(buffer, sizeof(Character), 1, _handle) != 1)
         {
-            if (std::ferror(_handle) != 0 || std::feof(_handle) == 0)
+            if (std::ferror(_handle) != 0)
                 return -1; // error
 
             return 0; // end of file
@@ -476,14 +476,11 @@ public:
 
 public:
 
-    int GetLine(char* buffer, size_t length,
-        const char rterminator = utils::string::ending::text,
-        const char wterminator = '\0') noexcept
+    int GetLine(char* buffer, size_t length, const char rterminator = utils::string::ending::text, const char wterminator = '\0') noexcept
     {
         assert(_handle != nullptr);
 
-        assert(rterminator >= 0 || rterminator == utils::string::ending::crlf
-                                || rterminator == utils::string::ending::text);
+        assert(rterminator >= 0 || rterminator == utils::string::ending::crlf || rterminator == utils::string::ending::text);
         assert(wterminator >= 0);
 
         assert(length == 0 || buffer != nullptr);
@@ -498,14 +495,9 @@ public:
                 if (*buffer == '\n' || *buffer == utils::string::ending::crlf || *buffer == '\r')
                     *buffer = wterminator;
             }
-            else if (rterminator >= 0)
+            else // if (rterminator >= 0 || rterminator == utils::string::ending::crlf)
             {
                 if (*buffer == rterminator)
-                    *buffer = wterminator;
-            }
-            else // if (rterminator == utils::string::ending::crlf)
-            {
-                if (*buffer == utils::string::ending::crlf)
                     *buffer = wterminator;
             }
 
@@ -520,9 +512,7 @@ public:
     }
 
     template <class Character, typename = std::enable_if_t<!std::is_const_v<Character>>>
-    int GetLine(Character* buffer, size_t length,
-        const Character rterminator = {},
-        const Character wterminator = {}) noexcept
+    int GetLine(Character* buffer, size_t length, const Character rterminator = {}, const Character wterminator = {}) noexcept
     {
         assert(_handle != nullptr);
 
@@ -544,24 +534,18 @@ public:
     }
 
     template <size_t Length>
-    int GetLine(char(&buffer)[Length],
-        const char rterminator = utils::string::ending::text,
-        const char wterminator = '\0') noexcept
+    int GetLine(char(&buffer)[Length], const char rterminator = utils::string::ending::text, const char wterminator = '\0') noexcept
     {
         return GetLine(buffer, Length, rterminator, wterminator);
     }
 
     template <class Character, size_t Length, typename = std::enable_if_t<!std::is_const_v<Character>>>
-    int GetLine(Character(&buffer)[Length],
-        const Character rterminator = {},
-        const Character wterminator = {}) noexcept
+    int GetLine(Character(&buffer)[Length], const Character rterminator = {}, const Character wterminator = {}) noexcept
     {
         return GetLine(buffer, Length, rterminator, wterminator);
     }
 
-    template <class Character>
-    bool PutLine(const Character* const string, const size_t length,
-        const Character wterminator = {}) noexcept
+    bool PutLine(const char* const string, const size_t length, const char wterminator = '\n') noexcept
     {
         assert(_handle != nullptr);
 
@@ -569,9 +553,20 @@ public:
     }
 
     template <class Character>
-    bool PutLine(const Character* const string,
-        const Character wterminator = {},
-        const Character rterminator = {}) noexcept
+    bool PutLine(const Character* const string, const size_t length, const Character wterminator = {}) noexcept
+    {
+        assert(_handle != nullptr);
+
+        return Write(string, length) == length && PutCharacter(wterminator);
+    }
+
+    bool PutLine(const char* const string, const char wterminator = '\n', const char rterminator = '\0') noexcept
+    {
+        return PutLine(string, utils::string::length(string, rterminator), wterminator);
+    }
+
+    template <class Character>
+    bool PutLine(const Character* const string, const Character wterminator = {}, const Character rterminator = {}) noexcept
     {
         return PutLine(string, utils::string::length(string, rterminator), wterminator);
     }
@@ -581,9 +576,11 @@ public:
     template <class... Buffers, typename = std::enable_if_t<(... && !std::is_const_v<Buffers>)>>
     bool Scan(const cstr_t format, Buffers&... buffers) noexcept
     {
+        static_assert(sizeof...(buffers) != 0);
+
         assert(_handle != nullptr);
 
-        assert(format != nullptr);
+        assert(format != nullptr && *format != '\0');
 
         return std::fscanf(_handle, format, (&buffers)...) == sizeof...(buffers);
     }
@@ -591,9 +588,11 @@ public:
     template <class... Values>
     bool Print(const cstr_t format, const Values... values) noexcept
     {
+        static_assert(sizeof...(values) != 0);
+
         assert(_handle != nullptr);
 
-        assert(format != nullptr);
+        assert(format != nullptr && *format != '\0');
 
         return std::fprintf(_handle, format, (values)...) == sizeof...(values);
     }
@@ -610,8 +609,7 @@ public:
         {
             if (std::fseek(_handle, 0, SEEK_END) == 0)
             {
-                if (const long size = std::ftell(_handle);
-                    std::fseek(_handle, offset, SEEK_SET) == 0 && size >= offset)
+                if (const long size = std::ftell(_handle); std::fseek(_handle, offset, SEEK_SET) == 0 && size > offset)
                 {
                     result = size - offset;
                 }
@@ -631,8 +629,7 @@ public:
         {
             if (std::fseek(_handle, 0, SEEK_END) == 0)
             {
-                if (const long size = std::ftell(_handle);
-                    std::fseek(_handle, offset, SEEK_SET) == 0 && size > 0)
+                if (const long size = std::ftell(_handle); std::fseek(_handle, offset, SEEK_SET) == 0 && size > 0)
                 {
                     result = size;
                 }

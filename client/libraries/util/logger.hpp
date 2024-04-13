@@ -93,7 +93,7 @@ public:
             const auto time_of_day = std::localtime(&c_time);
             assert(time_of_day != nullptr);
 
-            std::fprintf(_log_file, "[%.02d.%.02d.%.04d](%.02d:%.02d:%.02d): ",
+            std::fprintf(_log_file, "[%.02d.%.02d.%.04d](%.02d:%.02d:%.02d) ",
                 time_of_day->tm_mday, time_of_day->tm_mon + 1, time_of_day->tm_year + 1900,
                 time_of_day->tm_hour, time_of_day->tm_min, time_of_day->tm_sec);
             std::fprintf(_log_file, message, arguments...);

@@ -194,16 +194,17 @@ struct Effect {
     Effect() noexcept = default;
     ~Effect() noexcept = default;
     Effect(const Effect&) = delete;
-    Effect(Effect&&) = delete;
+    Effect(Effect&&) noexcept = default;
     Effect& operator=(const Effect&) = delete;
-    Effect& operator=(Effect&&) = delete;
+    Effect& operator=(Effect&&) noexcept = default;
 
 public:
 
     bool AppendFilter(const ubyte_t type, const sword_t priority, DataBlock<ubyte_t>&& parameters) noexcept
     {
         const auto filter = filters.Construct(type, priority, std::move(parameters));
-        return filter != nullptr && (filters.PushBack(filter), true);
+        if (filter != nullptr) filters.PushBack(filter);
+        return filter != nullptr;
     }
 
     void RemoveFilter(const ubyte_t type, const sword_t priority) noexcept

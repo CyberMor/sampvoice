@@ -92,7 +92,7 @@ public:
         _create_player_in_pool_hook.Deinitialize();
         _delete_player_from_pool_hook.Deinitialize();
 
-        _locked_players.Deinitialize();
+        _locked_players.Clear();
     }
 
 public:
@@ -104,8 +104,7 @@ public:
         File file { path, "wt" };
         if (file.Invalid())
         {
-            Logger::Instance().LogToFile("[sv:err:blacklist:save] "
-                "failed to open file (%s)", path);
+            Logger::Instance().LogToFile("[sv:err:blacklist:save] failed to open file (%s)", path);
             return false;
         }
 
@@ -113,8 +112,7 @@ public:
         {
             if (!file.PutLine(player->name, '\n'))
             {
-                Logger::Instance().LogToFile("[sv:err:blacklist:save] "
-                    "failed to write string to file", path);
+                Logger::Instance().LogToFile("[sv:err:blacklist:save] failed to write string to file", path);
                 return false;
             }
         }
@@ -129,8 +127,7 @@ public:
         File file { path, "rt" };
         if (file.Invalid())
         {
-            Logger::Instance().LogToFile("[sv:err:blacklist:load] "
-                "failed to open file (%s)", path);
+            Logger::Instance().LogToFile("[sv:err:blacklist:load] failed to open file (%s)", path);
             return false;
         }
 
@@ -165,8 +162,7 @@ public:
             const auto pointer = _locked_players.Construct(name, id);
             if (pointer == nullptr)
             {
-                Logger::Instance().LogToFile("[sv:err:blacklist:load] "
-                    "failed to allocate memory for player name");
+                Logger::Instance().LogToFile("[sv:err:blacklist:load] failed to allocate memory for player name");
                 return false;
             }
 

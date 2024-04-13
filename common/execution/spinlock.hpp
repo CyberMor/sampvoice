@@ -16,6 +16,10 @@ struct Spinlock {
 
     Spinlock() noexcept = default;
     ~Spinlock() noexcept = default;
+    Spinlock(const Spinlock&) = delete;
+    Spinlock(Spinlock&&) = delete;
+    Spinlock& operator=(const Spinlock&) = delete;
+    Spinlock& operator=(Spinlock&&) = delete;
 
 public:
 

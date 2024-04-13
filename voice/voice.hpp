@@ -471,6 +471,10 @@ private:
 
         PlayerInfo() noexcept = default;
         ~PlayerInfo() noexcept = default;
+        PlayerInfo(const PlayerInfo&) = delete;
+        PlayerInfo(PlayerInfo&&) = delete;
+        PlayerInfo& operator=(const PlayerInfo&) = delete;
+        PlayerInfo& operator=(PlayerInfo&&) = delete;
 
     public:
 
@@ -540,21 +544,12 @@ public:
 
         if (!socket.Initialize(false))
         {
-            if (Logger != nullptr)
-            {
-                Logger::Instance().Log("[Voice] Failed to initialize socket (%d)", GetSocketError());
-            }
-
+            Logger::Instance().Log("[err:voice:initialize] failed to initialize socket (%d)", GetSocketError());
             return false;
         }
-
         if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1))
         {
-            if (Logger != nullptr)
-            {
-                Logger::Instance().Log("[Voice] Failed to set option(SO_REUSEADDR) (%d)", GetSocketError());
-            }
-
+            Logger::Instance().Log("[err:voice:initialize] failed to set option(SO_REUSEADDR) (%d)", GetSocketError());
             return false;
         }
 
@@ -565,29 +560,16 @@ public:
 
         if (!socket.Bind(voice))
         {
-            if (Logger != nullptr)
-            {
-                char buffer[IPv4Address::LengthLimit + 1];
-
-                if (!voice.Print(buffer))
-                {
-                    buffer[0] = 'I'; buffer[1] = 'N'; buffer[2] = 'V'; buffer[3] = 'A';
-                    buffer[4] = 'L'; buffer[5] = 'I'; buffer[6] = 'D'; buffer[7] = '\0';
-                }
-
-                Logger::Instance().Log("[Voice] Failed to bind(%s) (%d)", buffer, GetSocketError());
-            }
-
+            char buffer[IPv4Address::LengthLimit + 1];
+            if (!voice.Print(buffer)) std::strcpy(buffer, "INVALID");
+            Logger::Instance().Log("[err:voice:initialize] failed to bind(%s) (%d)", buffer, GetSocketError());
             return false;
         }
 
-        if (Logger != nullptr)
-        {
-            if (int size; socket.GetOption(SOL_SOCKET, SO_SNDBUF, size) == 1)
-                Logger::Instance().Log("[Voice] set option(SO_SNDBUF) to %d bytes.", size);
-            if (int size; socket.GetOption(SOL_SOCKET, SO_RCVBUF, size) == 1)
-                Logger::Instance().Log("[Voice] set option(SO_RCVBUF) to %d bytes.", size);
-        }
+        if (int size; socket.GetOption(SOL_SOCKET, SO_SNDBUF, size) == 1)
+            Logger::Instance().Log("[inf:voice:initialize] set option(SO_SNDBUF) to %d bytes", size);
+        if (int size; socket.GetOption(SOL_SOCKET, SO_RCVBUF, size) == 1)
+            Logger::Instance().Log("[inf:voice:initialize] set option(SO_RCVBUF) to %d bytes", size);
 
         _socket = std::move(socket);
 
@@ -631,20 +613,13 @@ public:
         if (size <= 0)
         {
 #ifdef _WIN32
-            if (GetSocketError() == WSAEMSGSIZE  ||
-                GetSocketError() == WSAEINTR     ||
-                GetSocketError() == WSAENETRESET ||
-                GetSocketError() == WSAECONNRESET)
+            if (GetSocketError() == WSAEMSGSIZE || GetSocketError() == WSAEINTR)
 #else
-            if (GetSocketError() == EMSGSIZE ||
-                GetSocketError() == EINTR)
+            if (GetSocketError() == EMSGSIZE || GetSocketError() == EINTR)
 #endif
                 goto NextPacket;
 
-            if (Logger != nullptr)
-            {
-                Logger::Instance().Log("[Voice] Failed to recvfrom (%d)", GetSocketError());
-            }
+            Logger::Instance().Log("[err:voice:receive] failed to recvfrom (%d)", GetSocketError());
 
             return 0;
         }
@@ -750,11 +725,11 @@ public:
             OutcomingVoiceHeader change_key_packet;
 
             if constexpr (HostEndian != NetEndian)
-                change_key_packet.key = utils::bswap(old_key);
+                 change_key_packet.key = utils::bswap(old_key);
             else change_key_packet.key = old_key;
 
             if constexpr (HostEndian != NetEndian)
-                change_key_packet.packet = utils::bswap(new_key);
+                 change_key_packet.packet = utils::bswap(new_key);
             else change_key_packet.packet = new_key;
 
             change_key_packet.source = 0;
@@ -788,7 +763,7 @@ public:
         if (address.Invalid()) return false;
 
         if constexpr (HostEndian != NetEndian)
-            static_cast<OutcomingVoiceHeader*>(data)->key = utils::bswap(key);
+             static_cast<OutcomingVoiceHeader*>(data)->key = utils::bswap(key);
         else static_cast<OutcomingVoiceHeader*>(data)->key = key;
 
         return _socket.SendTo(data, size, address) == size;
@@ -819,10 +794,6 @@ public:
             }
         }
     }
-
-public:
-
-    std::FILE* Logger = nullptr;
 
 private:
 

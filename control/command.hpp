@@ -172,33 +172,33 @@ public:
 
         if (!socket.Initialize(true))
         {
-            Logger::Instance().Log("[Command] Failed to initialize socket (%d)", GetSocketError());
+            Logger::Instance().Log("[sv:err:command:initialize] failed to initialize socket (%d)", GetSocketError());
             return false;
         }
         if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1))
         {
-            Logger::Instance().Log("[Command] Failed to set option(SO_REUSEADDR) (%d)", GetSocketError());
+            Logger::Instance().Log("[sv:err:command:initialize] failed to set option(SO_REUSEADDR) (%d)", GetSocketError());
+            return false;
+        }
+        if (!socket.SetOption(IPPROTO_TCP, TCP_NODELAY, 1))
+        {
+            Logger::Instance().Log("[sv:err:command:initialize] failed to set option(TCP_NODELAY) (%d)", GetSocketError());
             return false;
         }
         if (!socket.Bind(control))
         {
             char buffer[IPv4Address::LengthLimit + 1];
-
-            if (!control.Print(buffer))
-            {
-                buffer[0] = 'I'; buffer[1] = 'N'; buffer[2] = 'V'; buffer[3] = 'A';
-                buffer[4] = 'L'; buffer[5] = 'I'; buffer[6] = 'D'; buffer[7] = '\0';
-            }
-
-            Logger::Instance().Log("[Command] Failed to bind(%s) (%d)", buffer, GetSocketError());
+            if (!control.Print(buffer)) std::strcpy(buffer, "INVALID");
+            Logger::Instance().Log("[sv:err:command:initialize] failed to bind(%s) (%d)", buffer, GetSocketError());
             return false;
         }
         if (!socket.Listen(1))
         {
-            Logger::Instance().Log("[Command] Failed to listen(1) (%d)", GetSocketError());
+            Logger::Instance().Log("[sv:err:command:initialize] failed to listen(1) (%d)", GetSocketError());
             return false;
         }
 
+        _control_address = control;
         _command_address = command;
 
         _socket = std::move(socket);
@@ -358,57 +358,91 @@ public:
         }
     }
 
-    bool SendCommand() noexcept
+    void SendCommand() noexcept
     {
-        return _socket.Send(_command_buffer, _command_length) == _command_length;
+        if (_socket.Valid())
+        {
+            if (_socket.IsListening() != 1)
+            {
+                if (_socket.Send(_command_buffer, _command_length) != _command_length)
+                {
+                    Logger::Instance().Log("[sv:err:command:send] failed to send command (%d)", GetSocketError());
+
+                    Deinitialize();
+                }
+            }
+        }
     }
 
 public:
 
-    int Tick(const Time moment = Clock::Now()) noexcept
+    void Tick(const Time moment = Clock::Now()) noexcept
     {
-        if (_socket.IsListening() == 1)
+        if (_socket.Invalid())
         {
-            if (_socket.Wait(Poll::InstantTimeout, POLLIN) == 1)
+            constexpr Time kResetCooldown = Time::Seconds(4);
+
+            if (_reset_clock.ExpiredAndRestart(kResetCooldown, moment))
             {
-                IPv4Address address;
-                IPv4TcpSocket socket = _socket.Accept(address, false);
-                if (socket.Valid() && (_command_address.IsEmpty() || address == _command_address))
+                Logger::Instance().Log("[sv:dbg:command:tick] reconnecting...");
+
+                Initialize(_control_address, _command_address);
+            }
+        }
+        if (_socket.Valid())
+        {
+            switch (_socket.IsListening())
+            {
+                case 0: // Connection established (send keep-alive)
                 {
-                    if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1))
+                    constexpr Time kKeepAliveInterval = Time::Seconds(5);
+
+                    if (_keep_alive_clock.ExpiredAndRestart(kKeepAliveInterval, moment))
                     {
-                        Logger::Instance().Log("[Command] Failed to set option(SO_REUSEADDR) (%d)", GetSocketError());
-                        return -1;
-                    }
-                    if (!socket.SetOption(IPPROTO_TCP, TCP_NODELAY, 1))
-                    {
-                        Logger::Instance().Log("[Command] Failed to set option(TCP_NODELAY) (%d)", GetSocketError());
-                        return -1;
-                    }
-                    if (!socket.Shutdown(SHUT_RD))
-                    {
-                        Logger::Instance().Log("[Command] Failed to shutdown(SHUT_RD) (%d)", GetSocketError());
-                        return -1;
+                        BeginCommand(CommandPackets::KeepAlive);
+                        SendCommand();
                     }
 
-                    _socket = std::move(socket);
+                    break;
+                }
+                case 1: // No connection established (accept connection)
+                {
+                    if (_socket.Wait(Poll::InstantTimeout, POLLIN) == 1)
+                    {
+                        IPv4Address address;
+                        IPv4TcpSocket socket = _socket.Accept(address, false);
+                        if (socket.Valid() && (_command_address.IsEmpty() || address == _command_address))
+                        {
+                            if (!socket.SetOption(SOL_SOCKET, SO_REUSEADDR, 1))
+                            {
+                                Logger::Instance().Log("[sv:err:command:tick] failed to set option(SO_REUSEADDR) (%d)", GetSocketError());
+                                return;
+                            }
+                            if (!socket.SetOption(IPPROTO_TCP, TCP_NODELAY, 1))
+                            {
+                                Logger::Instance().Log("[sv:err:command:tick] failed to set option(TCP_NODELAY) (%d)", GetSocketError());
+                                return;
+                            }
+                            if (!socket.Shutdown(SHUT_RD))
+                            {
+                                Logger::Instance().Log("[sv:err:command:tick] failed to shutdown(SHUT_RD) (%d)", GetSocketError());
+                                return;
+                            }
 
-                    OnSynchronize();
+                            _socket = std::move(socket);
+
+                            OnSynchronize();
+                        }
+                    }
+
+                    break;
+                }
+                default:
+                {
+                    Deinitialize();
                 }
             }
-
-            return 0;
         }
-
-        constexpr Time kKeepAliveInterval = Time::Seconds(5);
-
-        if (_clock.ExpiredAndRestart(kKeepAliveInterval, moment))
-        {
-            BeginCommand(CommandPackets::KeepAlive);
-            SendCommand();
-        }
-
-        return 1;
     }
 
 public:
@@ -421,6 +455,7 @@ private:
 
 private:
 
+    IPv4Address _control_address;
     IPv4Address _command_address;
 
 private:
@@ -430,6 +465,7 @@ private:
 
 private:
 
-    Clock _clock;
+    Clock _keep_alive_clock;
+    Clock _reset_clock;
 
 };

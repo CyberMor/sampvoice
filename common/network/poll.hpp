@@ -21,8 +21,7 @@ struct Poll {
     struct Event : private pollfd {
 
         Event(const SOCKET handle = INVALID_SOCKET, const sword_t filter = 0) noexcept
-            : pollfd { handle, filter, 0 }
-        {}
+            { fd = handle; events = filter; revents = 0; }
 
         ~Event() noexcept = default;
         Event(const Event&) noexcept = default;
@@ -67,18 +66,20 @@ public:
 
 public:
 
-    static int Wait(Event* const events, const nfds_t count, const Time timeout) noexcept
+    static int Wait(Event* const events, const nfds_t count, const Time timeout = InfiniteTimeout) noexcept
     {
+        assert(count == 0 || events != nullptr);
+
         return PollSockets(reinterpret_cast<pollfd*>(events), count, timeout.Milliseconds());
     }
 
     template <nfds_t Count>
-    static int Wait(Event(&events)[Count], const Time timeout) noexcept
+    static int Wait(Event(&events)[Count], const Time timeout = InfiniteTimeout) noexcept
     {
         return Wait(events, Count, timeout);
     }
 
-    static int Wait(Event& event, const Time timeout) noexcept
+    static int Wait(Event& event, const Time timeout = InfiniteTimeout) noexcept
     {
         return Wait(&event, 1, timeout);
     }

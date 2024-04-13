@@ -68,7 +68,7 @@ public:
         : _address { address }
     {
         if (_address != nullptr && enabled == true && Enable() == false)
-            _address = nullptr;
+            _address  = nullptr;
     }
 
 public:
@@ -95,7 +95,7 @@ public:
 #endif
 
         if (_address != nullptr && enabled == true && Enable() == false)
-            _address = nullptr;
+            _address  = nullptr;
 
         return _address != nullptr;
     }
@@ -175,21 +175,27 @@ private:
 
 };
 
-inline bool UnprotectMemory(const ptr_t address, const size_t length) noexcept
+template <size_t Size>
+static inline bool UnprotectMemory(const ptr_t address) noexcept
 {
+    static_assert(Size != 0);
+
+    assert(address != nullptr);
+
 #ifdef _WIN32
-    if (DWORD protect; VirtualProtect(address, length, PAGE_EXECUTE_READWRITE, &protect) != 0)
+    if (DWORD protect; VirtualProtect(address, Size, PAGE_EXECUTE_READWRITE, &protect) != 0)
         return true;
 #else
     if (const long pagesize = sysconf(_SC_PAGESIZE); pagesize > 0)
     {
         const adr_t begin = reinterpret_cast<adr_t>
             (reinterpret_cast<uptrint_t>(address) & ~(static_cast<uptrint_t>(pagesize) - 1));
-        const adr_t end = static_cast<adr_t>(address) + length;
+        const adr_t end = static_cast<adr_t>(address) + Size;
 
         if (mprotect(begin, end - begin, PROT_READ | PROT_WRITE | PROT_EXEC) == 0)
             return true;
     }
 #endif
+
     return false;
 }

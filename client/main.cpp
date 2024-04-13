@@ -769,8 +769,8 @@ static void OnGameExit() noexcept
     for (size_t player = 0; player != kMaxPlayers; ++player)
         gSources[player].Deinitialize();
 
-    gStreams.Deinitialize();
-    gEffects.Deinitialize();
+    gStreams.Clear();
+    gEffects.Clear();
 
     // SocketLibraryCleanup();
 }

@@ -152,13 +152,7 @@ public:
         if (!socket.Connect(_address))
         {
             char buffer[IPv4Address::LengthLimit + 1];
-
-            if (!_address.Print(buffer))
-            {
-                buffer[0] = 'I'; buffer[1] = 'N'; buffer[2] = 'V'; buffer[3] = 'A';
-                buffer[4] = 'L'; buffer[5] = 'I'; buffer[6] = 'D'; buffer[7] = '\0';
-            }
-
+            if (!_address.Print(buffer)) std::strcpy(buffer, "INVALID");
             Logger::Instance().LogToFile("[err:voice:open] failed to connect(%s) (%d)", buffer, GetSocketError());
             return false;
         }

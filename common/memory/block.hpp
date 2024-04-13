@@ -20,6 +20,10 @@
 template <class DataType, class SizeType = size_t>
 struct DataBlock {
 
+    static_assert(!std::is_volatile_v<DataType>);
+
+public:
+
     DataBlock() noexcept = default;
     ~DataBlock() noexcept
     {
@@ -33,12 +37,10 @@ struct DataBlock {
     {
         if (object._heap)
         {
-            _area.data = static_cast<DataType*>
-                (utils::allocate<alignof(DataType)>(object._area.size * sizeof(DataType)));
+            _area.data = static_cast<DataType*>(utils::allocate<alignof(DataType)>(object._area.size * sizeof(DataType)));
             if (_area.data != nullptr)
             {
-                std::memcpy(const_cast<std::remove_const_t<DataType>*>(_area.data),
-                    object._area.data, object._area.size * sizeof(DataType));
+                std::memcpy(const_cast<std::remove_const_t<DataType>*>(_area.data), object._area.data, object._area.size * sizeof(DataType));
 
                 _area.size = object._area.size;
                 _heap      = true;
@@ -72,12 +74,10 @@ struct DataBlock {
 
             if (object._heap)
             {
-                _area.data = static_cast<DataType*>
-                    (utils::allocate<alignof(DataType)>(object._area.size * sizeof(DataType)));
+                _area.data = static_cast<DataType*>(utils::allocate<alignof(DataType)>(object._area.size * sizeof(DataType)));
                 if (_area.data != nullptr)
                 {
-                    std::memcpy(const_cast<std::remove_const_t<DataType>*>(_area.data),
-                        object._area.data, object._area.size * sizeof(DataType));
+                    std::memcpy(const_cast<std::remove_const_t<DataType>*>(_area.data), object._area.data, object._area.size * sizeof(DataType));
 
                     _area.size = object._area.size;
                     _heap      = true;
@@ -122,12 +122,10 @@ public:
         {
             if constexpr (Copy)
             {
-                block._area.data = static_cast<DataType*>
-                    (utils::allocate<alignof(DataType)>(size * sizeof(DataType)));
+                block._area.data = static_cast<DataType*>(utils::allocate<alignof(DataType)>(size * sizeof(DataType)));
                 if (block._area.data != nullptr)
                 {
-                    std::memcpy(const_cast<std::remove_const_t<DataType>*>(block._area.data),
-                        data, size * sizeof(DataType));
+                    std::memcpy(const_cast<std::remove_const_t<DataType>*>(block._area.data), data, size * sizeof(DataType));
 
                     block._area.size = size;
                     block._heap      = true;
@@ -151,7 +149,7 @@ public:
         {
             if constexpr (Zeros)
             {
-                std::memset(buffer, {}, length * sizeof(DataType));
+                std::memset(buffer, 0, length * sizeof(DataType));
             }
 
             block._area = { buffer, length };
@@ -169,14 +167,12 @@ public:
 
         if (size != 0)
         {
-            block._area.data = static_cast<DataType*>
-                (utils::allocate<alignof(DataType)>(size * sizeof(DataType)));
+            block._area.data = static_cast<DataType*>(utils::allocate<alignof(DataType)>(size * sizeof(DataType)));
             if (block._area.data != nullptr)
             {
                 if constexpr (Zeros)
                 {
-                    std::memset(const_cast<std::remove_const_t<DataType>*>(block._area.data),
-                        {}, size * sizeof(DataType));
+                    std::memset(const_cast<std::remove_const_t<DataType>*>(block._area.data), 0, size * sizeof(DataType));
                 }
 
                 block._area.size = size;
@@ -191,42 +187,36 @@ public:
 
     bool operator<(const DataBlock& block) const noexcept
     {
-        const int result = std::memcmp(_area.data, block._area.data,
-            std::min(_area.size, block._area.size));
+        const int result = std::memcmp(_area.data, block._area.data, std::min(_area.size, block._area.size));
         return result < 0 || result == 0 && _area.size < block._area.size;
     }
 
     bool operator>(const DataBlock& block) const noexcept
     {
-        const int result = std::memcmp(_area.data, block._area.data,
-            std::min(_area.size, block._area.size));
+        const int result = std::memcmp(_area.data, block._area.data, std::min(_area.size, block._area.size));
         return result > 0 || result == 0 && _area.size > block._area.size;
     }
 
     bool operator<=(const DataBlock& block) const noexcept
     {
-        const int result = std::memcmp(_area.data, block._area.data,
-            std::min(_area.size, block._area.size));
+        const int result = std::memcmp(_area.data, block._area.data, std::min(_area.size, block._area.size));
         return result < 0 || result == 0 && _area.size <= block._area.size;
     }
 
     bool operator>=(const DataBlock& block) const noexcept
     {
-        const int result = std::memcmp(_area.data, block._area.data,
-            std::min(_area.size, block._area.size));
+        const int result = std::memcmp(_area.data, block._area.data, std::min(_area.size, block._area.size));
         return result > 0 || result == 0 && _area.size >= block._area.size;
     }
 
     bool operator==(const DataBlock& block) const noexcept
     {
-        return _area.size == block._area.size &&
-            std::memcmp(_area.data, block._area.data, block._area.size) == 0;
+        return _area.size == block._area.size && std::memcmp(_area.data, block._area.data, _area.size) == 0;
     }
 
     bool operator!=(const DataBlock& block) const noexcept
     {
-        return _area.size != block._area.size ||
-            std::memcmp(_area.data, block._area.data, block._area.size) != 0;
+        return _area.size != block._area.size || std::memcmp(_area.data, block._area.data, _area.size) != 0;
     }
 
 public:
@@ -310,12 +300,10 @@ public:
         {
             if (_area.data != nullptr)
             {
-                DataType* const new_data = static_cast<DataType*>
-                    (utils::allocate<alignof(DataType)>(_area.size * sizeof(DataType)));
+                DataType* const new_data = static_cast<DataType*>(utils::allocate<alignof(DataType)>(_area.size * sizeof(DataType)));
                 if (new_data != nullptr)
                 {
-                    std::memcpy(const_cast<std::remove_const_t<DataType>*>(new_data),
-                        _area.data, _area.size * sizeof(DataType));
+                    std::memcpy(const_cast<std::remove_const_t<DataType>*>(new_data), _area.data, _area.size * sizeof(DataType));
 
                     _area.data = new_data;
                     _heap      = true;
@@ -354,8 +342,7 @@ public:
                     {
                         if (new_size > _area.size)
                         {
-                            std::memset(const_cast<std::remove_const_t<DataType>*>(new_data + _area.size),
-                                {}, (new_size - _area.size) * sizeof(DataType));
+                            std::memset(const_cast<std::remove_const_t<DataType>*>(new_data + _area.size), 0, (new_size - _area.size) * sizeof(DataType));
                         }
                     }
 
@@ -368,17 +355,14 @@ public:
             }
             else
             {
-                DataType* const new_data = static_cast<DataType*>
-                    (utils::allocate<alignof(DataType)>(new_size * sizeof(DataType)));
+                DataType* const new_data = static_cast<DataType*>(utils::allocate<alignof(DataType)>(new_size * sizeof(DataType)));
                 if (new_data != nullptr)
                 {
-                    std::memcpy(const_cast<std::remove_const_t<DataType>*>(new_data),
-                        _area.data, _area.size * sizeof(DataType));
+                    std::memcpy(const_cast<std::remove_const_t<DataType>*>(new_data), _area.data, _area.size * sizeof(DataType));
 
                     if constexpr (Zeros)
                     {
-                        std::memset(const_cast<std::remove_const_t<DataType>*>(new_data + _area.size),
-                            {}, (new_size - _area.size) * sizeof(DataType));
+                        std::memset(const_cast<std::remove_const_t<DataType>*>(new_data + _area.size), 0, (new_size - _area.size) * sizeof(DataType));
                     }
 
                     _area = { new_data, new_size };
@@ -403,9 +387,24 @@ public:
 
 public:
 
-    SizeType Bytes() const noexcept
+    const DataType* Previous(const DataType* const iterator) const noexcept
     {
-        return _area.Bytes();
+        return _area.Previous(iterator);
+    }
+
+    DataType* Previous(DataType* const iterator) noexcept
+    {
+        return _area.Previous(iterator);
+    }
+
+    const DataType* Next(const DataType* const iterator) const noexcept
+    {
+        return _area.Next(iterator);
+    }
+
+    DataType* Next(DataType* const iterator) noexcept
+    {
+        return _area.Next(iterator);
     }
 
 public:
@@ -454,24 +453,9 @@ public:
 
 public:
 
-    const DataType* Previous(DataType* const iterator) const noexcept
+    SizeType Bytes() const noexcept
     {
-        return _area.Previous(iterator);
-    }
-
-    DataType* Previous(DataType* const iterator) noexcept
-    {
-        return _area.Previous(iterator);
-    }
-
-    const DataType* Next(DataType* const iterator) const noexcept
-    {
-        return _area.Next(iterator);
-    }
-
-    DataType* Next(DataType* const iterator) noexcept
-    {
-        return _area.Next(iterator);
+        return _area.Bytes();
     }
 
 public:

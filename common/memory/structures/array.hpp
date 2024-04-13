@@ -95,9 +95,24 @@ public:
 
 public:
 
-    static constexpr size_t Bytes() noexcept
+    const Type* Previous(const Type* const iterator) const noexcept
     {
-        return Capacity * sizeof(Type);
+        return iterator != First() ? (iterator != End() ? iterator - 1 : Last()) : End();
+    }
+
+    Type* Previous(Type* const iterator) noexcept
+    {
+        return iterator != First() ? (iterator != End() ? iterator - 1 : Last()) : End();
+    }
+
+    const Type* Next(const Type* const iterator) const noexcept
+    {
+        return iterator != Last() ? (iterator != End() ? iterator + 1 : First()) : End();
+    }
+
+    Type* Next(Type* const iterator) noexcept
+    {
+        return iterator != Last() ? (iterator != End() ? iterator + 1 : First()) : End();
     }
 
 public:
@@ -146,24 +161,9 @@ public:
 
 public:
 
-    const Type* Previous(Type* const iterator) const noexcept
+    static constexpr size_t Bytes() noexcept
     {
-        return iterator != First() ? (iterator != End() ? iterator - 1 : Last()) : End();
-    }
-
-    Type* Previous(Type* const iterator) noexcept
-    {
-        return iterator != First() ? (iterator != End() ? iterator - 1 : Last()) : End();
-    }
-
-    const Type* Next(Type* const iterator) const noexcept
-    {
-        return iterator != Last() ? (iterator != End() ? iterator + 1 : First()) : End();
-    }
-
-    Type* Next(Type* const iterator) noexcept
-    {
-        return iterator != Last() ? (iterator != End() ? iterator + 1 : First()) : End();
+        return Size() * sizeof(Type);
     }
 
 public:
@@ -186,6 +186,6 @@ public:
 private:
 
     alignas (alignof(Type))
-    ubyte_t _elements[Capacity * sizeof(Type)];
+    ubyte_t _elements[Bytes()];
 
 };

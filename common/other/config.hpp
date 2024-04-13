@@ -21,9 +21,9 @@ struct Config {
 
     Config() noexcept = default;
     ~Config() noexcept = default;
-    Config(const Config&) = default;
+    Config(const Config&) noexcept = default;
     Config(Config&&) noexcept = default;
-    Config& operator=(const Config&) = default;
+    Config& operator=(const Config&) noexcept = default;
     Config& operator=(Config&&) noexcept = default;
 
 public:
@@ -80,7 +80,7 @@ public:
 
                 const str_t key_begin = iterator;
 
-                while (*iterator != ' ' && *iterator != '=' && *iterator != '\0' && *iterator != '\t')
+                while (*iterator != ' ' && *iterator != '=' && *iterator != '\t' && *iterator != '\0')
                     ++iterator;
 
                 const str_t key_end = iterator;
@@ -89,23 +89,22 @@ public:
                     ++iterator;
 
                 if (*iterator++ != '=')
-                    return -2;
+                    return -3; // format error
 
                 while (*iterator == ' ' || *iterator == '\t')
                     ++iterator;
 
                 const str_t value_begin = iterator;
 
-                while (*iterator != ' ' && *iterator != '\0' && *iterator != '\t')
+                while (*iterator != '\0' && *iterator != ' ' && *iterator != '\t')
                     ++iterator;
 
                 const str_t value_end = iterator;
 
-                *key_end = *value_end = '\0';
+                *key_end = '\0';
 
-                size_t index = None<size_t>;
+                size_t index = GetIndexByKey(key_begin);
 
-                if (index == None<size_t>) index = GetIndexByKey(key_begin);
                 if (index == None<size_t>) index = FindFreeIndex();
                 if (index == None<size_t>) index = (_parameters.emplace_back(), _parameters.size() - 1);
 

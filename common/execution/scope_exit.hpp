@@ -13,6 +13,10 @@
 
 struct ScopeExit {
 
+    using Callback = std::function<void()>;
+
+public:
+
     ScopeExit() noexcept = default;
     ~ScopeExit() noexcept
     {
@@ -21,13 +25,31 @@ struct ScopeExit {
     }
 
     ScopeExit(const ScopeExit&) = delete;
-    ScopeExit(ScopeExit&&) noexcept = default;
+    ScopeExit(ScopeExit&& object) noexcept
+        : _callback { std::move(object._callback) }
+    {
+        object._callback = nullptr;
+    }
+
     ScopeExit& operator=(const ScopeExit&) = delete;
-    ScopeExit& operator=(ScopeExit&&) noexcept = default;
+    ScopeExit& operator=(ScopeExit&& object) noexcept
+    {
+        if (&object != this)
+        {
+            if (_callback != nullptr)
+                _callback();
+
+            _callback = std::move(object._callback);
+
+            object._callback = nullptr;
+        }
+
+        return *this;
+    }
 
 public:
 
-    ScopeExit(std::function<void()>&& callback) noexcept
+    ScopeExit(Callback&& callback) noexcept
         : _callback { std::move(callback) }
     {}
 
@@ -40,6 +62,6 @@ public:
 
 private:
 
-    std::function<void()> _callback;
+    Callback _callback;
 
 };
