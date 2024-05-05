@@ -1579,8 +1579,8 @@ PLUGIN_EXPORT void PLUGIN_CALL ProcessTick() noexcept
                         if (gPlayers.Acquire<0>(player) == false)
                             goto VehicleDetach;
 
-                        assert(pNetGame->pPlayerPool->pPlayer[player] != nullptr);
-
+                        if (pNetGame->pPlayerPool->pPlayer[player] == nullptr)
+                            goto VehicleDetach;
                         if (pNetGame->pPlayerPool->pPlayer[player]->byteVehicleStreamedIn[index] == 0)
                             goto VehicleDetach;
 
@@ -1624,8 +1624,8 @@ PLUGIN_EXPORT void PLUGIN_CALL ProcessTick() noexcept
                         if (gPlayers.Acquire<0>(player) == false)
                             goto PlayerDetach;
 
-                        assert(pNetGame->pPlayerPool->pPlayer[player] != nullptr);
-
+                        if (pNetGame->pPlayerPool->pPlayer[player] == nullptr)
+                            goto PlayerDetach;
                         if (pNetGame->pPlayerPool->pPlayer[player]->byteStreamedIn[index] == 0)
                             goto PlayerDetach;
 
@@ -1670,7 +1670,8 @@ PLUGIN_EXPORT void PLUGIN_CALL ProcessTick() noexcept
                         if (gPlayers.Acquire<0>(player) == false)
                             goto ObjectDetach;
 
-                        assert(pNetGame->pPlayerPool->pPlayer[player] != nullptr);
+                        if (pNetGame->pPlayerPool->pPlayer[player] == nullptr)
+                            goto ObjectDetach;
 
                         {
                             const CVector delta = pNetGame->pPlayerPool->pPlayer[player]->vecPosition -
