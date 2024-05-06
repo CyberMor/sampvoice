@@ -62,14 +62,16 @@ private:
 public:
 
     CallHook(const ptr_t inject, const cptr_t hook, const bool enabled = true) noexcept
-        : _patch { hook != nullptr ? inject : nullptr, &CallInstruction(reinterpret_cast<sptrint_t>(hook) -
+        : _target { reinterpret_cast<ptr_t>((reinterpret_cast<sptrint_t>(inject) +
+            static_cast<sptrint_t>(sizeof(CallInstruction))) + static_cast<const CallInstruction*>(inject)->Offset()) }
+        , _patch { hook != nullptr ? inject : nullptr, &CallInstruction(reinterpret_cast<sptrint_t>(hook) -
             (reinterpret_cast<sptrint_t>(inject) + static_cast<sptrint_t>(sizeof(CallInstruction)))), enabled }
     {
-        if (_patch.Valid())
+        assert(_target != nullptr);
+
+        if (_patch.Invalid())
         {
-            _target = reinterpret_cast<ptr_t>((reinterpret_cast<sptrint_t>(inject) +
-                static_cast<sptrint_t>(sizeof(CallInstruction))) + static_cast<const CallInstruction*>(inject)->Offset());
-            assert(_target != nullptr);
+            _target = nullptr;
         }
     }
 
@@ -89,12 +91,14 @@ public:
 
     bool Initialize(const ptr_t inject, const cptr_t hook, const bool enabled = true) noexcept
     {
-        if (_patch.Initialize(hook != nullptr ? inject : nullptr, &CallInstruction(reinterpret_cast<sptrint_t>(hook) -
+        _target = reinterpret_cast<ptr_t>((reinterpret_cast<sptrint_t>(inject) +
+            static_cast<sptrint_t>(sizeof(CallInstruction))) + static_cast<const CallInstruction*>(inject)->Offset());
+        assert(_target != nullptr);
+
+        if (!_patch.Initialize(hook != nullptr ? inject : nullptr, &CallInstruction(reinterpret_cast<sptrint_t>(hook) -
             (reinterpret_cast<sptrint_t>(inject) + static_cast<sptrint_t>(sizeof(CallInstruction)))), enabled))
         {
-            _target = reinterpret_cast<ptr_t>((reinterpret_cast<sptrint_t>(inject) +
-                static_cast<sptrint_t>(sizeof(CallInstruction))) + static_cast<const CallInstruction*>(inject)->Offset());
-            assert(_target != nullptr);
+            _target = nullptr;
         }
 
         return _patch.Valid();
