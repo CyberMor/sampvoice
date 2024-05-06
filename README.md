@@ -157,7 +157,7 @@ To compile the client side of the plugin, you need the *DirectX 9 SDK*. By defau
 ---------------------------------
 Make sure you have all dependencies installed:
 ```sh
-sudo apt install make gcc g++ gcc-multilib g++-multilib
+sudo apt install build-essential gcc-multilib g++-multilib
 ```
 To build the **control-server** for the *Linux x86* platform, follow these instructions:
 ```sh
