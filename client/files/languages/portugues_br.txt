@@ -1,0 +1,32 @@
+Português (Brasil)
+Configurações do Chat de Voz
+Geral
+Idioma
+Som
+Ativar som
+Volume do som
+Efeitos
+Suavização de volume
+Filtro passa-alto
+Ícone acima dos jogadores
+Escala
+Deslocamento
+Microfone
+Dispositivo
+Ligar o microfone
+Volume do microfone
+Dispositivo de entrada
+Verificar o dispositivo
+Ícone do microfone
+Tamanho
+Posição X
+Posição Y
+Mover com o mouse
+Não há microfones disponíveis
+Lista negra
+Filtro
+Digite o ID ou Nome do jogador...
+Jogadores no servidor
+Jogadores bloqueados
+Reiniciar
+Redefinir todas as configurações
