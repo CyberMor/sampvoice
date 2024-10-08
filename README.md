@@ -45,7 +45,7 @@ Players have access to 2 installation options: automatic (via the installer) and
 To get started using the plugin, read the documentation that comes with the server side. To do this, open the *sampvoice.chm* file using the Windows reference. **(If the documentation does not open, right-click on the documentation file, then Properties -> Unblock -> OK)**
 
 To start using the plugin functionality, include the header file:
-```php
+```pawn
 #include <sampvoice>
 ```
 
@@ -65,7 +65,7 @@ Players can be both speakers and listeners at the same time. In this case, the p
 #### Example
 ---------------------------------
 Let's take a look at some of the plugin's features with a practical example. Below we will create a server that will bind all connected players to the global stream, and also create a local stream for each player. Thus, players will be able to communicate through the global (heard equally at any point on the map) and local (heard only near the player) chats.
-```php
+```pawn
 #include <sampvoice>
 
 #define GLOBAL_CHANNEL 0
