@@ -1,0 +1,32 @@
+Bahasa Indonesia
+Pengaturan Obrolan Suara
+Umum
+Bahasa
+Suara
+Mengaktifkan Mikrofon
+Volume Suara
+Efek
+Memperhalus Suara
+High pass filter
+Ikon diatas player
+Skala
+Offset
+Mikrofon
+Perangkat
+Mengaktifkan Mikrofon
+Volume Mikrofon
+Perangkat Input
+Cek Perangkat
+Ikon Mikrofon
+Skala
+Posisi X
+Posisi Y
+Gerak
+Tidak ada mikrofon tersedia
+Blacklist
+Filter
+Masukan ID Pemain atau Nama...
+Pemain dalam server
+Pemain yang di block
+Mengatur Ulang
+Mengatur ulang semua pengaturan
