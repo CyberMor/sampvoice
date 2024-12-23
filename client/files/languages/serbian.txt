@@ -1,0 +1,32 @@
+Srpski
+Podesavanja
+Opste
+Jezik
+Zvuk
+Omoguci zvuk
+Jacina zvuka
+Efekti
+Izravnavanje jacine zvuka
+Filter visokih frekvencija
+Ikona iznad igraca
+Skala
+Pomeranje
+Mikrofon
+Uredjaj
+Omoguci mikrofon
+Jacina mikrofona
+Uredjaj za unos
+Proveri uredjaj
+Ikona mikrofona
+Skala
+Pozicija po X
+Pozicija po Y
+Pomeri
+Nema dostupnih mikrofona
+Crna lista
+Filter
+Unesite ID ili nadimak igraca...
+Igraci na serveru
+Blokirani igraci
+Resetovanje
+Resetuj sve postavke
